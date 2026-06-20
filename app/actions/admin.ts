@@ -1,0 +1,245 @@
+'use server';
+
+import { auth } from '@/lib/auth';
+import { db } from '@/lib/db';
+import { course, module, video, pdf, user } from '@/lib/db/schema';
+import { eq, desc } from 'drizzle-orm';
+import { headers } from 'next/headers';
+import { revalidatePath } from 'next/cache';
+
+async function isAdmin() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session?.user || session.user.role !== 'admin') {
+    throw new Error('Unauthorized: Admin access required');
+  }
+  return true;
+}
+
+// Course management
+export async function getAllCourses() {
+  try {
+    await isAdmin();
+    const courses = await db.select().from(course).orderBy(desc(course.createdAt));
+    return { success: true, data: courses };
+  } catch (error) {
+    console.error('Error fetching courses:', error);
+    return { success: false, error: 'Failed to fetch courses' };
+  }
+}
+
+export async function createCourse(data: {
+  title: string;
+  description?: string;
+  thumbnail?: string;
+  instructor?: string;
+}) {
+  try {
+    await isAdmin();
+    const newCourse = {
+      id: `course-${Date.now()}`,
+      ...data,
+      isPublished: false,
+    };
+    await db.insert(course).values(newCourse);
+    revalidatePath('/admin/courses');
+    return { success: true, data: newCourse };
+  } catch (error) {
+    console.error('Error creating course:', error);
+    return { success: false, error: 'Failed to create course' };
+  }
+}
+
+export async function updateCourse(
+  courseId: string,
+  data: {
+    title?: string;
+    description?: string;
+    thumbnail?: string;
+    instructor?: string;
+    isPublished?: boolean;
+  }
+) {
+  try {
+    await isAdmin();
+    await db.update(course).set(data).where(eq(course.id, courseId));
+    revalidatePath('/admin/courses');
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating course:', error);
+    return { success: false, error: 'Failed to update course' };
+  }
+}
+
+export async function deleteCourse(courseId: string) {
+  try {
+    await isAdmin();
+    await db.delete(course).where(eq(course.id, courseId));
+    revalidatePath('/admin/courses');
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting course:', error);
+    return { success: false, error: 'Failed to delete course' };
+  }
+}
+
+// Module management
+export async function createModule(courseId: string, data: { title: string; description?: string; order: number }) {
+  try {
+    await isAdmin();
+    const newModule = {
+      id: `module-${Date.now()}`,
+      courseId,
+      ...data,
+    };
+    await db.insert(module).values(newModule);
+    revalidatePath('/admin/courses');
+    return { success: true, data: newModule };
+  } catch (error) {
+    console.error('Error creating module:', error);
+    return { success: false, error: 'Failed to create module' };
+  }
+}
+
+export async function updateModule(
+  moduleId: string,
+  data: { title?: string; description?: string; order?: number }
+) {
+  try {
+    await isAdmin();
+    await db.update(module).set(data).where(eq(module.id, moduleId));
+    revalidatePath('/admin/courses');
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating module:', error);
+    return { success: false, error: 'Failed to update module' };
+  }
+}
+
+export async function deleteModule(moduleId: string) {
+  try {
+    await isAdmin();
+    await db.delete(module).where(eq(module.id, moduleId));
+    revalidatePath('/admin/courses');
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting module:', error);
+    return { success: false, error: 'Failed to delete module' };
+  }
+}
+
+// Video management
+export async function createVideo(
+  moduleId: string,
+  data: { title: string; url: string; duration?: number; order: number }
+) {
+  try {
+    await isAdmin();
+    const newVideo = {
+      id: `video-${Date.now()}`,
+      moduleId,
+      ...data,
+    };
+    await db.insert(video).values(newVideo);
+    revalidatePath('/admin/courses');
+    return { success: true, data: newVideo };
+  } catch (error) {
+    console.error('Error creating video:', error);
+    return { success: false, error: 'Failed to create video' };
+  }
+}
+
+export async function updateVideo(
+  videoId: string,
+  data: { title?: string; url?: string; duration?: number; order?: number }
+) {
+  try {
+    await isAdmin();
+    await db.update(video).set(data).where(eq(video.id, videoId));
+    revalidatePath('/admin/courses');
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating video:', error);
+    return { success: false, error: 'Failed to update video' };
+  }
+}
+
+export async function deleteVideo(videoId: string) {
+  try {
+    await isAdmin();
+    await db.delete(video).where(eq(video.id, videoId));
+    revalidatePath('/admin/courses');
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting video:', error);
+    return { success: false, error: 'Failed to delete video' };
+  }
+}
+
+// PDF management
+export async function createPdf(
+  moduleId: string,
+  data: { title: string; url: string; order: number }
+) {
+  try {
+    await isAdmin();
+    const newPdf = {
+      id: `pdf-${Date.now()}`,
+      moduleId,
+      ...data,
+    };
+    await db.insert(pdf).values(newPdf);
+    revalidatePath('/admin/courses');
+    return { success: true, data: newPdf };
+  } catch (error) {
+    console.error('Error creating PDF:', error);
+    return { success: false, error: 'Failed to create PDF' };
+  }
+}
+
+export async function updatePdf(pdfId: string, data: { title?: string; url?: string; order?: number }) {
+  try {
+    await isAdmin();
+    await db.update(pdf).set(data).where(eq(pdf.id, pdfId));
+    revalidatePath('/admin/courses');
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating PDF:', error);
+    return { success: false, error: 'Failed to update PDF' };
+  }
+}
+
+export async function deletePdf(pdfId: string) {
+  try {
+    await isAdmin();
+    await db.delete(pdf).where(eq(pdf.id, pdfId));
+    revalidatePath('/admin/courses');
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting PDF:', error);
+    return { success: false, error: 'Failed to delete PDF' };
+  }
+}
+
+// User management
+export async function getAllUsers() {
+  try {
+    await isAdmin();
+    const users = await db.select().from(user).orderBy(desc(user.createdAt));
+    return { success: true, data: users };
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    return { success: false, error: 'Failed to fetch users' };
+  }
+}
+
+export async function updateUserRole(userId: string, role: 'learner' | 'admin') {
+  try {
+    await isAdmin();
+    await db.update(user).set({ role }).where(eq(user.id, userId));
+    revalidatePath('/admin/users');
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating user role:', error);
+    return { success: false, error: 'Failed to update user role' };
+  }
+}
