@@ -4,9 +4,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCourseById, getUserProgress, updateProgress } from '@/app/actions/courses';
 import ReactPlayer from 'react-player';
-import { Document, Page as PDFPage } from 'react-pdf';
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
-import 'react-pdf/dist/esm/Page/TextLayer.css';
 
 export default function LearningPage({ params }: { params: { courseId: string } }) {
   const router = useRouter();
@@ -16,7 +13,6 @@ export default function LearningPage({ params }: { params: { courseId: string } 
   const [currentContentType, setCurrentContentType] = useState<'video' | 'pdf' | null>(null);
   const [currentContentId, setCurrentContentId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [pdfPages, setPdfPages] = useState(0);
 
   useEffect(() => {
     const loadCourseData = async () => {
@@ -179,16 +175,21 @@ export default function LearningPage({ params }: { params: { courseId: string } 
                     />
                   </div>
                 ) : currentContentType === 'pdf' && currentContent ? (
-                  <div className='p-4'>
-                    <Document file={currentContent.url} onLoadSuccess={({ numPages }) => setPdfPages(numPages)}>
-                      {Array.from(new Array(pdfPages), (el, index) => (
-                        <PDFPage key={`page_${index + 1}`} pageNumber={index + 1} />
-                      ))}
-                    </Document>
+                  <div className='p-8 bg-white rounded-lg shadow flex flex-col items-center justify-center min-h-96'>
+                    <p className='text-lg font-semibold text-gray-700 mb-4'>PDF Document</p>
+                    <p className='text-gray-600 mb-6'>{currentContent.title}</p>
+                    <a
+                      href={currentContent.url}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold'
+                    >
+                      View PDF
+                    </a>
                     <a
                       href={currentContent.url}
                       download
-                      className='mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700'
+                      className='mt-4 inline-block px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-semibold'
                     >
                       Download PDF
                     </a>
