@@ -2,7 +2,8 @@
 
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
-import { isAdmin } from '@/lib/user-utils';
+import { getUserWithRole } from '@/lib/user-utils';
+import { headers } from 'next/headers';
 
 const UPLOAD_DIR = join(process.cwd(), 'public/uploads');
 const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
@@ -12,7 +13,10 @@ const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB for videos, 50MB for others
 
 export async function uploadFile(formData: FormData) {
   try {
-    await isAdmin();
+    const userWithRole = await getUserWithRole();
+    if (!userWithRole || userWithRole.role !== 'admin') {
+      return { success: false, error: 'Unauthorized: Admin access required' };
+    }
 
     const file = formData.get('file') as File;
     const fileType = formData.get('fileType') as string;
