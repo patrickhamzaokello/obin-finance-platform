@@ -228,15 +228,20 @@ export async function updateProgress(courseId: string, moduleId: string, videoId
 
 export async function getUserProgress(courseId: string) {
   try {
-    const userId = await getUserId();
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user) {
+      // User not authenticated, return empty progress
+      return { success: true, data: [] };
+    }
+
     const progress = await db
       .select()
       .from(userProgress)
-      .where(and(eq(userProgress.userId, userId), eq(userProgress.courseId, courseId)));
+      .where(and(eq(userProgress.userId, session.user.id), eq(userProgress.courseId, courseId)));
 
     return { success: true, data: progress };
   } catch (error) {
     console.error('Error fetching progress:', error);
-    return { success: false, error: 'Failed to fetch progress' };
+    return { success: true, data: [] };
   }
 }

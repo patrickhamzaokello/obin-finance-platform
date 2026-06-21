@@ -99,17 +99,25 @@ export default function LearningPage({ params }: { params: { courseId: string } 
 
   if (!course) {
     return (
-      <div className='min-h-screen bg-background flex items-center justify-center'>
-        <div className='text-center max-w-md'>
+      <div className='min-h-screen bg-background flex items-center justify-center px-4'>
+        <div className='text-center max-w-md border-2 border-border bg-white p-8 rounded'>
           <h2 className='text-2xl font-semibold text-foreground mb-2'>Course Not Found</h2>
-          <p className='text-muted-foreground mb-6'>The course you are looking for does not exist or you are not enrolled.</p>
-          <Link
-            href='/dashboard'
-            className='inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium'
-          >
-            <ArrowLeft size={16} />
-            Back to Dashboard
-          </Link>
+          <p className='text-muted-foreground mb-6'>The course you are looking for does not exist, or you need to be enrolled or logged in to view it.</p>
+          <div className='flex flex-col gap-3'>
+            <Link
+              href='/sign-in'
+              className='inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground border-2 border-primary rounded hover:bg-primary/90 transition-colors font-medium'
+            >
+              Sign In
+            </Link>
+            <Link
+              href='/dashboard'
+              className='inline-flex items-center justify-center gap-2 px-4 py-2 bg-white text-foreground border-2 border-border rounded hover:bg-secondary transition-colors font-medium'
+            >
+              <ArrowLeft size={16} />
+              Back to Dashboard
+            </Link>
+          </div>
         </div>
       </div>
     );
