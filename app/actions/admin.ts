@@ -31,20 +31,24 @@ export async function createCourse(data: {
   description?: string;
   thumbnail?: string;
   instructor?: string;
-}) {
+  }) {
   try {
-    await isAdmin();
+    console.log('[v0] Creating course with data:', data);
+    const admin = await isAdmin();
+    console.log('[v0] Admin check passed:', admin);
     const newCourse = {
       id: `course-${Date.now()}`,
       ...data,
       isPublished: false,
     };
+    console.log('[v0] Inserting course:', newCourse);
     await db.insert(course).values(newCourse);
+    console.log('[v0] Course inserted successfully');
     revalidatePath('/admin/courses');
     return { success: true, data: newCourse };
   } catch (error) {
-    console.error('Error creating course:', error);
-    return { success: false, error: 'Failed to create course' };
+    console.error('[v0] Error creating course:', error);
+    return { success: false, error: String(error) || 'Failed to create course' };
   }
 }
 
