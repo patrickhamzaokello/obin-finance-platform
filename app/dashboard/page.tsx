@@ -1,17 +1,16 @@
-import { auth } from '@/lib/auth';
-import { redirect, headers as getHeaders } from 'next/navigation';
-import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getPublishedCourses, getUserEnrolledCourses } from '@/app/actions/courses';
+import { getUserWithRole } from '@/lib/user-utils';
 
 export default async function Dashboard() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const userWithRole = await getUserWithRole();
 
-  if (!session?.user) {
+  if (!userWithRole) {
     redirect('/sign-in');
   }
 
-  if (session.user.role === 'admin') {
+  if (userWithRole.role === 'admin') {
     redirect('/admin');
   }
 
@@ -28,7 +27,7 @@ export default async function Dashboard() {
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex justify-between items-center'>
           <div>
             <h1 className='text-3xl font-bold text-gray-900'>Obin Finance</h1>
-            <p className='text-gray-600 mt-1'>Welcome, {session.user.name || session.user.email}</p>
+            <p className='text-gray-600 mt-1'>Welcome, {userWithRole.name || userWithRole.email}</p>
           </div>
           <button
             onClick={async () => {

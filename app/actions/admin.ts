@@ -1,18 +1,17 @@
 'use server';
 
-import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { course, module, video, pdf, user } from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
-import { headers } from 'next/headers';
+import { getUserWithRole } from '@/lib/user-utils';
 import { revalidatePath } from 'next/cache';
 
 async function isAdmin() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user || session.user.role !== 'admin') {
+  const userWithRole = await getUserWithRole();
+  if (!userWithRole || userWithRole.role !== 'admin') {
     throw new Error('Unauthorized: Admin access required');
   }
-  return true;
+  return userWithRole;
 }
 
 // Course management
