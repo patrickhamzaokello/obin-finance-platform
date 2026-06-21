@@ -81,7 +81,7 @@ export async function uploadFile(formData: FormData) {
     // Convert file to buffer and upload to Vercel Blob
     const bytes = await file.arrayBuffer();
     const blob = await put(blobPath, bytes, {
-      access: 'public',
+      access: 'private',
       contentType: file.type,
     });
 
