@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getCourseById } from '@/app/actions/courses';
+import { getCourseWithEnrollmentStatus } from '@/app/actions/courses';
 import { EnrollButton } from '@/components/enroll-button';
 import Link from 'next/link';
 import { ArrowLeft, BookOpen, Play, FileText } from 'lucide-react';
@@ -33,7 +33,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
     const loadCourse = async () => {
       const resolvedParams = await params;
       setCourseId(resolvedParams.courseId);
-      const result = await getCourseById(resolvedParams.courseId);
+      const result = await getCourseWithEnrollmentStatus(resolvedParams.courseId);
       if (result.success) {
         setCourse(result.data as any);
       } else {

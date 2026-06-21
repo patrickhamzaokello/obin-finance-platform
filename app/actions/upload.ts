@@ -15,6 +15,7 @@ export async function uploadFile(formData: FormData) {
   try {
     const userWithRole = await getUserWithRole();
     if (!userWithRole || userWithRole.role !== 'admin') {
+      console.error('[v0] Unauthorized upload attempt. User:', userWithRole?.id, 'Role:', userWithRole?.role);
       return { success: false, error: 'Unauthorized: Admin access required' };
     }
 
@@ -22,8 +23,11 @@ export async function uploadFile(formData: FormData) {
     const fileType = formData.get('fileType') as string;
 
     if (!file) {
+      console.error('[v0] No file provided in upload');
       return { success: false, error: 'No file provided' };
     }
+
+    console.log('[v0] Uploading file:', { name: file.name, type: file.type, size: file.size, fileType });
 
     // Validate file type
     let uploadPath: string;
@@ -47,20 +51,30 @@ export async function uploadFile(formData: FormData) {
         maxSize = 5 * 1024 * 1024; // 5MB
         break;
       default:
+        console.error('[v0] Invalid file type:', fileType);
         return { success: false, error: 'Invalid file type' };
     }
 
     // Validate file size
     if (file.size > maxSize) {
-      return { success: false, error: `File size exceeds ${maxSize / 1024 / 1024}MB limit` };
+      const limitMB = maxSize / 1024 / 1024;
+      console.error(`[v0] File size ${file.size} exceeds ${limitMB}MB limit`);
+      return { success: false, error: `File size exceeds ${limitMB}MB limit` };
     }
 
-    // Validate MIME type
-    if (!allowedTypes.includes(file.type)) {
-      return { success: false, error: `Invalid file type. Allowed: ${allowedTypes.join(', ')}` };
+    // Validate MIME type - allow more flexible matching
+    const isValidType = allowedTypes.includes(file.type) || 
+                       (fileType === 'video' && file.type.startsWith('video/')) ||
+                       (fileType === 'pdf' && file.type === 'application/pdf') ||
+                       (fileType === 'thumbnail' && file.type.startsWith('image/'));
+    
+    if (!isValidType) {
+      console.error('[v0] Invalid MIME type:', { actual: file.type, allowed: allowedTypes });
+      return { success: false, error: `Invalid file type. Expected: ${fileType}` };
     }
 
     // Ensure upload directory exists
+    console.log('[v0] Creating upload directory:', uploadPath);
     await mkdir(uploadPath, { recursive: true });
 
     // Generate unique filename
@@ -70,11 +84,15 @@ export async function uploadFile(formData: FormData) {
     const filename = `${timestamp}-${randomString}-${originalName}`;
     const filepath = join(uploadPath, filename);
 
+    console.log('[v0] Writing file to:', filepath);
+
     // Convert file to buffer and write
     const bytes = await file.arrayBuffer();
     await writeFile(filepath, Buffer.from(bytes));
 
     const publicUrl = `/uploads/${fileType}s/${filename}`;
+
+    console.log('[v0] File uploaded successfully:', { publicUrl, size: file.size });
 
     return {
       success: true,
@@ -83,6 +101,7 @@ export async function uploadFile(formData: FormData) {
     };
   } catch (error) {
     console.error('[v0] Error uploading file:', error);
-    return { success: false, error: 'Failed to upload file' };
+    const errorMessage = error instanceof Error ? error.message : 'Failed to upload file';
+    return { success: false, error: errorMessage };
   }
 }

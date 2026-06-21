@@ -72,7 +72,9 @@ export async function getCourseById(courseId: string) {
 
 export async function getCourseWithEnrollmentStatus(courseId: string) {
   try {
-    const userId = await getUserId();
+    const session = await auth.api.getSession({ headers: await headers() });
+    const userId = session?.user?.id;
+
     const courseData = await db.select().from(course).where(eq(course.id, courseId)).limit(1);
     if (!courseData.length) return { success: false, error: 'Course not found' };
 
@@ -100,18 +102,22 @@ export async function getCourseWithEnrollmentStatus(courseId: string) {
       })
     );
 
-    const enrollment = await db
-      .select()
-      .from(courseEnrollment)
-      .where(and(eq(courseEnrollment.userId, userId), eq(courseEnrollment.courseId, courseId)))
-      .limit(1);
+    let isEnrolled = false;
+    if (userId) {
+      const enrollment = await db
+        .select()
+        .from(courseEnrollment)
+        .where(and(eq(courseEnrollment.userId, userId), eq(courseEnrollment.courseId, courseId)))
+        .limit(1);
+      isEnrolled = enrollment.length > 0;
+    }
 
     return {
       success: true,
       data: {
         ...courseData[0],
         modules: modulesWithContent,
-        isEnrolled: enrollment.length > 0,
+        isEnrolled,
       },
     };
   } catch (error) {
