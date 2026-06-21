@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCourseById, getUserProgress, updateProgress } from '@/app/actions/courses';
 import ReactPlayer from 'react-player';
+import Link from 'next/link';
+import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function LearningPage({ params }: { params: { courseId: string } }) {
   const router = useRouter();
@@ -13,6 +15,7 @@ export default function LearningPage({ params }: { params: { courseId: string } 
   const [currentContentType, setCurrentContentType] = useState<'video' | 'pdf' | null>(null);
   const [currentContentId, setCurrentContentId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const loadCourseData = async () => {
@@ -24,7 +27,6 @@ export default function LearningPage({ params }: { params: { courseId: string } 
         const progressResult = await getUserProgress(params.courseId);
         if (progressResult.success) {
           setProgress(progressResult.data);
-          // Set current content from last progress
           if (progressResult.data.length > 0) {
             const lastProgress = progressResult.data[progressResult.data.length - 1];
             setCurrentModuleId(lastProgress.moduleId);
@@ -74,6 +76,16 @@ export default function LearningPage({ params }: { params: { courseId: string } 
     setCurrentContentId(pdfId);
   };
 
+  const toggleModuleExpanded = (moduleId: string) => {
+    const newExpanded = new Set(expandedModules);
+    if (newExpanded.has(moduleId)) {
+      newExpanded.delete(moduleId);
+    } else {
+      newExpanded.add(moduleId);
+    }
+    setExpandedModules(newExpanded);
+  };
+
   if (loading) {
     return (
       <div className='min-h-screen bg-background flex items-center justify-center'>
@@ -91,187 +103,228 @@ export default function LearningPage({ params }: { params: { courseId: string } 
         <div className='text-center max-w-md'>
           <h2 className='text-2xl font-semibold text-foreground mb-2'>Course Not Found</h2>
           <p className='text-muted-foreground mb-6'>The course you are looking for does not exist or you are not enrolled.</p>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className='px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors'
+          <Link
+            href='/dashboard'
+            className='inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium'
           >
+            <ArrowLeft size={16} />
             Back to Dashboard
-          </button>
+          </Link>
         </div>
       </div>
     );
   }
 
   const currentModule = course.modules.find((m: any) => m.id === currentModuleId);
-  let currentContent: any = null;
+  const currentContent = currentModule
+    ? currentContentType === 'video'
+      ? currentModule.videos.find((v: any) => v.id === currentContentId)
+      : currentModule.pdfs.find((p: any) => p.id === currentContentId)
+    : null;
 
-  if (currentContentType === 'video' && currentModule) {
-    currentContent = currentModule.videos.find((v: any) => v.id === currentContentId);
-  } else if (currentContentType === 'pdf' && currentModule) {
-    currentContent = currentModule.pdfs.find((p: any) => p.id === currentContentId);
-  }
-
-  const currentProgress = progress.find((p: any) => p.moduleId === currentModuleId);
+  const currentVideo = currentModule?.videos.find((v: any) => v.id === currentContentId);
 
   return (
     <div className='min-h-screen bg-background'>
       {/* Header */}
-      <header className='border-b border-border bg-card sticky top-0 z-10'>
+      <header className='border-b-2 border-border bg-white'>
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center'>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className='text-primary hover:text-primary/80 font-medium inline-flex items-center gap-2 transition-colors'
+          <Link
+            href='/dashboard'
+            className='inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-medium'
           >
-            ← Back to Dashboard
-          </button>
-          <h1 className='text-lg font-semibold text-foreground'>{course.title}</h1>
-          <div className='text-sm text-muted-foreground'>{course.modules.length} modules</div>
+            <ArrowLeft size={16} />
+            Back to Courses
+          </Link>
+          <h1 className='text-lg font-semibold text-foreground flex-1 text-center'>{course.title}</h1>
+          <div className='w-24'></div>
         </div>
       </header>
 
-      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-4 gap-6'>
-        {/* Sidebar - Modules List */}
-        <aside className='lg:col-span-1'>
-          <div className='bg-card border border-border rounded-lg p-4 sticky top-24 max-h-[calc(100vh-200px)] overflow-y-auto'>
-            <h2 className='font-semibold text-lg text-foreground mb-4'>Modules</h2>
-            <div className='space-y-2'>
-              {course.modules.map((module: any, index: number) => {
-                const moduleProgress = progress.find((p: any) => p.moduleId === module.id);
-                const isCompleted = moduleProgress?.isModuleCompleted;
-                const isActive = currentModuleId === module.id;
-                return (
-                  <button
-                    key={module.id}
-                    onClick={() => handleSelectModule(module.id)}
-                    className={`w-full text-left px-3 py-3 rounded-md transition-all ${
-                      isActive
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted text-foreground hover:bg-muted/80'
-                    }`}
-                  >
-                    <div className='flex items-center justify-between gap-2'>
-                      <div className='flex-1 min-w-0'>
-                        <p className='font-medium text-sm truncate'>{index + 1}. {module.title}</p>
-                      </div>
-                      {isCompleted && <span className='text-lg flex-shrink-0'>✓</span>}
-                    </div>
-                  </button>
-                );
-              })}
+      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
+        <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+          {/* Left Column - Video Player and Content */}
+          <div className='lg:col-span-2'>
+            <div className='border-2 border-border bg-white rounded overflow-hidden'>
+              {/* Video Player */}
+              {currentContentType === 'video' && currentVideo ? (
+                <div className='bg-black aspect-video'>
+                  <ReactPlayer
+                    url={currentVideo.url}
+                    controls
+                    width='100%'
+                    height='100%'
+                    onProgress={handleVideoProgress}
+                    progressInterval={5000}
+                    playing={false}
+                    config={{
+                      youtube: {
+                        playerVars: {
+                          controls: 1,
+                          modestbranding: 1,
+                          rel: 0,
+                          showinfo: 0,
+                        },
+                      },
+                      file: {
+                        attributes: {
+                          controlsList: 'nodownload',
+                          poster: course.thumbnail,
+                        },
+                      },
+                    }}
+                  />
+                </div>
+              ) : currentContentType === 'pdf' && currentContent ? (
+                <div className='p-8 bg-white flex flex-col items-center justify-center min-h-96'>
+                  <div className='text-5xl mb-4'>📄</div>
+                  <p className='text-lg font-semibold text-foreground mb-2'>{currentContent.title}</p>
+                  <p className='text-muted-foreground mb-6'>PDF Document</p>
+                  <div className='flex gap-4'>
+                    <a
+                      href={currentContent.url}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='px-6 py-3 bg-primary text-primary-foreground border-2 border-primary font-semibold hover:bg-primary/90 transition-colors'
+                    >
+                      View PDF
+                    </a>
+                    <a
+                      href={currentContent.url}
+                      download
+                      className='px-6 py-3 bg-white text-foreground border-2 border-border font-semibold hover:bg-secondary transition-colors'
+                    >
+                      Download
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <div className='p-8 bg-secondary text-center min-h-96 flex items-center justify-center'>
+                  <p className='text-lg text-muted-foreground'>Select a video or document to view</p>
+                </div>
+              )}
             </div>
+
+            {/* Content Info */}
+            {currentContent && (
+              <div className='mt-6 border-2 border-border bg-white p-6 rounded'>
+                <h2 className='text-2xl font-semibold text-foreground mb-2'>{currentContent.title}</h2>
+                <p className='text-muted-foreground'>
+                  {currentContentType === 'video' ? 'Video' : 'PDF Document'}
+                </p>
+              </div>
+            )}
           </div>
-        </aside>
 
-        {/* Main Content Area */}
-        <div className='lg:col-span-3 space-y-6'>
-          {currentModule && (
-            <>
-              {/* Module Title and Description */}
-              <div>
-                <h2 className='text-3xl font-semibold text-foreground'>{currentModule.title}</h2>
-                {currentModule.description && (
-                  <p className='text-muted-foreground mt-2 leading-relaxed'>{currentModule.description}</p>
-                )}
-              </div>
+          {/* Right Column - Course Navigation */}
+          <div className='lg:col-span-1'>
+            <div className='sticky top-6 border-2 border-border bg-white rounded overflow-hidden'>
+              {/* Module List */}
+              <div className='p-0'>
+                <div className='px-6 py-4 border-b-2 border-border bg-secondary'>
+                  <h3 className='font-semibold text-foreground text-lg'>Course Content</h3>
+                  <p className='text-xs text-muted-foreground mt-1'>{course.modules.length} modules</p>
+                </div>
 
-              {/* Content Viewer */}
-              <div className='bg-card border border-border rounded-lg overflow-hidden'>
-                {currentContentType === 'video' && currentContent ? (
-                  <div className='bg-black relative aspect-video'>
-                    <ReactPlayer
-                      url={currentContent.url}
-                      controls
-                      width='100%'
-                      height='100%'
-                      onProgress={handleVideoProgress}
-                      progressInterval={5000}
-                      playing={false}
-                    />
-                  </div>
-                ) : currentContentType === 'pdf' && currentContent ? (
-                  <div className='p-8 bg-card flex flex-col items-center justify-center min-h-96'>
-                    <div className='text-5xl mb-4'>📄</div>
-                    <p className='text-lg font-semibold text-foreground mb-2'>{currentContent.title}</p>
-                    <p className='text-muted-foreground mb-6 text-center'>PDF Document</p>
-                    <div className='flex gap-4'>
-                      <a
-                        href={currentContent.url}
-                        target='_blank'
-                        rel='noopener noreferrer'
-                        className='px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 font-medium transition-colors'
-                      >
-                        View PDF
-                      </a>
-                      <a
-                        href={currentContent.url}
-                        download
-                        className='px-6 py-3 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 font-medium transition-colors'
-                      >
-                        Download
-                      </a>
-                    </div>
-                  </div>
-                ) : (
-                  <div className='p-8 text-center text-muted-foreground'>
-                    <p className='text-lg'>Select a video or document to view</p>
-                  </div>
-                )}
-              </div>
+                <div className='divide-y-2 divide-border'>
+                  {course.modules.map((module: any, index: number) => {
+                    const isExpanded = expandedModules.has(module.id);
+                    const isActive = currentModuleId === module.id;
 
-              {/* Content Navigation */}
-              <div className='bg-card border border-border rounded-lg p-6'>
-                <h3 className='font-semibold text-lg text-foreground mb-6'>Module Content</h3>
-                <div className='space-y-6'>
-                  {currentModule.videos.length > 0 && (
-                    <div>
-                      <p className='text-sm font-semibold text-foreground mb-3'>Videos ({currentModule.videos.length})</p>
-                      <div className='space-y-2'>
-                        {currentModule.videos.map((video: any, idx: number) => (
-                          <button
-                            key={video.id}
-                            onClick={() => handleSelectVideo(video.id)}
-                            className={`w-full text-left px-4 py-3 rounded-md transition text-sm font-medium ${
-                              currentContentId === video.id
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-muted text-foreground hover:bg-muted/80'
-                            }`}
-                          >
-                            <div className='flex items-center gap-3'>
-                              <span className='text-xs opacity-75'>Video {idx + 1}</span>
-                              <span className='truncate'>{video.title}</span>
+                    return (
+                      <div key={module.id}>
+                        <button
+                          onClick={() => {
+                            handleSelectModule(module.id);
+                            toggleModuleExpanded(module.id);
+                          }}
+                          className={`w-full px-6 py-4 text-left transition-colors flex justify-between items-center ${
+                            isActive
+                              ? 'bg-primary text-primary-foreground'
+                              : 'hover:bg-secondary text-foreground'
+                          }`}
+                        >
+                          <div className='flex-1'>
+                            <div className='font-semibold text-sm'>
+                              Module {index + 1}: {module.title}
                             </div>
-                          </button>
-                        ))}
+                            <p className='text-xs opacity-75 mt-1'>
+                              {module.videos.length} video{module.videos.length !== 1 ? 's' : ''} •{' '}
+                              {module.pdfs.length} resource{module.pdfs.length !== 1 ? 's' : ''}
+                            </p>
+                          </div>
+                          {isExpanded ? (
+                            <ChevronUp size={18} className='ml-2' />
+                          ) : (
+                            <ChevronDown size={18} className='ml-2' />
+                          )}
+                        </button>
+
+                        {/* Module Content */}
+                        {isExpanded && (
+                          <div className='bg-secondary border-t-2 border-border'>
+                            {/* Videos */}
+                            {module.videos.length > 0 && (
+                              <div className='px-6 py-4 border-b border-border'>
+                                <p className='text-xs font-semibold text-foreground uppercase mb-3 text-muted-foreground'>
+                                  Videos
+                                </p>
+                                <div className='space-y-2'>
+                                  {module.videos.map((video: any, idx: number) => (
+                                    <button
+                                      key={video.id}
+                                      onClick={() => handleSelectVideo(video.id)}
+                                      className={`w-full text-left px-3 py-2 rounded text-sm font-medium transition-colors ${
+                                        currentContentId === video.id
+                                          ? 'bg-primary text-primary-foreground'
+                                          : 'bg-white text-foreground border border-border hover:border-primary'
+                                      }`}
+                                    >
+                                      <div className='flex items-center gap-2'>
+                                        <span className='text-xs opacity-70'>▶</span>
+                                        <span className='truncate'>Video {idx + 1}</span>
+                                      </div>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* PDFs */}
+                            {module.pdfs.length > 0 && (
+                              <div className='px-6 py-4'>
+                                <p className='text-xs font-semibold text-foreground uppercase mb-3 text-muted-foreground'>
+                                  Resources
+                                </p>
+                                <div className='space-y-2'>
+                                  {module.pdfs.map((pdf: any, idx: number) => (
+                                    <button
+                                      key={pdf.id}
+                                      onClick={() => handleSelectPdf(pdf.id)}
+                                      className={`w-full text-left px-3 py-2 rounded text-sm font-medium transition-colors ${
+                                        currentContentId === pdf.id
+                                          ? 'bg-primary text-primary-foreground'
+                                          : 'bg-white text-foreground border border-border hover:border-primary'
+                                      }`}
+                                    >
+                                      <div className='flex items-center gap-2'>
+                                        <span className='text-xs opacity-70'>📄</span>
+                                        <span className='truncate'>Resource {idx + 1}</span>
+                                      </div>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  )}
-                  {currentModule.pdfs.length > 0 && (
-                    <div className={currentModule.videos.length > 0 ? 'border-t border-border pt-6' : ''}>
-                      <p className='text-sm font-semibold text-foreground mb-3'>Resources ({currentModule.pdfs.length})</p>
-                      <div className='space-y-2'>
-                        {currentModule.pdfs.map((pdf: any, idx: number) => (
-                          <button
-                            key={pdf.id}
-                            onClick={() => handleSelectPdf(pdf.id)}
-                            className={`w-full text-left px-4 py-3 rounded-md transition text-sm font-medium ${
-                              currentContentId === pdf.id
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-muted text-foreground hover:bg-muted/80'
-                            }`}
-                          >
-                            <div className='flex items-center gap-3'>
-                              <span className='text-xs opacity-75'>PDF {idx + 1}</span>
-                              <span className='truncate'>{pdf.title}</span>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                    );
+                  })}
                 </div>
               </div>
-            </>
-          )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

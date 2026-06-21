@@ -60,49 +60,51 @@ export default function CoursesList() {
 
   if (loading) {
     return (
-      <div className='min-h-screen flex items-center justify-center'>
-        <div className='text-lg text-gray-600'>Loading courses...</div>
+      <div className='min-h-screen bg-white flex items-center justify-center'>
+        <div className='text-lg text-foreground'>Loading courses...</div>
       </div>
     );
   }
 
   return (
-    <div className='min-h-screen bg-gray-50'>
-      <header className='bg-white shadow'>
+    <div className='min-h-screen bg-white'>
+      {/* Header */}
+      <header className='border-b-2 border-border bg-white'>
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6'>
-          <h1 className='text-3xl font-bold text-gray-900'>Course Management</h1>
+          <h1 className='text-3xl font-semibold text-foreground'>Course Management</h1>
         </div>
       </header>
 
       <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
-        <div className='bg-white rounded-lg shadow p-6 mb-6'>
+        {/* Controls Section */}
+        <div className='border-2 border-border bg-white p-6 mb-6'>
           <div className='flex justify-between items-center mb-6'>
-            <h2 className='text-2xl font-bold text-gray-900'>All Courses ({filteredCourses.length})</h2>
+            <h2 className='text-2xl font-semibold text-foreground'>All Courses ({filteredCourses.length})</h2>
             <Link
               href='/admin/courses/new'
-              className='px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold'
+              className='px-4 py-2 bg-primary text-primary-foreground border-2 border-primary font-semibold hover:bg-primary/90 transition'
             >
               + Create New Course
             </Link>
           </div>
 
-          <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-6'>
+          <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
             <div>
-              <label className='block text-sm font-semibold text-gray-900 mb-2'>Search Courses</label>
+              <label className='block text-sm font-semibold text-foreground mb-2'>Search Courses</label>
               <input
                 type='text'
                 placeholder='Search by title or description...'
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className='w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500'
+                className='w-full px-4 py-2 border-2 border-border rounded focus:border-primary focus:outline-none'
               />
             </div>
             <div>
-              <label className='block text-sm font-semibold text-gray-900 mb-2'>Status</label>
+              <label className='block text-sm font-semibold text-foreground mb-2'>Status</label>
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className='w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500'
+                className='w-full px-4 py-2 border-2 border-border rounded focus:border-primary focus:outline-none'
               >
                 <option value='all'>All Courses</option>
                 <option value='published'>Published</option>
@@ -110,57 +112,60 @@ export default function CoursesList() {
               </select>
             </div>
           </div>
-
         </div>
 
         {courses.length === 0 ? (
-          <div className='bg-white rounded-lg shadow p-8 text-center'>
-            <p className='text-gray-600 mb-4'>No courses yet.</p>
+          <div className='border-2 border-border bg-white p-8 text-center'>
+            <p className='text-muted-foreground mb-4'>No courses yet.</p>
             <Link
               href='/admin/courses/new'
-              className='text-blue-600 hover:text-blue-700 font-semibold'
+              className='text-primary hover:text-primary/80 font-semibold'
             >
               Create your first course →
             </Link>
           </div>
         ) : filteredCourses.length === 0 ? (
-          <div className='bg-white rounded-lg shadow p-8 text-center'>
-            <p className='text-gray-600 mb-4'>No courses match your search.</p>
+          <div className='border-2 border-border bg-white p-8 text-center'>
+            <p className='text-muted-foreground mb-4'>No courses match your search.</p>
           </div>
         ) : (
           <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
             {filteredCourses.map((course) => (
-              <div key={course.id} className='bg-white rounded-lg shadow hover:shadow-lg transition overflow-hidden'>
-                {course.thumbnail ? (
-                  <img src={course.thumbnail} alt={course.title} className='w-full h-48 object-cover' />
-                ) : (
-                  <div className='w-full h-48 bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center'>
-                    <span className='text-white text-xl font-bold'>No Image</span>
-                  </div>
-                )}
+              <div key={course.id} className='border-2 border-border bg-white overflow-hidden hover:border-primary transition'>
+                <div className='w-full h-48 bg-secondary flex items-center justify-center overflow-hidden'>
+                  {course.thumbnail ? (
+                    <img src={course.thumbnail} alt={course.title} className='w-full h-full object-cover' />
+                  ) : (
+                    <span className='text-muted-foreground font-semibold'>No Image</span>
+                  )}
+                </div>
                 <div className='p-4'>
-                  <h3 className='text-lg font-semibold text-gray-900'>{course.title}</h3>
-                  <p className='text-gray-600 text-sm mt-2 line-clamp-2'>{course.description || 'No description'}</p>
-                  {course.instructor && <p className='text-gray-500 text-xs mt-3'>By {course.instructor}</p>}
+                  <h3 className='text-lg font-semibold text-foreground'>{course.title}</h3>
+                  <p className='text-muted-foreground text-sm mt-2 line-clamp-2'>{course.description || 'No description'}</p>
+                  {course.instructor && <p className='text-muted-foreground text-xs mt-3'>By {course.instructor}</p>}
 
-                  <div className='mt-4 flex items-center justify-between gap-2'>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
-                        course.isPublished ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                      }`}
-                    >
-                      {course.isPublished ? 'Published' : 'Draft'}
-                    </span>
+                  <div className='mt-4 space-y-3'>
+                    <div className='flex items-center justify-between'>
+                      <span
+                        className={`px-3 py-1 border-2 font-semibold text-xs whitespace-nowrap ${
+                          course.isPublished
+                            ? 'border-primary bg-primary text-primary-foreground'
+                            : 'border-border bg-secondary text-foreground'
+                        }`}
+                      >
+                        {course.isPublished ? '✓ Published' : 'Draft'}
+                      </span>
+                    </div>
                     <div className='flex gap-2'>
                       <Link
                         href={`/admin/courses/${course.id}`}
-                        className='px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition'
+                        className='flex-1 px-3 py-2 text-xs bg-primary text-primary-foreground border-2 border-primary font-semibold hover:bg-primary/90 transition text-center'
                       >
                         Edit
                       </Link>
                       <button
                         onClick={() => handleDelete(course.id)}
-                        className='px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition'
+                        className='flex-1 px-3 py-2 text-xs bg-white text-destructive border-2 border-destructive font-semibold hover:bg-destructive/10 transition'
                       >
                         Delete
                       </button>
@@ -173,7 +178,7 @@ export default function CoursesList() {
         )}
 
         <div className='mt-8'>
-          <Link href='/admin' className='text-blue-600 hover:text-blue-700 font-semibold'>
+          <Link href='/admin' className='text-primary hover:text-primary/80 font-semibold'>
             ← Back to Dashboard
           </Link>
         </div>

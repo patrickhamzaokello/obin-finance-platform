@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { getCourseById } from '@/app/actions/courses';
+import { FileOrUrlInput } from '@/components/file-or-url-input';
 import {
   createCourse,
   updateCourse,
@@ -117,8 +118,8 @@ export default function CourseEditor() {
 
   if (loading) {
     return (
-      <div className='min-h-screen flex items-center justify-center'>
-        <div className='text-lg text-gray-600'>Loading...</div>
+      <div className='min-h-screen bg-white flex items-center justify-center'>
+        <div className='text-lg text-foreground'>Loading...</div>
       </div>
     );
   }
@@ -128,82 +129,82 @@ export default function CourseEditor() {
   }
 
   return (
-    <div className='min-h-screen bg-gray-50'>
-      <header className='bg-white shadow'>
+    <div className='min-h-screen bg-white'>
+      <header className='border-b-2 border-border bg-white'>
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6'>
-          <h1 className='text-3xl font-bold text-gray-900'>{isNew ? 'Create Course' : 'Edit Course'}</h1>
+          <h1 className='text-3xl font-semibold text-foreground'>{isNew ? 'Create Course' : 'Edit Course'}</h1>
         </div>
       </header>
 
       <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
         {/* Course Details */}
-        <div className='bg-white rounded-lg shadow p-6 mb-8'>
-          <h2 className='text-2xl font-bold text-gray-900 mb-6'>Course Details</h2>
-          <div className='space-y-4'>
+        <div className='border-2 border-border bg-white p-6 mb-8'>
+          <h2 className='text-2xl font-semibold text-foreground mb-6'>Course Details</h2>
+          <div className='space-y-5'>
             <div>
-              <label className='block text-sm font-semibold text-gray-900 mb-2'>Course Title*</label>
+              <label className='block text-sm font-semibold text-foreground mb-2'>Course Title*</label>
               <input
                 type='text'
                 value={course.title}
                 onChange={(e) => setCourse({ ...course, title: e.target.value })}
-                className='w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                className='w-full px-4 py-2 border-2 border-border rounded focus:border-primary focus:outline-none'
                 placeholder='Enter course title'
               />
             </div>
             <div>
-              <label className='block text-sm font-semibold text-gray-900 mb-2'>Description</label>
+              <label className='block text-sm font-semibold text-foreground mb-2'>Description</label>
               <textarea
                 value={course.description}
                 onChange={(e) => setCourse({ ...course, description: e.target.value })}
-                className='w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                className='w-full px-4 py-2 border-2 border-border rounded focus:border-primary focus:outline-none'
                 placeholder='Enter course description'
                 rows={4}
               />
             </div>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-5'>
               <div>
-                <label className='block text-sm font-semibold text-gray-900 mb-2'>Thumbnail URL</label>
-                <input
-                  type='text'
+                <FileOrUrlInput
                   value={course.thumbnail}
-                  onChange={(e) => setCourse({ ...course, thumbnail: e.target.value })}
-                  className='w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                  onChange={(value) => setCourse({ ...course, thumbnail: value })}
+                  fileType='thumbnail'
+                  label='Thumbnail Image'
                   placeholder='https://...'
                 />
               </div>
               <div>
-                <label className='block text-sm font-semibold text-gray-900 mb-2'>Instructor</label>
+                <label className='block text-sm font-semibold text-foreground mb-2'>Instructor</label>
                 <input
                   type='text'
                   value={course.instructor}
                   onChange={(e) => setCourse({ ...course, instructor: e.target.value })}
-                  className='w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                  className='w-full px-4 py-2 border-2 border-border rounded focus:border-primary focus:outline-none'
                   placeholder='Instructor name'
                 />
               </div>
             </div>
-            <div className='flex items-center gap-4'>
-              <label className='flex items-center gap-2 cursor-pointer'>
-                <input
-                  type='checkbox'
-                  checked={course.isPublished}
-                  onChange={(e) => setCourse({ ...course, isPublished: e.target.checked })}
-                  className='w-4 h-4'
-                />
-                <span className='text-sm font-semibold text-gray-900'>Publish this course</span>
+            <div className='flex items-center gap-3'>
+              <input
+                type='checkbox'
+                id='publish-course'
+                checked={course.isPublished}
+                onChange={(e) => setCourse({ ...course, isPublished: e.target.checked })}
+                className='w-5 h-5 border-2 border-border rounded accent-primary'
+              />
+              <label htmlFor='publish-course' className='text-sm font-semibold text-foreground cursor-pointer'>
+                Publish this course
               </label>
             </div>
-            <div className='flex gap-4 pt-4'>
+            <div className='flex gap-3 pt-4'>
               <button
                 onClick={handleSaveCourse}
-                className='px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition'
+                className='px-6 py-2 bg-primary text-primary-foreground border-2 border-primary font-semibold hover:bg-primary/90 transition'
               >
                 Save Course
               </button>
               {!isNew && (
                 <button
                   onClick={handleDeleteCourse}
-                  className='px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition'
+                  className='px-6 py-2 bg-white text-destructive border-2 border-destructive font-semibold hover:bg-destructive/10 transition'
                 >
                   Delete Course
                 </button>
@@ -215,12 +216,12 @@ export default function CourseEditor() {
         {!isNew && (
           <>
             {/* Modules Section */}
-            <div className='bg-white rounded-lg shadow p-6'>
+            <div className='border-2 border-border bg-white p-6'>
               <div className='flex justify-between items-center mb-6'>
-                <h2 className='text-2xl font-bold text-gray-900'>Modules</h2>
+                <h2 className='text-2xl font-semibold text-foreground'>Modules</h2>
                 <button
                   onClick={() => setShowModuleForm(!showModuleForm)}
-                  className='px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition'
+                  className='px-4 py-2 bg-primary text-primary-foreground border-2 border-primary font-semibold hover:bg-primary/90 transition'
                 >
                   Add Module
                 </button>
@@ -235,14 +236,14 @@ export default function CourseEditor() {
                   ))}
                 </div>
               ) : (
-                <p className='text-gray-600'>No modules yet. Add one to get started.</p>
+                <p className='text-muted-foreground'>No modules yet. Add one to get started.</p>
               )}
             </div>
           </>
         )}
 
         <div className='mt-8'>
-          <Link href='/admin/courses' className='text-blue-600 hover:text-blue-700 font-semibold'>
+          <Link href='/admin/courses' className='text-primary hover:text-primary/80 font-semibold'>
             ← Back to Courses
           </Link>
         </div>
@@ -256,24 +257,24 @@ function ModuleForm({ onSubmit, onCancel }: { onSubmit: (title: string, desc: st
   const [description, setDescription] = useState('');
 
   return (
-    <div className='bg-gray-50 p-4 rounded-lg mb-4'>
+    <div className='border-2 border-border bg-secondary p-4 mb-4'>
       <div className='space-y-4'>
         <div>
-          <label className='block text-sm font-semibold text-gray-900 mb-2'>Module Title</label>
+          <label className='block text-sm font-semibold text-foreground mb-2'>Module Title</label>
           <input
             type='text'
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className='w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500'
+            className='w-full px-4 py-2 border-2 border-border rounded focus:border-primary focus:outline-none'
             placeholder='Module title'
           />
         </div>
         <div>
-          <label className='block text-sm font-semibold text-gray-900 mb-2'>Description</label>
+          <label className='block text-sm font-semibold text-foreground mb-2'>Description</label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className='w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500'
+            className='w-full px-4 py-2 border-2 border-border rounded focus:border-primary focus:outline-none'
             placeholder='Module description'
             rows={3}
           />
@@ -281,11 +282,11 @@ function ModuleForm({ onSubmit, onCancel }: { onSubmit: (title: string, desc: st
         <div className='flex gap-2'>
           <button
             onClick={() => onSubmit(title, description)}
-            className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700'
+            className='px-4 py-2 bg-primary text-primary-foreground border-2 border-primary font-semibold hover:bg-primary/90'
           >
             Create Module
           </button>
-          <button onClick={onCancel} className='px-4 py-2 bg-gray-300 text-gray-900 rounded-lg hover:bg-gray-400'>
+          <button onClick={onCancel} className='px-4 py-2 bg-secondary text-foreground border-2 border-border font-semibold hover:bg-muted'>
             Cancel
           </button>
         </div>
@@ -342,50 +343,50 @@ function ModuleItem({ module, courseId }: { module: any; courseId: string }) {
   };
 
   return (
-    <div className='border rounded-lg p-4'>
+    <div className='border-2 border-border bg-white p-4'>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className='w-full text-left flex justify-between items-center'
       >
         <div>
-          <h3 className='font-semibold text-gray-900'>{module.title}</h3>
-          {module.description && <p className='text-sm text-gray-600 mt-1'>{module.description}</p>}
+          <h3 className='font-semibold text-foreground'>{module.title}</h3>
+          {module.description && <p className='text-sm text-muted-foreground mt-1'>{module.description}</p>}
         </div>
-        <span className='text-gray-400'>{isExpanded ? '▼' : '▶'}</span>
+        <span className='text-muted-foreground'>{isExpanded ? '▼' : '▶'}</span>
       </button>
 
       {isExpanded && (
-        <div className='mt-4 space-y-4 pt-4 border-t'>
+        <div className='mt-4 space-y-5 pt-4 border-t-2 border-border'>
+          {/* Videos Section */}
           <div>
             <div className='flex justify-between items-center mb-3'>
-              <h4 className='font-semibold text-gray-900'>Videos ({module.videos?.length || 0})</h4>
+              <h4 className='font-semibold text-foreground'>Videos ({module.videos?.length || 0})</h4>
               <button
                 onClick={() => setShowVideoForm(!showVideoForm)}
-                className='px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600'
+                className='px-3 py-1 text-sm bg-primary text-primary-foreground border border-primary rounded hover:bg-primary/90'
               >
                 {showVideoForm ? 'Cancel' : 'Add Video'}
               </button>
             </div>
 
             {showVideoForm && (
-              <div className='bg-gray-50 p-3 rounded mb-3 space-y-3'>
+              <div className='border-2 border-border bg-secondary p-3 mb-3 space-y-3'>
                 <input
                   type='text'
                   placeholder='Video title'
                   value={videoTitle}
                   onChange={(e) => setVideoTitle(e.target.value)}
-                  className='w-full px-3 py-2 border rounded text-sm'
+                  className='w-full px-3 py-2 border-2 border-border rounded text-sm focus:border-primary focus:outline-none'
                 />
-                <input
-                  type='text'
-                  placeholder='Video URL (YouTube, Vimeo, etc.)'
+                <FileOrUrlInput
                   value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
-                  className='w-full px-3 py-2 border rounded text-sm'
+                  onChange={setVideoUrl}
+                  fileType='video'
+                  placeholder='Video URL (YouTube, Vimeo, etc.)'
                 />
                 <button
                   onClick={handleAddVideo}
-                  className='w-full px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700'
+                  className='w-full px-3 py-2 bg-primary text-primary-foreground text-sm border-2 border-primary font-semibold rounded hover:bg-primary/90'
                 >
                   Add Video
                 </button>
@@ -395,49 +396,49 @@ function ModuleItem({ module, courseId }: { module: any; courseId: string }) {
             {module.videos && module.videos.length > 0 ? (
               <div className='space-y-2'>
                 {module.videos.map((vid: any) => (
-                  <div key={vid.id} className='flex justify-between items-center p-2 bg-gray-50 rounded'>
-                    <div>
-                      <p className='text-sm font-medium text-gray-900'>{vid.title}</p>
-                      <p className='text-xs text-gray-600 truncate'>{vid.url}</p>
+                  <div key={vid.id} className='flex justify-between items-center p-3 border-2 border-border bg-secondary rounded'>
+                    <div className='flex-1'>
+                      <p className='text-sm font-medium text-foreground'>{vid.title}</p>
+                      <p className='text-xs text-muted-foreground truncate'>{vid.url}</p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className='text-xs text-gray-500 italic'>No videos added yet</p>
+              <p className='text-xs text-muted-foreground italic'>No videos added yet</p>
             )}
           </div>
 
-          <div className='border-t pt-4'>
+          {/* PDFs Section */}
+          <div className='pt-4'>
             <div className='flex justify-between items-center mb-3'>
-              <h4 className='font-semibold text-gray-900'>PDFs ({module.pdfs?.length || 0})</h4>
+              <h4 className='font-semibold text-foreground'>PDFs ({module.pdfs?.length || 0})</h4>
               <button
                 onClick={() => setShowPdfForm(!showPdfForm)}
-                className='px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600'
+                className='px-3 py-1 text-sm bg-primary text-primary-foreground border border-primary rounded hover:bg-primary/90'
               >
                 {showPdfForm ? 'Cancel' : 'Add PDF'}
               </button>
             </div>
 
             {showPdfForm && (
-              <div className='bg-gray-50 p-3 rounded mb-3 space-y-3'>
+              <div className='border-2 border-border bg-secondary p-3 mb-3 space-y-3'>
                 <input
                   type='text'
                   placeholder='PDF title'
                   value={pdfTitle}
                   onChange={(e) => setPdfTitle(e.target.value)}
-                  className='w-full px-3 py-2 border rounded text-sm'
+                  className='w-full px-3 py-2 border-2 border-border rounded text-sm focus:border-primary focus:outline-none'
                 />
-                <input
-                  type='text'
-                  placeholder='PDF URL'
+                <FileOrUrlInput
                   value={pdfUrl}
-                  onChange={(e) => setPdfUrl(e.target.value)}
-                  className='w-full px-3 py-2 border rounded text-sm'
+                  onChange={setPdfUrl}
+                  fileType='pdf'
+                  placeholder='PDF URL'
                 />
                 <button
                   onClick={handleAddPdf}
-                  className='w-full px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700'
+                  className='w-full px-3 py-2 bg-primary text-primary-foreground text-sm border-2 border-primary font-semibold rounded hover:bg-primary/90'
                 >
                   Add PDF
                 </button>
@@ -447,16 +448,16 @@ function ModuleItem({ module, courseId }: { module: any; courseId: string }) {
             {module.pdfs && module.pdfs.length > 0 ? (
               <div className='space-y-2'>
                 {module.pdfs.map((p: any) => (
-                  <div key={p.id} className='flex justify-between items-center p-2 bg-gray-50 rounded'>
-                    <div>
-                      <p className='text-sm font-medium text-gray-900'>{p.title}</p>
-                      <p className='text-xs text-gray-600 truncate'>{p.url}</p>
+                  <div key={p.id} className='flex justify-between items-center p-3 border-2 border-border bg-secondary rounded'>
+                    <div className='flex-1'>
+                      <p className='text-sm font-medium text-foreground'>{p.title}</p>
+                      <p className='text-xs text-muted-foreground truncate'>{p.url}</p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className='text-xs text-gray-500 italic'>No PDFs added yet</p>
+              <p className='text-xs text-muted-foreground italic'>No PDFs added yet</p>
             )}
           </div>
         </div>
