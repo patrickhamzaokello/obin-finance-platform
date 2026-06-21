@@ -14,22 +14,22 @@ export default async function Home() {
   }
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4'>
-      <div className='max-w-2xl w-full text-center'>
-        <h1 className='text-5xl font-bold text-gray-900 mb-6'>Obin Finance</h1>
-        <p className='text-xl text-gray-700 mb-4'>Learn finance at your own pace with our comprehensive courses</p>
-        <p className='text-lg text-gray-600 mb-8'>Master financial concepts from basics to advanced strategies</p>
+    <div className='min-h-screen bg-white flex items-center justify-center px-4'>
+      <div className='max-w-2xl w-full text-center border-2 border-border p-8'>
+        <h1 className='text-5xl font-bold text-foreground mb-6'>Obin Finance</h1>
+        <p className='text-xl text-foreground mb-4'>Learn finance at your own pace with our comprehensive courses</p>
+        <p className='text-lg text-muted-foreground mb-8'>Master financial concepts from basics to advanced strategies</p>
 
         <div className='flex gap-4 justify-center'>
           <Link
             href='/sign-in'
-            className='px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition'
+            className='px-8 py-3 bg-primary text-primary-foreground font-semibold border-2 border-primary hover:bg-primary/90 transition'
           >
             Sign In
           </Link>
           <Link
             href='/sign-up'
-            className='px-8 py-3 bg-white text-blue-600 font-semibold rounded-lg border-2 border-blue-600 hover:bg-blue-50 transition'
+            className='px-8 py-3 bg-white text-foreground font-semibold border-2 border-border hover:bg-secondary transition'
           >
             Sign Up
           </Link>
