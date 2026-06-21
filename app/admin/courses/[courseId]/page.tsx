@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { getCourseById } from '@/app/actions/courses';
 import {
+  createCourse,
   updateCourse,
   deleteCourse,
   createModule,
@@ -70,15 +71,21 @@ export default function CourseEditor() {
     };
 
     if (isNew) {
-      const result = await updateCourse(course.id, data);
+      const result = await createCourse(data);
       if (result.success) {
         alert('Course created successfully!');
         router.push('/admin/courses');
+      } else {
+        alert('Error creating course: ' + (result.error || 'Unknown error'));
+        console.error('[v0] Create course failed:', result);
       }
     } else {
       const result = await updateCourse(courseId, data);
       if (result.success) {
         alert('Course updated successfully!');
+      } else {
+        alert('Error updating course: ' + (result.error || 'Unknown error'));
+        console.error('[v0] Update course failed:', result);
       }
     }
   };
