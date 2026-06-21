@@ -18,14 +18,14 @@ export default async function Home() {
     <div className='min-h-screen bg-background text-foreground overflow-hidden'>
       {/* Animated gradient background */}
       <div className='absolute inset-0 overflow-hidden pointer-events-none'>
-        <div className='absolute -top-40 -right-40 w-80 h-80 bg-primary/20 rounded-full blur-3xl animate-pulse' />
-        <div className='absolute -bottom-40 -left-40 w-80 h-80 bg-accent/20 rounded-full blur-3xl animate-pulse' />
-        <div className='absolute top-1/2 left-1/2 w-96 h-96 bg-secondary/10 rounded-full blur-3xl animate-pulse' />
+        <div className='absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl animate-pulse' />
+        <div className='absolute -bottom-40 -left-40 w-80 h-80 bg-accent/10 rounded-full blur-3xl animate-pulse' />
+        <div className='absolute top-1/2 left-1/2 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse' />
       </div>
 
       {/* Navigation */}
-      <nav className='relative z-10 flex items-center justify-between px-6 sm:px-8 py-6 backdrop-blur-sm border-b border-border/40'>
-        <div className='text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent'>
+      <nav className='relative z-10 flex items-center justify-between px-6 sm:px-8 py-6 border-b border-border'>
+        <div className='text-2xl font-bold text-primary'>
           Obin Finance
         </div>
         <div className='flex gap-4 items-center'>
@@ -50,12 +50,12 @@ export default async function Home() {
         <div className='grid lg:grid-cols-2 gap-12 items-center mb-20 slide-up'>
           <div className='space-y-8'>
             <div className='space-y-4'>
-              <div className='inline-block px-3 py-1 bg-primary/20 border border-primary/40 rounded-full text-sm text-primary font-medium'>
+              <div className='inline-block px-3 py-1 bg-primary/10 border border-primary/30 rounded-full text-sm text-primary font-medium'>
                 Master Your Financial Future
               </div>
               <h1 className='text-5xl sm:text-6xl lg:text-7xl font-bold leading-tight tracking-tight'>
                 Build Wealth Through{' '}
-                <span className='bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent'>
+                <span className='text-primary'>
                   Financial Mastery
                 </span>
               </h1>
@@ -83,14 +83,14 @@ export default async function Home() {
             <div className='flex flex-col sm:flex-row gap-4 pt-4'>
               <Link
                 href='/sign-up'
-                className='px-8 py-3 bg-gradient-to-r from-primary to-secondary text-primary-foreground font-semibold rounded-lg hover:shadow-lg hover:shadow-primary/20 transition glow-pulse'
+                className='px-8 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:shadow-lg hover:shadow-primary/20 transition glow-pulse'
               >
                 Start Learning Today
                 <ChevronRight className='inline-block w-4 h-4 ml-2' />
               </Link>
               <Link
                 href='/sign-in'
-                className='px-8 py-3 border border-border bg-card/50 hover:bg-card text-foreground font-semibold rounded-lg transition'
+                className='px-8 py-3 border border-border bg-secondary hover:bg-secondary/80 text-foreground font-semibold rounded-lg transition'
               >
                 Sign In
               </Link>
@@ -98,20 +98,20 @@ export default async function Home() {
           </div>
 
           {/* Visual element - animated gradient card */}
-          <div className='relative h-96 sm:h-full float-in'>
-            <div className='absolute inset-0 bg-gradient-to-br from-primary/20 via-secondary/10 to-accent/20 rounded-2xl blur-3xl' />
-            <div className='relative h-full bg-gradient-to-br from-card/40 to-card/20 border border-border/40 rounded-2xl p-8 backdrop-blur-sm overflow-hidden'>
+          <div className='float-in'>
+            <div className='absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10 rounded-2xl blur-3xl' />
+            <div className='relative bg-white border border-border rounded-2xl p-8 overflow-hidden'>
               <div className='absolute inset-0 overflow-hidden'>
                 <div className='absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/40 to-transparent' />
               </div>
-              <div className='relative h-full flex flex-col justify-between'>
+              <div className='relative h-full flex flex-col justify-between py-20'>
                 <div>
                   <div className='text-4xl font-bold text-primary mb-2'>$1.2M+</div>
                   <p className='text-sm text-muted-foreground'>Wealth managed through our platform</p>
                 </div>
                 <div className='space-y-3'>
                   <div className='h-2 bg-border rounded-full overflow-hidden'>
-                    <div className='h-full w-3/4 bg-gradient-to-r from-primary to-secondary' />
+                    <div className='h-full w-3/4 bg-primary' />
                   </div>
                   <div className='flex justify-between text-xs text-muted-foreground'>
                     <span>5,000+ students</span>
@@ -125,24 +125,24 @@ export default async function Home() {
 
         {/* Features grid */}
         <div className='grid md:grid-cols-3 gap-6 mt-32 slide-in-left'>
-          <div className='group p-6 border border-border/40 rounded-lg hover:border-primary/40 hover:bg-card/50 transition backdrop-blur-sm'>
-            <div className='w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center mb-4 group-hover:bg-primary/30 transition'>
+          <div className='group p-6 border border-border rounded-lg hover:border-primary hover:shadow-lg transition'>
+            <div className='w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition'>
               <Lock className='w-6 h-6 text-primary' />
             </div>
             <h3 className='text-lg font-semibold mb-2'>Secure & Verified</h3>
             <p className='text-sm text-muted-foreground'>Bank-grade security for all your learning and data</p>
           </div>
 
-          <div className='group p-6 border border-border/40 rounded-lg hover:border-primary/40 hover:bg-card/50 transition backdrop-blur-sm'>
-            <div className='w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center mb-4 group-hover:bg-primary/30 transition'>
+          <div className='group p-6 border border-border rounded-lg hover:border-primary hover:shadow-lg transition'>
+            <div className='w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition'>
               <Users className='w-6 h-6 text-primary' />
             </div>
             <h3 className='text-lg font-semibold mb-2'>Community Driven</h3>
             <p className='text-sm text-muted-foreground'>Learn alongside thousands of finance enthusiasts</p>
           </div>
 
-          <div className='group p-6 border border-border/40 rounded-lg hover:border-primary/40 hover:bg-card/50 transition backdrop-blur-sm'>
-            <div className='w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center mb-4 group-hover:bg-primary/30 transition'>
+          <div className='group p-6 border border-border rounded-lg hover:border-primary hover:shadow-lg transition'>
+            <div className='w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition'>
               <TrendingUp className='w-6 h-6 text-primary' />
             </div>
             <h3 className='text-lg font-semibold mb-2'>Real Results</h3>
@@ -152,8 +152,8 @@ export default async function Home() {
 
         {/* CTA Section */}
         <div className='mt-32 relative'>
-          <div className='absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 rounded-2xl blur-2xl' />
-          <div className='relative p-12 bg-gradient-to-r from-card/80 to-card/40 border border-border/40 rounded-2xl backdrop-blur-sm text-center'>
+          <div className='absolute inset-0 bg-primary/5 rounded-2xl blur-2xl' />
+          <div className='relative p-12 bg-white border border-border rounded-2xl text-center'>
             <h2 className='text-3xl sm:text-4xl font-bold mb-4'>
               Ready to Master Your Finances?
             </h2>
@@ -162,7 +162,7 @@ export default async function Home() {
             </p>
             <Link
               href='/sign-up'
-              className='inline-block px-8 py-4 bg-gradient-to-r from-primary to-secondary text-primary-foreground font-semibold rounded-lg hover:shadow-lg hover:shadow-primary/30 transition'
+              className='inline-block px-8 py-4 bg-primary text-primary-foreground font-semibold rounded-lg hover:shadow-lg hover:shadow-primary/30 transition'
             >
               Begin Your Learning Journey
               <ChevronRight className='inline-block w-4 h-4 ml-2' />
