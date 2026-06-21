@@ -70,10 +70,70 @@ export async function getCourseById(courseId: string) {
   }
 }
 
+export async function getCourseWithEnrollmentStatus(courseId: string) {
+  try {
+    const userId = await getUserId();
+    const courseData = await db.select().from(course).where(eq(course.id, courseId)).limit(1);
+    if (!courseData.length) return { success: false, error: 'Course not found' };
+
+    const modules = await db
+      .select()
+      .from(module)
+      .where(eq(module.courseId, courseId))
+      .orderBy(module.order);
+
+    const modulesWithContent = await Promise.all(
+      modules.map(async (mod) => {
+        const videos = await db
+          .select()
+          .from(video)
+          .where(eq(video.moduleId, mod.id))
+          .orderBy(video.order);
+
+        const pdfs = await db
+          .select()
+          .from(pdf)
+          .where(eq(pdf.moduleId, mod.id))
+          .orderBy(pdf.order);
+
+        return { ...mod, videos, pdfs };
+      })
+    );
+
+    const enrollment = await db
+      .select()
+      .from(courseEnrollment)
+      .where(and(eq(courseEnrollment.userId, userId), eq(courseEnrollment.courseId, courseId)))
+      .limit(1);
+
+    return {
+      success: true,
+      data: {
+        ...courseData[0],
+        modules: modulesWithContent,
+        isEnrolled: enrollment.length > 0,
+      },
+    };
+  } catch (error) {
+    console.error('Error fetching course with enrollment status:', error);
+    return { success: false, error: 'Failed to fetch course' };
+  }
+}
+
 // Enrollment
 export async function enrollCourse(courseId: string) {
   try {
     const userId = await getUserId();
+
+    // Verify course exists and is published
+    const courseData = await db.select().from(course).where(eq(course.id, courseId)).limit(1);
+    if (!courseData.length) {
+      return { success: false, error: 'Course not found' };
+    }
+    if (!courseData[0].isPublished) {
+      return { success: false, error: 'This course is not available' };
+    }
+
     const existing = await db
       .select()
       .from(courseEnrollment)
@@ -81,20 +141,21 @@ export async function enrollCourse(courseId: string) {
       .limit(1);
 
     if (existing.length) {
-      return { success: false, error: 'Already enrolled' };
+      return { success: false, error: 'You are already enrolled in this course' };
     }
 
-    const enrollment = await db.insert(courseEnrollment).values({
+    await db.insert(courseEnrollment).values({
       id: `enrollment-${Date.now()}`,
       userId,
       courseId,
     });
 
     revalidatePath('/dashboard');
-    return { success: true, data: enrollment };
+    revalidatePath(`/course/${courseId}`);
+    return { success: true, message: 'Successfully enrolled in course!' };
   } catch (error) {
     console.error('Error enrolling course:', error);
-    return { success: false, error: 'Failed to enroll course' };
+    return { success: false, error: 'Failed to enroll in course. Please try again.' };
   }
 }
 
