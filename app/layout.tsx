@@ -10,8 +10,8 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: 'Obin Finance - Learn, Grow, Succeed',
+  description: 'Master financial literacy with Obin Finance. Expert-led courses on budgeting, investing, and wealth management.',
   generator: 'v0.app',
   icons: {
     icon: [
@@ -35,8 +35,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   colorScheme: 'light dark',
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: 'white' },
-    { media: '(prefers-color-scheme: dark)', color: 'black' },
+    { media: '(prefers-color-scheme: light)', color: '#f9f8f7' },
+    { media: '(prefers-color-scheme: dark)', color: '#1f1f1f' },
   ],
 }
 
