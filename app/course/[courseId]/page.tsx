@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getCourseById } from '@/app/actions/courses';
+import { getCourseWithEnrollmentStatus } from '@/app/actions/courses';
 import { EnrollButton } from '@/components/enroll-button';
 import Link from 'next/link';
 import { ArrowLeft, BookOpen, Play, FileText } from 'lucide-react';
@@ -23,14 +23,17 @@ interface CourseDetails {
   isEnrolled?: boolean;
 }
 
-export default function CoursePage({ params }: { params: { courseId: string } }) {
+export default function CoursePage({ params }: { params: Promise<{ courseId: string }> }) {
   const [course, setCourse] = useState<CourseDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [courseId, setCourseId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadCourse = async () => {
-      const result = await getCourseById(params.courseId);
+      const resolvedParams = await params;
+      setCourseId(resolvedParams.courseId);
+      const result = await getCourseWithEnrollmentStatus(resolvedParams.courseId);
       if (result.success) {
         setCourse(result.data as any);
       } else {
@@ -40,7 +43,7 @@ export default function CoursePage({ params }: { params: { courseId: string } })
     };
 
     loadCourse();
-  }, [params.courseId]);
+  }, [params]);
 
   if (loading) {
     return (
