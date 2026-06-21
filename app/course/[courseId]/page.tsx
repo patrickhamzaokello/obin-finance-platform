@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getCourseWithEnrollmentStatus } from '@/app/actions/courses';
+import { getCourseById } from '@/app/actions/courses';
 import { EnrollButton } from '@/components/enroll-button';
 import Link from 'next/link';
 import { ArrowLeft, BookOpen, Play, FileText } from 'lucide-react';
@@ -20,7 +20,7 @@ interface CourseDetails {
     videos: Array<{ id: string; title: string }>;
     pdfs: Array<{ id: string; title: string }>;
   }>;
-  isEnrolled: boolean;
+  isEnrolled?: boolean;
 }
 
 export default function CoursePage({ params }: { params: { courseId: string } }) {
@@ -30,7 +30,7 @@ export default function CoursePage({ params }: { params: { courseId: string } })
 
   useEffect(() => {
     const loadCourse = async () => {
-      const result = await getCourseWithEnrollmentStatus(params.courseId);
+      const result = await getCourseById(params.courseId);
       if (result.success) {
         setCourse(result.data as any);
       } else {
@@ -174,35 +174,29 @@ export default function CoursePage({ params }: { params: { courseId: string } })
 
           {/* Right Column - Enrollment Card */}
           <div className="lg:col-span-1">
-            <div className="sticky top-6 p-6 bg-card rounded-lg border border-border">
+            <div className="sticky top-6 p-6 bg-white border-2 border-border">
               <div className="mb-6">
-                <div className="inline-block px-3 py-1 bg-accent/10 text-accent rounded-full text-sm font-medium mb-4">
-                  {course.isEnrolled ? 'Enrolled' : 'Available'}
+                <div className="inline-block px-3 py-1 bg-primary/10 text-primary border border-primary rounded text-sm font-semibold mb-4">
+                  Available
                 </div>
-
-                {course.isEnrolled && (
-                  <div className="mb-4 p-3 bg-primary/10 border border-primary/30 rounded-md">
-                    <p className="text-sm text-primary font-medium">You are enrolled in this course!</p>
-                  </div>
-                )}
 
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <BookOpen size={16} />
-                    <span>{course.modules.length} modules to complete</span>
+                    <span>{course.modules.length} modules</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Play size={16} />
-                    <span>{totalVideos} videos to watch</span>
+                    <span>{totalVideos} videos</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <FileText size={16} />
-                    <span>{totalPdfs} resources included</span>
+                    <span>{totalPdfs} resources</span>
                   </div>
                 </div>
               </div>
 
-              <EnrollButton courseId={course.id} isEnrolled={course.isEnrolled} />
+              <EnrollButton courseId={course.id} isEnrolled={course.isEnrolled || false} />
             </div>
           </div>
         </div>
