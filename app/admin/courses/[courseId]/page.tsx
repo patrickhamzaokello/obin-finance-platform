@@ -289,6 +289,50 @@ function ModuleForm({ onSubmit, onCancel }: { onSubmit: (title: string, desc: st
 
 function ModuleItem({ module, courseId }: { module: any; courseId: string }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showVideoForm, setShowVideoForm] = useState(false);
+  const [showPdfForm, setShowPdfForm] = useState(false);
+  const [videoTitle, setVideoTitle] = useState('');
+  const [videoUrl, setVideoUrl] = useState('');
+  const [pdfTitle, setPdfTitle] = useState('');
+  const [pdfUrl, setPdfUrl] = useState('');
+
+  const handleAddVideo = async () => {
+    if (!videoTitle || !videoUrl) {
+      alert('Please enter video title and URL');
+      return;
+    }
+    const result = await createVideo(module.id, {
+      title: videoTitle,
+      url: videoUrl,
+      order: (module.videos?.length || 0) + 1,
+    });
+    if (result.success) {
+      alert('Video added successfully!');
+      setVideoTitle('');
+      setVideoUrl('');
+      setShowVideoForm(false);
+      window.location.reload();
+    }
+  };
+
+  const handleAddPdf = async () => {
+    if (!pdfTitle || !pdfUrl) {
+      alert('Please enter PDF title and URL');
+      return;
+    }
+    const result = await createPdf(module.id, {
+      title: pdfTitle,
+      url: pdfUrl,
+      order: (module.pdfs?.length || 0) + 1,
+    });
+    if (result.success) {
+      alert('PDF added successfully!');
+      setPdfTitle('');
+      setPdfUrl('');
+      setShowPdfForm(false);
+      window.location.reload();
+    }
+  };
 
   return (
     <div className='border rounded-lg p-4'>
@@ -304,9 +348,109 @@ function ModuleItem({ module, courseId }: { module: any; courseId: string }) {
       </button>
 
       {isExpanded && (
-        <div className='mt-4 space-y-3 pt-4 border-t'>
-          <div className='text-sm text-gray-600'>
-            {module.videos?.length || 0} videos, {module.pdfs?.length || 0} documents
+        <div className='mt-4 space-y-4 pt-4 border-t'>
+          <div>
+            <div className='flex justify-between items-center mb-3'>
+              <h4 className='font-semibold text-gray-900'>Videos ({module.videos?.length || 0})</h4>
+              <button
+                onClick={() => setShowVideoForm(!showVideoForm)}
+                className='px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600'
+              >
+                {showVideoForm ? 'Cancel' : 'Add Video'}
+              </button>
+            </div>
+
+            {showVideoForm && (
+              <div className='bg-gray-50 p-3 rounded mb-3 space-y-3'>
+                <input
+                  type='text'
+                  placeholder='Video title'
+                  value={videoTitle}
+                  onChange={(e) => setVideoTitle(e.target.value)}
+                  className='w-full px-3 py-2 border rounded text-sm'
+                />
+                <input
+                  type='text'
+                  placeholder='Video URL (YouTube, Vimeo, etc.)'
+                  value={videoUrl}
+                  onChange={(e) => setVideoUrl(e.target.value)}
+                  className='w-full px-3 py-2 border rounded text-sm'
+                />
+                <button
+                  onClick={handleAddVideo}
+                  className='w-full px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700'
+                >
+                  Add Video
+                </button>
+              </div>
+            )}
+
+            {module.videos && module.videos.length > 0 ? (
+              <div className='space-y-2'>
+                {module.videos.map((vid: any) => (
+                  <div key={vid.id} className='flex justify-between items-center p-2 bg-gray-50 rounded'>
+                    <div>
+                      <p className='text-sm font-medium text-gray-900'>{vid.title}</p>
+                      <p className='text-xs text-gray-600 truncate'>{vid.url}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className='text-xs text-gray-500 italic'>No videos added yet</p>
+            )}
+          </div>
+
+          <div className='border-t pt-4'>
+            <div className='flex justify-between items-center mb-3'>
+              <h4 className='font-semibold text-gray-900'>PDFs ({module.pdfs?.length || 0})</h4>
+              <button
+                onClick={() => setShowPdfForm(!showPdfForm)}
+                className='px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600'
+              >
+                {showPdfForm ? 'Cancel' : 'Add PDF'}
+              </button>
+            </div>
+
+            {showPdfForm && (
+              <div className='bg-gray-50 p-3 rounded mb-3 space-y-3'>
+                <input
+                  type='text'
+                  placeholder='PDF title'
+                  value={pdfTitle}
+                  onChange={(e) => setPdfTitle(e.target.value)}
+                  className='w-full px-3 py-2 border rounded text-sm'
+                />
+                <input
+                  type='text'
+                  placeholder='PDF URL'
+                  value={pdfUrl}
+                  onChange={(e) => setPdfUrl(e.target.value)}
+                  className='w-full px-3 py-2 border rounded text-sm'
+                />
+                <button
+                  onClick={handleAddPdf}
+                  className='w-full px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700'
+                >
+                  Add PDF
+                </button>
+              </div>
+            )}
+
+            {module.pdfs && module.pdfs.length > 0 ? (
+              <div className='space-y-2'>
+                {module.pdfs.map((p: any) => (
+                  <div key={p.id} className='flex justify-between items-center p-2 bg-gray-50 rounded'>
+                    <div>
+                      <p className='text-sm font-medium text-gray-900'>{p.title}</p>
+                      <p className='text-xs text-gray-600 truncate'>{p.url}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className='text-xs text-gray-500 italic'>No PDFs added yet</p>
+            )}
           </div>
         </div>
       )}
