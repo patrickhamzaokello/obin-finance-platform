@@ -16,9 +16,12 @@ export default function CoursesList() {
   useEffect(() => {
     const loadCourses = async () => {
       const result = await getAllCourses();
+      console.log('[v0] getAllCourses result:', result);
       if (result.success) {
         setCourses(result.data);
         setFilteredCourses(result.data);
+      } else {
+        console.error('[v0] Failed to fetch courses:', result.error);
       }
       setLoading(false);
     };
