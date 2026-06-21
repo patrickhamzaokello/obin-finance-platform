@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getPublishedCourses, getUserEnrolledCourses } from '@/app/actions/courses';
 import { getUserWithRole } from '@/lib/user-utils';
+import { SignOutButton } from '@/components/sign-out-button';
 
 export default async function Dashboard() {
   const userWithRole = await getUserWithRole();
@@ -30,18 +31,7 @@ export default async function Dashboard() {
             <h1 className='text-3xl font-semibold text-foreground'>Obin Finance</h1>
             <p className='text-muted-foreground mt-1'>Welcome, {userWithRole.name || userWithRole.email}</p>
           </div>
-          <button
-            onClick={async () => {
-              'use server';
-              const { auth } = await import('@/lib/auth');
-              const { headers } = await import('next/headers');
-              await auth.api.signOut({ headers: await headers() });
-              redirect('/');
-            }}
-            className='px-4 py-2 bg-destructive text-primary-foreground rounded-md hover:bg-destructive/90 transition-colors font-medium'
-          >
-            Sign Out
-          </button>
+          <SignOutButton className='px-4 py-2 bg-destructive text-primary-foreground rounded-md hover:bg-destructive/90 transition-colors font-medium border-2 border-destructive' />
         </div>
       </header>
 
