@@ -7,7 +7,7 @@ import ReactPlayer from 'react-player';
 import Link from 'next/link';
 import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
 
-export default function LearningPage({ params }: { params: { courseId: string } }) {
+export default function LearningPage({ params }: { params: Promise<{ courseId: string }> }) {
   const router = useRouter();
   const [course, setCourse] = useState<any>(null);
   const [progress, setProgress] = useState<any[]>([]);
@@ -16,15 +16,18 @@ export default function LearningPage({ params }: { params: { courseId: string } 
   const [currentContentId, setCurrentContentId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
+  const [courseId, setCourseId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadCourseData = async () => {
-      const courseResult = await getCourseById(params.courseId);
+      const resolvedParams = await params;
+      setCourseId(resolvedParams.courseId);
+      const courseResult = await getCourseById(resolvedParams.courseId);
       if (courseResult.success) {
         setCourse(courseResult.data);
         setCurrentModuleId(courseResult.data.modules[0]?.id || null);
 
-        const progressResult = await getUserProgress(params.courseId);
+        const progressResult = await getUserProgress(resolvedParams.courseId);
         if (progressResult.success) {
           setProgress(progressResult.data);
           if (progressResult.data.length > 0) {
@@ -43,7 +46,7 @@ export default function LearningPage({ params }: { params: { courseId: string } 
     };
 
     loadCourseData();
-  }, [params.courseId, router]);
+  }, [params, router]);
 
   const handleVideoProgress = async (state: any) => {
     if (currentModuleId && currentContentId) {
