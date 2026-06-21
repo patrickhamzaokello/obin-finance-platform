@@ -1,13 +1,12 @@
-import { auth } from '@/lib/auth';
-import { redirect, headers as getHeaders } from 'next/navigation';
-import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getAllCourses, getAllUsers } from '@/app/actions/admin';
+import { getUserWithRole } from '@/lib/user-utils';
 
 export default async function AdminDashboard() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const userWithRole = await getUserWithRole();
 
-  if (!session?.user || session.user.role !== 'admin') {
+  if (!userWithRole || userWithRole.role !== 'admin') {
     redirect('/sign-in');
   }
 
