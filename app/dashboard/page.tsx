@@ -22,20 +22,23 @@ export default async function Dashboard() {
   const enrolledCourseIds = new Set(enrolledCourses.map((c: any) => c.id));
 
   return (
-    <div className='min-h-screen bg-gray-50'>
-      <header className='bg-white shadow'>
+    <div className='min-h-screen bg-background'>
+      {/* Header */}
+      <header className='border-b border-border bg-card'>
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex justify-between items-center'>
           <div>
-            <h1 className='text-3xl font-bold text-gray-900'>Obin Finance</h1>
-            <p className='text-gray-600 mt-1'>Welcome, {userWithRole.name || userWithRole.email}</p>
+            <h1 className='text-3xl font-semibold text-foreground'>Obin Finance</h1>
+            <p className='text-muted-foreground mt-1'>Welcome, {userWithRole.name || userWithRole.email}</p>
           </div>
           <button
             onClick={async () => {
               'use server';
+              const { auth } = await import('@/lib/auth');
+              const { headers } = await import('next/headers');
               await auth.api.signOut({ headers: await headers() });
               redirect('/');
             }}
-            className='px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition'
+            className='px-4 py-2 bg-destructive text-primary-foreground rounded-md hover:bg-destructive/90 transition-colors font-medium'
           >
             Sign Out
           </button>
@@ -45,21 +48,25 @@ export default async function Dashboard() {
       <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
         {/* Enrolled Courses Section */}
         {enrolledCourses.length > 0 && (
-          <section className='mb-12'>
-            <h2 className='text-2xl font-bold text-gray-900 mb-6'>My Courses</h2>
+          <section className='mb-16'>
+            <h2 className='text-2xl font-semibold text-foreground mb-6'>My Courses</h2>
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
               {enrolledCourses.map((c: any) => (
                 <Link href={`/learning/${c.id}`} key={c.id}>
-                  <div className='bg-white rounded-lg shadow hover:shadow-lg transition overflow-hidden cursor-pointer h-full'>
-                    {c.thumbnail && (
-                      <img src={c.thumbnail} alt={c.title} className='w-full h-48 object-cover' />
-                    )}
+                  <div className='group bg-card border border-border rounded-lg overflow-hidden hover:border-primary hover:shadow-md transition-all cursor-pointer h-full'>
+                    <div className='relative overflow-hidden h-48 bg-muted'>
+                      {c.thumbnail && (
+                        <img src={c.thumbnail} alt={c.title} className='w-full h-full object-cover group-hover:scale-105 transition-transform' />
+                      )}
+                      <div className='absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors'></div>
+                    </div>
                     <div className='p-4'>
-                      <h3 className='text-lg font-semibold text-gray-900'>{c.title}</h3>
-                      <p className='text-gray-600 text-sm mt-2 line-clamp-2'>{c.description}</p>
+                      <div className='mb-2 inline-block px-2 py-1 bg-accent/10 text-accent rounded text-xs font-medium'>In Progress</div>
+                      <h3 className='text-lg font-semibold text-foreground'>{c.title}</h3>
+                      <p className='text-muted-foreground text-sm mt-2 line-clamp-2'>{c.description}</p>
                       <div className='mt-4 flex justify-between items-center'>
-                        <span className='text-blue-600 font-semibold text-sm'>Continue Learning</span>
-                        <span className='text-gray-400'>→</span>
+                        <span className='text-primary font-medium text-sm'>Continue Learning</span>
+                        <span className='text-muted-foreground group-hover:text-primary transition-colors'>→</span>
                       </div>
                     </div>
                   </div>
@@ -71,37 +78,37 @@ export default async function Dashboard() {
 
         {/* Available Courses Section */}
         <section>
-          <h2 className='text-2xl font-bold text-gray-900 mb-6'>
+          <h2 className='text-2xl font-semibold text-foreground mb-6'>
             {enrolledCourses.length > 0 ? 'Explore More Courses' : 'Available Courses'}
           </h2>
           {allCourses.length === 0 ? (
-            <p className='text-gray-600'>No courses available yet.</p>
+            <div className='text-center py-12 bg-card rounded-lg border border-border'>
+              <p className='text-muted-foreground'>No courses available yet.</p>
+            </div>
           ) : (
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
               {allCourses
                 .filter((c: any) => !enrolledCourseIds.has(c.id))
                 .map((c: any) => (
-                  <div key={c.id} className='bg-white rounded-lg shadow hover:shadow-lg transition overflow-hidden'>
-                    {c.thumbnail && (
-                      <img src={c.thumbnail} alt={c.title} className='w-full h-48 object-cover' />
-                    )}
-                    <div className='p-4'>
-                      <h3 className='text-lg font-semibold text-gray-900'>{c.title}</h3>
-                      <p className='text-gray-600 text-sm mt-2 line-clamp-2'>{c.description}</p>
-                      {c.instructor && <p className='text-gray-500 text-xs mt-3'>Instructor: {c.instructor}</p>}
-                      <button
-                        onClick={async () => {
-                          'use server';
-                          const { enrollCourse } = await import('@/app/actions/courses');
-                          await enrollCourse(c.id);
-                          redirect(`/learning/${c.id}`);
-                        }}
-                        className='mt-4 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition'
-                      >
-                        Enroll Now
-                      </button>
+                  <Link href={`/course/${c.id}`} key={c.id}>
+                    <div className='group bg-card border border-border rounded-lg overflow-hidden hover:border-primary hover:shadow-md transition-all cursor-pointer h-full flex flex-col'>
+                      <div className='relative overflow-hidden h-48 bg-muted'>
+                        {c.thumbnail && (
+                          <img src={c.thumbnail} alt={c.title} className='w-full h-full object-cover group-hover:scale-105 transition-transform' />
+                        )}
+                        <div className='absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors'></div>
+                      </div>
+                      <div className='p-4 flex-1 flex flex-col'>
+                        <h3 className='text-lg font-semibold text-foreground'>{c.title}</h3>
+                        <p className='text-muted-foreground text-sm mt-2 line-clamp-2 flex-1'>{c.description}</p>
+                        {c.instructor && <p className='text-muted-foreground text-xs mt-3'>Taught by {c.instructor}</p>}
+                        <div className='mt-4 flex justify-between items-center'>
+                          <span className='text-primary font-medium text-sm'>View Course</span>
+                          <span className='text-muted-foreground group-hover:text-primary transition-colors'>→</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
             </div>
           )}
