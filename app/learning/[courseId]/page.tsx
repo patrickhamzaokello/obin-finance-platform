@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCourseById, getUserProgress, updateProgress } from '@/app/actions/courses';
+import { convertBlobUrlToApiUrl } from '@/lib/blob-url';
 import ReactPlayer from 'react-player';
 import Link from 'next/link';
 import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
@@ -161,7 +162,7 @@ export default function LearningPage({ params }: { params: Promise<{ courseId: s
               {currentContentType === 'video' && currentVideo ? (
                 <div className='bg-black aspect-video'>
                   <ReactPlayer
-                    url={currentVideo.url}
+                    url={convertBlobUrlToApiUrl(currentVideo.url)}
                     controls
                     width='100%'
                     height='100%'
@@ -193,7 +194,7 @@ export default function LearningPage({ params }: { params: Promise<{ courseId: s
                   <p className='text-muted-foreground mb-6'>PDF Document</p>
                   <div className='flex gap-4'>
                     <a
-                      href={currentContent.url}
+                      href={convertBlobUrlToApiUrl(currentContent.url)}
                       target='_blank'
                       rel='noopener noreferrer'
                       className='px-6 py-3 bg-primary text-primary-foreground border-2 border-primary font-semibold hover:bg-primary/90 transition-colors'
@@ -201,7 +202,7 @@ export default function LearningPage({ params }: { params: Promise<{ courseId: s
                       View PDF
                     </a>
                     <a
-                      href={currentContent.url}
+                      href={convertBlobUrlToApiUrl(currentContent.url)}
                       download
                       className='px-6 py-3 bg-white text-foreground border-2 border-border font-semibold hover:bg-secondary transition-colors'
                     >

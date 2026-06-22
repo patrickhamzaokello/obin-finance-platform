@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getAllCourses, deleteCourse } from '@/app/actions/admin';
+import { convertBlobUrlToApiUrl } from '@/lib/blob-url';
 
 export default function CoursesList() {
   const router = useRouter();
@@ -134,7 +135,7 @@ export default function CoursesList() {
               <div key={course.id} className='border-2 border-border bg-white overflow-hidden hover:border-primary transition'>
                 <div className='w-full h-48 bg-secondary flex items-center justify-center overflow-hidden'>
                   {course.thumbnail ? (
-                    <img src={course.thumbnail} alt={course.title} className='w-full h-full object-cover' />
+                    <img src={convertBlobUrlToApiUrl(course.thumbnail)} alt={course.title} className='w-full h-full object-cover' />
                   ) : (
                     <span className='text-muted-foreground font-semibold'>No Image</span>
                   )}
