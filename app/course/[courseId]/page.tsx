@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getCourseWithEnrollmentStatus } from '@/app/actions/courses';
 import { EnrollButton } from '@/components/enroll-button';
+import { convertBlobUrlToApiUrl } from '@/lib/blob-url';
 import Link from 'next/link';
 import { ArrowLeft, BookOpen, Play, FileText } from 'lucide-react';
 
@@ -101,7 +102,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
             {course.thumbnail && (
               <div className="mb-8 rounded-lg overflow-hidden bg-muted h-80">
                 <img
-                  src={course.thumbnail}
+                  src={convertBlobUrlToApiUrl(course.thumbnail)}
                   alt={course.title}
                   className="w-full h-full object-cover"
                 />
