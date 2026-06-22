@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { course, module, video, pdf, user } from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { getUserWithRole } from '@/lib/user-utils';
+import { isYouTubeUrl, extractYouTubeId } from '@/lib/video-url';
 import { revalidatePath } from 'next/cache';
 
 async function isAdmin() {
@@ -137,10 +138,25 @@ export async function createVideo(
 ) {
   try {
     await isAdmin();
+    
+    // Separate YouTube URL from regular URL
+    let videoUrl = null;
+    let youtubeUrl = null;
+    
+    if (isYouTubeUrl(data.url)) {
+      youtubeUrl = data.url;
+    } else {
+      videoUrl = data.url;
+    }
+    
     const newVideo = {
       id: `video-${Date.now()}`,
       moduleId,
-      ...data,
+      title: data.title,
+      url: videoUrl,
+      youtubeUrl: youtubeUrl,
+      duration: data.duration,
+      order: data.order,
     };
     await db.insert(video).values(newVideo);
     revalidatePath('/admin/courses');
@@ -157,7 +173,20 @@ export async function updateVideo(
 ) {
   try {
     await isAdmin();
-    await db.update(video).set(data).where(eq(video.id, videoId));
+    
+    // Handle YouTube URL separation
+    const updateData: any = { ...data };
+    if (data.url !== undefined) {
+      if (isYouTubeUrl(data.url)) {
+        updateData.youtubeUrl = data.url;
+        updateData.url = null;
+      } else {
+        updateData.url = data.url;
+        updateData.youtubeUrl = null;
+      }
+    }
+    
+    await db.update(video).set(updateData).where(eq(video.id, videoId));
     revalidatePath('/admin/courses');
     return { success: true };
   } catch (error) {
