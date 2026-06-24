@@ -85,8 +85,8 @@ export default async function Home() {
           <div className='w-full max-w-4xl fade-in-image'>
             <div className='relative rounded-2xl overflow-hidden border border-border shadow-2xl bg-white'>
               <img 
-                src='/images/hero-centered.png' 
-                alt='African professional mastering finance' 
+                src='/images/financial-management-graphic.png' 
+                alt='Complete financial management framework - budgeting, investing, saving, retirement planning, and wealth building' 
                 className='w-full h-auto object-cover aspect-video hover:scale-105 transition-transform duration-500'
               />
               {/* Fade overlay */}
