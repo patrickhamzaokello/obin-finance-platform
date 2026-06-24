@@ -47,41 +47,24 @@ export default async function Home() {
 
       {/* Main content */}
       <div className='relative z-20 max-w-7xl mx-auto px-6 sm:px-8 py-20 sm:py-32'>
-        {/* Hero section */}
-        <div className='grid lg:grid-cols-2 gap-12 items-center mb-20 slide-up'>
-          <div className='space-y-8'>
-            <div className='space-y-4'>
-              <div className='inline-block px-3 py-1 bg-primary/10 border border-primary/30 rounded-full text-sm text-primary font-medium'>
-                Master Your Financial Future
-              </div>
-              <h1 className='text-5xl sm:text-6xl lg:text-6xl font-bold leading-tight tracking-tight'>
-                Build Wealth Through{' '}
-                <span className='text-primary'>
-                  Financial Mastery
-                </span>
-              </h1>
+        {/* Hero section - Centered */}
+        <div className='flex flex-col items-center text-center mb-20 space-y-12 slide-up'>
+          {/* Text content */}
+          <div className='space-y-6 max-w-3xl'>
+            <div className='inline-block px-4 py-2 bg-primary/10 border border-primary/30 rounded-full text-sm text-primary font-medium mx-auto'>
+              Master Your Financial Future
             </div>
-
-            <p className='text-lg sm:text-xl text-muted-foreground leading-relaxed max-w-md'>
+            <h1 className='text-5xl sm:text-6xl lg:text-7xl font-bold leading-tight tracking-tight'>
+              Build Wealth Through{' '}
+              <span className='text-primary'>
+                Financial Mastery
+              </span>
+            </h1>
+            <p className='text-lg sm:text-xl text-muted-foreground leading-relaxed mx-auto max-w-2xl'>
               Transform your financial future with expert-led courses. From investment fundamentals to advanced portfolio strategies, take control of your wealth.
             </p>
 
-            <div className='space-y-3'>
-              <div className='flex items-center gap-3 text-muted-foreground'>
-                <Zap className='w-5 h-5 text-primary flex-shrink-0' />
-                <span>Learn at your own pace, anytime, anywhere</span>
-              </div>
-              <div className='flex items-center gap-3 text-muted-foreground'>
-                <Target className='w-5 h-5 text-primary flex-shrink-0' />
-                <span>Industry-expert instructors with real-world experience</span>
-              </div>
-              <div className='flex items-center gap-3 text-muted-foreground'>
-                <TrendingUp className='w-5 h-5 text-primary flex-shrink-0' />
-                <span>From basics to advanced investment strategies</span>
-              </div>
-            </div>
-
-            <div className='flex flex-col sm:flex-row gap-4 pt-4'>
+            <div className='flex flex-col sm:flex-row gap-4 justify-center pt-4'>
               <Link
                 href='/sign-up'
                 className='px-8 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:shadow-lg hover:shadow-primary/20 transition glow-pulse'
@@ -98,28 +81,35 @@ export default async function Home() {
             </div>
           </div>
 
-          {/* Hero collage */}
-          <div className='float-in relative h-96 w-full'>
-            <div className='collage-container relative w-full h-full'>
-              {/* Large main image - top left */}
-              <div className='collage-item-1 collage-image fading-border' style={{ top: '0', left: '0', width: '65%', height: '60%' }}>
-                <img src='/images/collage-1-analysis.png' alt='African professional analyzing financial data' className='w-full h-full object-cover' />
-              </div>
-              
-              {/* Top right image */}
-              <div className='collage-item-2 collage-image fading-border' style={{ top: '0', right: '0', width: '40%', height: '50%' }}>
-                <img src='/images/collage-3-success.png' alt='Young African professional celebrating success' className='w-full h-full object-cover' />
-              </div>
-              
-              {/* Bottom left image */}
-              <div className='collage-item-3 collage-image fading-border' style={{ bottom: '0', left: '5%', width: '45%', height: '50%' }}>
-                <img src='/images/collage-2-collaboration.png' alt='African professionals collaborating' className='w-full h-full object-cover' />
-              </div>
-              
-              {/* Bottom right image */}
-              <div className='collage-item-4 collage-image fading-border' style={{ bottom: '0', right: '5%', width: '45%', height: '50%' }}>
-                <img src='/images/collage-4-planning.png' alt='African entrepreneur planning strategy' className='w-full h-full object-cover' />
-              </div>
+          {/* Hero image with fade effect */}
+          <div className='w-full max-w-4xl fade-in-image'>
+            <div className='relative rounded-2xl overflow-hidden border border-border shadow-2xl bg-white'>
+              <img 
+                src='/images/hero-centered.png' 
+                alt='African professional mastering finance' 
+                className='w-full h-auto object-cover aspect-video hover:scale-105 transition-transform duration-500'
+              />
+              {/* Fade overlay */}
+              <div className='absolute inset-0 bg-gradient-to-t from-background/20 via-transparent to-transparent pointer-events-none' />
+            </div>
+          </div>
+
+          {/* Benefits list - below hero */}
+          <div className='grid sm:grid-cols-3 gap-8 pt-8 w-full'>
+            <div className='space-y-2'>
+              <Zap className='w-8 h-8 text-primary mx-auto' />
+              <h3 className='font-semibold'>Learn at Your Pace</h3>
+              <p className='text-sm text-muted-foreground'>Flexible courses you can study anytime, anywhere</p>
+            </div>
+            <div className='space-y-2'>
+              <Target className='w-8 h-8 text-primary mx-auto' />
+              <h3 className='font-semibold'>Expert Instructors</h3>
+              <p className='text-sm text-muted-foreground'>Industry leaders with real-world financial experience</p>
+            </div>
+            <div className='space-y-2'>
+              <TrendingUp className='w-8 h-8 text-primary mx-auto' />
+              <h3 className='font-semibold'>Complete Curriculum</h3>
+              <p className='text-sm text-muted-foreground'>Basics to advanced investment strategies</p>
             </div>
           </div>
         </div>
