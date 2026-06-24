@@ -25,8 +25,9 @@ export default async function Home() {
 
       {/* Navigation */}
       <nav className='relative z-10 flex items-center justify-between px-6 sm:px-8 py-6 border-b border-border'>
-        <div className='text-2xl font-bold text-primary'>
-          Obin Finance
+        <div className='flex items-center gap-3'>
+          <img src='/horse-logo.png' alt='Obin Finance' className='w-8 h-8' />
+          <span className='text-2xl font-bold text-primary'>Obin Finance</span>
         </div>
         <div className='flex gap-4 items-center'>
           <Link
@@ -53,7 +54,7 @@ export default async function Home() {
               <div className='inline-block px-3 py-1 bg-primary/10 border border-primary/30 rounded-full text-sm text-primary font-medium'>
                 Master Your Financial Future
               </div>
-              <h1 className='text-5xl sm:text-6xl lg:text-7xl font-bold leading-tight tracking-tight'>
+              <h1 className='text-5xl sm:text-6xl lg:text-6xl font-bold leading-tight tracking-tight'>
                 Build Wealth Through{' '}
                 <span className='text-primary'>
                   Financial Mastery
@@ -97,56 +98,50 @@ export default async function Home() {
             </div>
           </div>
 
-          {/* Visual element - animated gradient card */}
-          <div className='float-in'>
-            <div className='absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10 rounded-2xl blur-3xl' />
-            <div className='relative bg-white border border-border rounded-2xl p-8 overflow-hidden'>
-              <div className='absolute inset-0 overflow-hidden'>
-                <div className='absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/40 to-transparent' />
-              </div>
-              <div className='relative h-full flex flex-col justify-between py-20'>
-                <div>
-                  <div className='text-4xl font-bold text-primary mb-2'>$1.2M+</div>
-                  <p className='text-sm text-muted-foreground'>Wealth managed through our platform</p>
-                </div>
-                <div className='space-y-3'>
-                  <div className='h-2 bg-border rounded-full overflow-hidden'>
-                    <div className='h-full w-3/4 bg-primary' />
-                  </div>
-                  <div className='flex justify-between text-xs text-muted-foreground'>
-                    <span>5,000+ students</span>
-                    <span>98% satisfaction</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+          {/* Hero image */}
+          <div className='float-in rounded-2xl overflow-hidden border border-border shadow-2xl'>
+            <img src='/images/hero-finance.png' alt='Finance professional' className='w-full h-full object-cover' />
           </div>
         </div>
 
-        {/* Features grid */}
-        <div className='grid md:grid-cols-3 gap-6 mt-32 slide-in-left'>
-          <div className='group p-6 border border-border rounded-lg hover:border-primary hover:shadow-lg transition'>
-            <div className='w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition'>
-              <Lock className='w-6 h-6 text-primary' />
+        {/* Why Choose Obin - with imagery */}
+        <div className='mt-32 mb-20'>
+          <h2 className='text-4xl font-bold text-center mb-4'>Why Choose Obin Finance</h2>
+          <p className='text-center text-muted-foreground max-w-2xl mx-auto mb-16'>Learn from industry experts, plan your financial future with confidence, and achieve your wealth goals</p>
+          
+          <div className='grid md:grid-cols-3 gap-8'>
+            {/* Learning */}
+            <div className='group overflow-hidden rounded-xl border border-border hover:border-primary transition hover:shadow-xl duration-300'>
+              <div className='h-64 overflow-hidden bg-secondary'>
+                <img src='/images/learning.png' alt='Expert Learning' className='w-full h-full object-cover group-hover:scale-105 transition duration-300' />
+              </div>
+              <div className='p-6'>
+                <h3 className='text-xl font-semibold mb-2'>Expert Learning</h3>
+                <p className='text-sm text-muted-foreground'>Learn from industry experts with decades of real-world financial experience and proven track records</p>
+              </div>
             </div>
-            <h3 className='text-lg font-semibold mb-2'>Secure & Verified</h3>
-            <p className='text-sm text-muted-foreground'>Bank-grade security for all your learning and data</p>
-          </div>
 
-          <div className='group p-6 border border-border rounded-lg hover:border-primary hover:shadow-lg transition'>
-            <div className='w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition'>
-              <Users className='w-6 h-6 text-primary' />
+            {/* Planning */}
+            <div className='group overflow-hidden rounded-xl border border-border hover:border-primary transition hover:shadow-xl duration-300'>
+              <div className='h-64 overflow-hidden bg-secondary'>
+                <img src='/images/planning.png' alt='Strategic Planning' className='w-full h-full object-cover group-hover:scale-105 transition duration-300' />
+              </div>
+              <div className='p-6'>
+                <h3 className='text-xl font-semibold mb-2'>Strategic Planning</h3>
+                <p className='text-sm text-muted-foreground'>Create personalized financial plans with our comprehensive courses and practical investment strategies</p>
+              </div>
             </div>
-            <h3 className='text-lg font-semibold mb-2'>Community Driven</h3>
-            <p className='text-sm text-muted-foreground'>Learn alongside thousands of finance enthusiasts</p>
-          </div>
 
-          <div className='group p-6 border border-border rounded-lg hover:border-primary hover:shadow-lg transition'>
-            <div className='w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition'>
-              <TrendingUp className='w-6 h-6 text-primary' />
+            {/* Success */}
+            <div className='group overflow-hidden rounded-xl border border-border hover:border-primary transition hover:shadow-xl duration-300'>
+              <div className='h-64 overflow-hidden bg-secondary'>
+                <img src='/images/success.png' alt='Proven Success' className='w-full h-full object-cover group-hover:scale-105 transition duration-300' />
+              </div>
+              <div className='p-6'>
+                <h3 className='text-xl font-semibold mb-2'>Proven Success</h3>
+                <p className='text-sm text-muted-foreground'>Join thousands of successful students who have transformed their financial lives through Obin Finance</p>
+              </div>
             </div>
-            <h3 className='text-lg font-semibold mb-2'>Real Results</h3>
-            <p className='text-sm text-muted-foreground'>Watch your portfolio grow with proven strategies</p>
           </div>
         </div>
 
