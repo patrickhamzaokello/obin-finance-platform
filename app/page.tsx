@@ -98,9 +98,29 @@ export default async function Home() {
             </div>
           </div>
 
-          {/* Hero image */}
-          <div className='float-in rounded-2xl overflow-hidden border border-border shadow-2xl'>
-            <img src='/images/hero-african.png' alt='Young African finance professional analyzing market data' className='w-full h-full object-cover' />
+          {/* Hero collage */}
+          <div className='float-in relative h-96 w-full'>
+            <div className='collage-container relative w-full h-full'>
+              {/* Large main image - top left */}
+              <div className='collage-item-1 collage-image fading-border' style={{ top: '0', left: '0', width: '65%', height: '60%' }}>
+                <img src='/images/collage-1-analysis.png' alt='African professional analyzing financial data' className='w-full h-full object-cover' />
+              </div>
+              
+              {/* Top right image */}
+              <div className='collage-item-2 collage-image fading-border' style={{ top: '0', right: '0', width: '40%', height: '50%' }}>
+                <img src='/images/collage-3-success.png' alt='Young African professional celebrating success' className='w-full h-full object-cover' />
+              </div>
+              
+              {/* Bottom left image */}
+              <div className='collage-item-3 collage-image fading-border' style={{ bottom: '0', left: '5%', width: '45%', height: '50%' }}>
+                <img src='/images/collage-2-collaboration.png' alt='African professionals collaborating' className='w-full h-full object-cover' />
+              </div>
+              
+              {/* Bottom right image */}
+              <div className='collage-item-4 collage-image fading-border' style={{ bottom: '0', right: '5%', width: '45%', height: '50%' }}>
+                <img src='/images/collage-4-planning.png' alt='African entrepreneur planning strategy' className='w-full h-full object-cover' />
+              </div>
+            </div>
           </div>
         </div>
 
