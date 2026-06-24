@@ -56,32 +56,32 @@
   --card-foreground: #1a1a1a;
   --popover: #ffffff;
   --popover-foreground: #1a1a1a;
-  --primary: #16a34a;
+  --primary: #d4a017;
   --primary-foreground: #ffffff;
   --secondary: #f5f5f5;
   --secondary-foreground: #1a1a1a;
   --muted: #e5e5e5;
   --muted-foreground: #666666;
-  --accent: #22c55e;
+  --accent: #f4c430;
   --accent-foreground: #ffffff;
   --destructive: #dc2626;
   --border: #d4d4d4;
   --input: #ffffff;
-  --ring: #16a34a;
-  --chart-1: #16a34a;
-  --chart-2: #22c55e;
-  --chart-3: #86efac;
-  --chart-4: #dcfce7;
-  --chart-5: #f0fdf4;
+  --ring: #d4a017;
+  --chart-1: #d4a017;
+  --chart-2: #f4c430;
+  --chart-3: #ffd700;
+  --chart-4: #ffe44d;
+  --chart-5: #fff9e6;
   --radius: 0.25rem;
   --sidebar: #ffffff;
   --sidebar-foreground: #1a1a1a;
-  --sidebar-primary: #16a34a;
+  --sidebar-primary: #d4a017;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #f5f5f5;
   --sidebar-accent-foreground: #1a1a1a;
   --sidebar-border: #d4d4d4;
-  --sidebar-ring: #16a34a;
+  --sidebar-ring: #d4a017;
 }
 
 .dark {
@@ -92,31 +92,31 @@
   --card-foreground: #1a1a1a;
   --popover: #ffffff;
   --popover-foreground: #1a1a1a;
-  --primary: #16a34a;
+  --primary: #d4a017;
   --primary-foreground: #ffffff;
   --secondary: #f5f5f5;
   --secondary-foreground: #1a1a1a;
   --muted: #e5e5e5;
   --muted-foreground: #666666;
-  --accent: #22c55e;
+  --accent: #f4c430;
   --accent-foreground: #ffffff;
   --destructive: #dc2626;
   --border: #d4d4d4;
   --input: #ffffff;
-  --ring: #16a34a;
-  --chart-1: #16a34a;
-  --chart-2: #22c55e;
-  --chart-3: #86efac;
-  --chart-4: #dcfce7;
-  --chart-5: #f0fdf4;
+  --ring: #d4a017;
+  --chart-1: #d4a017;
+  --chart-2: #f4c430;
+  --chart-3: #ffd700;
+  --chart-4: #ffe44d;
+  --chart-5: #fff9e6;
   --sidebar: #ffffff;
   --sidebar-foreground: #1a1a1a;
-  --sidebar-primary: #16a34a;
+  --sidebar-primary: #d4a017;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #f5f5f5;
   --sidebar-accent-foreground: #1a1a1a;
   --sidebar-border: #d4d4d4;
-  --sidebar-ring: #16a34a;
+  --sidebar-ring: #d4a017;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -128,31 +128,31 @@
     --card-foreground: #1a1a1a;
     --popover: #ffffff;
     --popover-foreground: #1a1a1a;
-    --primary: #16a34a;
+    --primary: #d4a017;
     --primary-foreground: #ffffff;
     --secondary: #f5f5f5;
     --secondary-foreground: #1a1a1a;
     --muted: #e5e5e5;
     --muted-foreground: #666666;
-    --accent: #22c55e;
+    --accent: #f4c430;
     --accent-foreground: #ffffff;
     --destructive: #dc2626;
     --border: #d4d4d4;
     --input: #ffffff;
-    --ring: #16a34a;
-    --chart-1: #16a34a;
-    --chart-2: #22c55e;
-    --chart-3: #86efac;
-    --chart-4: #dcfce7;
-    --chart-5: #f0fdf4;
+    --ring: #d4a017;
+    --chart-1: #d4a017;
+    --chart-2: #f4c430;
+    --chart-3: #ffd700;
+    --chart-4: #ffe44d;
+    --chart-5: #fff9e6;
     --sidebar: #ffffff;
     --sidebar-foreground: #1a1a1a;
-    --sidebar-primary: #16a34a;
+    --sidebar-primary: #d4a017;
     --sidebar-primary-foreground: #ffffff;
     --sidebar-accent: #f5f5f5;
     --sidebar-accent-foreground: #1a1a1a;
     --sidebar-border: #d4d4d4;
-    --sidebar-ring: #16a34a;
+    --sidebar-ring: #d4a017;
   }
 }
 
@@ -206,8 +206,8 @@
 }
 
 @keyframes fadingBorder {
-  0%, 100% { box-shadow: 0 0 30px rgba(22, 163, 74, 0.4); }
-  50% { box-shadow: 0 0 50px rgba(22, 163, 74, 0.6); }
+  0%, 100% { box-shadow: 0 0 30px rgba(212, 160, 23, 0.4); }
+  50% { box-shadow: 0 0 50px rgba(212, 160, 23, 0.6); }
 }
 
 @keyframes collageFloat1 {
@@ -302,7 +302,7 @@
 
 .fading-border {
   position: relative;
-  box-shadow: 0 0 30px rgba(22, 163, 74, 0.4);
+  box-shadow: 0 0 30px rgba(212, 160, 23, 0.4);
   animation: fadingBorder 3s ease-in-out infinite;
 }
 
@@ -344,7 +344,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, transparent 0%, rgba(22, 163, 74, 0.05) 50%, transparent 100%);
+  background: linear-gradient(135deg, transparent 0%, rgba(212, 160, 23, 0.05) 50%, transparent 100%);
   pointer-events: none;
 }
 
