@@ -100,7 +100,7 @@ export default async function Home() {
 
           {/* Hero image */}
           <div className='float-in rounded-2xl overflow-hidden border border-border shadow-2xl'>
-            <img src='/images/hero-finance.png' alt='Finance professional' className='w-full h-full object-cover' />
+            <img src='/images/hero-african.png' alt='Young African finance professional analyzing market data' className='w-full h-full object-cover' />
           </div>
         </div>
 
@@ -113,7 +113,7 @@ export default async function Home() {
             {/* Learning */}
             <div className='group overflow-hidden rounded-xl border border-border hover:border-primary transition hover:shadow-xl duration-300'>
               <div className='h-64 overflow-hidden bg-secondary'>
-                <img src='/images/learning.png' alt='Expert Learning' className='w-full h-full object-cover group-hover:scale-105 transition duration-300' />
+                <img src='/images/learning-african.png' alt='Young African professionals learning finance together' className='w-full h-full object-cover group-hover:scale-105 transition duration-300' />
               </div>
               <div className='p-6'>
                 <h3 className='text-xl font-semibold mb-2'>Expert Learning</h3>
@@ -124,7 +124,7 @@ export default async function Home() {
             {/* Planning */}
             <div className='group overflow-hidden rounded-xl border border-border hover:border-primary transition hover:shadow-xl duration-300'>
               <div className='h-64 overflow-hidden bg-secondary'>
-                <img src='/images/planning.png' alt='Strategic Planning' className='w-full h-full object-cover group-hover:scale-105 transition duration-300' />
+                <img src='/images/planning-african.png' alt='Young African financial advisor planning with client' className='w-full h-full object-cover group-hover:scale-105 transition duration-300' />
               </div>
               <div className='p-6'>
                 <h3 className='text-xl font-semibold mb-2'>Strategic Planning</h3>
@@ -135,7 +135,7 @@ export default async function Home() {
             {/* Success */}
             <div className='group overflow-hidden rounded-xl border border-border hover:border-primary transition hover:shadow-xl duration-300'>
               <div className='h-64 overflow-hidden bg-secondary'>
-                <img src='/images/success.png' alt='Proven Success' className='w-full h-full object-cover group-hover:scale-105 transition duration-300' />
+                <img src='/images/success-african.png' alt='Young African professionals celebrating financial success' className='w-full h-full object-cover group-hover:scale-105 transition duration-300' />
               </div>
               <div className='p-6'>
                 <h3 className='text-xl font-semibold mb-2'>Proven Success</h3>
