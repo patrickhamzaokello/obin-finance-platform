@@ -251,3 +251,37 @@ export async function getUserProgress(courseId: string) {
     return { success: true, data: [] };
   }
 }
+
+export async function markModuleComplete(courseId: string, moduleId: string) {
+  try {
+    const userId = await getUserId();
+
+    const existing = await db
+      .select()
+      .from(userProgress)
+      .where(and(eq(userProgress.userId, userId), eq(userProgress.moduleId, moduleId)))
+      .limit(1);
+
+    if (existing.length) {
+      await db
+        .update(userProgress)
+        .set({ isModuleCompleted: true, completedAt: new Date(), updatedAt: new Date() })
+        .where(eq(userProgress.id, existing[0].id));
+    } else {
+      await db.insert(userProgress).values({
+        id: `progress-${Date.now()}`,
+        userId,
+        courseId,
+        moduleId,
+        isModuleCompleted: true,
+        completedAt: new Date(),
+      });
+    }
+
+    revalidatePath(`/learning/${courseId}`);
+    return { success: true };
+  } catch (error) {
+    console.error('Error marking module complete:', error);
+    return { success: false, error: 'Failed to mark module complete' };
+  }
+}

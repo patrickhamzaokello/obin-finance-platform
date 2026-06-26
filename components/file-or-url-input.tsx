@@ -1,163 +1,88 @@
 'use client';
 
 import { useState } from 'react';
-import { uploadFile } from '@/app/actions/upload';
-import { validateYouTubeUrl } from '@/lib/video-url';
-import { Input } from '@/components/ui/input';
+import { uploadToBlob } from '@/lib/upload-client';
 
 interface FileOrUrlInputProps {
   value: string;
   onChange: (value: string) => void;
   fileType: 'video' | 'pdf' | 'thumbnail';
+  schoolSlug: string;
   label?: string;
   placeholder?: string;
 }
 
-export function FileOrUrlInput({
-  value,
-  onChange,
-  fileType,
-  label,
-  placeholder,
-}: FileOrUrlInputProps) {
-  const [activeTab, setActiveTab] = useState<'url' | 'upload'>('url');
+export function FileOrUrlInput({ value, onChange, fileType, schoolSlug, label, placeholder }: FileOrUrlInputProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const [progress, setProgress]       = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  
-  const isYouTubeVideo = fileType === 'video' && value && validateYouTubeUrl(value).valid;
+
+  const accept =
+    fileType === 'video'     ? 'video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov' :
+    fileType === 'pdf'       ? 'application/pdf,.pdf' :
+                               'image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp';
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
+    if (!schoolSlug) { setUploadError('No school selected — choose a school for this course first'); return; }
     setIsUploading(true);
     setUploadError(null);
+    setProgress(0);
 
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('fileType', fileType);
-
-    const result = await uploadFile(formData);
+    const result = await uploadToBlob(file, fileType, schoolSlug, setProgress);
 
     if (result.success) {
-      onChange(result.url!);
-      setUploadError(null);
+      onChange(result.url);
     } else {
-      setUploadError(result.error || 'Upload failed');
+      setUploadError(result.error);
     }
-
     setIsUploading(false);
     e.target.value = '';
-  };
-
-  const getAcceptTypes = () => {
-    switch (fileType) {
-      case 'video':
-        return 'video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov';
-      case 'pdf':
-        return 'application/pdf,.pdf';
-      case 'thumbnail':
-        return 'image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp';
-      default:
-        return '';
-    }
   };
 
   return (
     <div className='space-y-2'>
       {label && <label className='text-sm font-medium text-foreground'>{label}</label>}
 
-      {/* Tabs */}
-      <div className='flex gap-2 border-b-2 border-border'>
-        <button
-          type='button'
-          onClick={() => setActiveTab('url')}
-          className={`px-4 py-2 font-medium transition-colors ${
-            activeTab === 'url'
-              ? 'border-b-2 border-primary text-primary -mb-[2px]'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          URL
-        </button>
-        <button
-          type='button'
-          onClick={() => setActiveTab('upload')}
-          className={`px-4 py-2 font-medium transition-colors ${
-            activeTab === 'upload'
-              ? 'border-b-2 border-primary text-primary -mb-[2px]'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          Upload File
-        </button>
-      </div>
+      <input
+        type='text'
+        placeholder={placeholder || 'https://…'}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className='w-full px-3 py-2 text-sm border border-border rounded focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20 bg-white'
+      />
 
-      {/* Tab Content */}
-      <div className='mt-4'>
-        {activeTab === 'url' ? (
-          <div className='space-y-3'>
-            <Input
-              type='url'
-              placeholder={
-                fileType === 'video'
-                  ? 'Enter URL (YouTube or video file URL)'
-                  : placeholder || 'Enter URL'
-              }
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-            />
-            {fileType === 'video' && (
-              <div className='text-xs text-muted-foreground bg-muted/50 border border-border rounded px-3 py-2 space-y-1'>
-                <p className='font-medium'>Supported formats:</p>
-                <ul className='list-disc list-inside space-y-0.5'>
-                  <li>YouTube: youtube.com/watch?v=VIDEO_ID or youtu.be/VIDEO_ID</li>
-                  <li>Video file: Upload via "Upload File" tab (MP4, WebM, MOV)</li>
-                </ul>
-              </div>
-            )}
-            {isYouTubeVideo && (
-              <p className='text-sm text-primary font-medium'>✓ Valid YouTube URL</p>
-            )}
-          </div>
-        ) : (
-          <div className='space-y-3'>
-            <div className='border-2 border-dashed border-border rounded p-4 text-center'>
-              <input
-                type='file'
-                accept={getAcceptTypes()}
-                onChange={handleFileChange}
-                disabled={isUploading}
-                className='hidden'
-                id={`file-input-${fileType}`}
-              />
-              <label
-                htmlFor={`file-input-${fileType}`}
-                className='block cursor-pointer'
-              >
-                <p className='text-sm font-medium text-foreground mb-1'>
-                  {isUploading ? 'Uploading...' : 'Click to select file or drag and drop'}
-                </p>
-                <p className='text-xs text-muted-foreground'>
-                  {fileType === 'video' && 'MP4, WebM, MOV (Max 100MB)'}
-                  {fileType === 'pdf' && 'PDF (Max 50MB)'}
-                  {fileType === 'thumbnail' && 'JPG, PNG, WebP (Max 5MB)'}
-                </p>
-              </label>
-            </div>
-
-            {uploadError && (
-              <p className='text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded px-3 py-2'>
-                {uploadError}
-              </p>
-            )}
-
-            {value && activeTab === 'upload' && (
-              <p className='text-sm text-primary font-medium'>✓ File uploaded successfully</p>
-            )}
-          </div>
+      <div className='flex items-center gap-3'>
+        <span className='text-xs text-muted-foreground'>or</span>
+        <label className={`inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded text-xs font-semibold cursor-pointer transition-colors ${isUploading || !schoolSlug ? 'opacity-60 cursor-not-allowed' : 'hover:bg-secondary'}`}>
+          <input
+            type='file'
+            accept={accept}
+            onChange={handleFileChange}
+            disabled={isUploading || !schoolSlug}
+            className='hidden'
+          />
+          {isUploading ? `Uploading… ${progress}%` : 'Upload file'}
+        </label>
+        {value && !isUploading && (
+          <span className='text-xs text-accent font-semibold'>✓ Uploaded</span>
         )}
       </div>
+
+      {isUploading && (
+        <div className='w-full h-1.5 bg-border rounded-full overflow-hidden'>
+          <div className='h-full bg-primary rounded-full transition-all' style={{ width: `${progress}%` }} />
+        </div>
+      )}
+
+      {uploadError && (
+        <p className='text-xs text-destructive bg-destructive/8 border border-destructive/20 rounded px-3 py-2'>{uploadError}</p>
+      )}
+
+      {!schoolSlug && (
+        <p className='text-xs text-muted-foreground'>Select a school above to enable file uploads.</p>
+      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { course, module, video, pdf, user } from '@/lib/db/schema';
+import { course, module, video, pdf, user, school } from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { getUserWithRole } from '@/lib/user-utils';
 import { isYouTubeUrl, extractYouTubeId } from '@/lib/video-url';
@@ -32,6 +32,7 @@ export async function createCourse(data: {
   description?: string;
   thumbnail?: string;
   instructor?: string;
+  schoolId?: string | null;
   }) {
   try {
     console.log('[v0] Creating course with data:', data);
@@ -61,6 +62,7 @@ export async function updateCourse(
     thumbnail?: string;
     instructor?: string;
     isPublished?: boolean;
+    schoolId?: string | null;
   }
 ) {
   try {
@@ -83,6 +85,43 @@ export async function deleteCourse(courseId: string) {
   } catch (error) {
     console.error('Error deleting course:', error);
     return { success: false, error: 'Failed to delete course' };
+  }
+}
+
+// Course detail (admin view — returns full course with modules, videos, pdfs)
+export async function getAdminCourse(courseId: string) {
+  try {
+    await isAdmin();
+
+    const courseRows = await db.select().from(course).where(eq(course.id, courseId)).limit(1);
+    if (!courseRows.length) return { success: false, error: 'Course not found' };
+
+    const modules = await db
+      .select()
+      .from(module)
+      .where(eq(module.courseId, courseId))
+      .orderBy(module.order);
+
+    const modulesWithContent = await Promise.all(
+      modules.map(async (mod) => {
+        const videos = await db
+          .select()
+          .from(video)
+          .where(eq(video.moduleId, mod.id))
+          .orderBy(video.order);
+        const pdfs = await db
+          .select()
+          .from(pdf)
+          .where(eq(pdf.moduleId, mod.id))
+          .orderBy(pdf.order);
+        return { ...mod, videos, pdfs };
+      })
+    );
+
+    return { success: true, data: { ...courseRows[0], modules: modulesWithContent } };
+  } catch (error) {
+    console.error('Error fetching admin course:', error);
+    return { success: false, error: String(error) };
   }
 }
 
@@ -273,5 +312,56 @@ export async function updateUserRole(userId: string, role: 'learner' | 'admin') 
   } catch (error) {
     console.error('Error updating user role:', error);
     return { success: false, error: 'Failed to update user role' };
+  }
+}
+
+// ─── School management ────────────────────────────────────────────────────────
+
+export async function getSchools() {
+  try {
+    await isAdmin();
+    const schools = await db.select().from(school).orderBy(school.name);
+    return { success: true, data: schools };
+  } catch (error) {
+    return { success: false, error: String(error) };
+  }
+}
+
+export async function createSchool(data: { name: string; slug: string; logoUrl?: string }) {
+  try {
+    await isAdmin();
+    const slug = data.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    const id   = `school-${Date.now()}`;
+    await db.insert(school).values({ id, slug, name: data.name, logoUrl: data.logoUrl || null });
+    revalidatePath('/admin/schools');
+    return { success: true, data: { id, slug, name: data.name } };
+  } catch (error) {
+    return { success: false, error: String(error) };
+  }
+}
+
+export async function updateSchool(schoolId: string, data: { name?: string; slug?: string; logoUrl?: string }) {
+  try {
+    await isAdmin();
+    const updates: any = { updatedAt: new Date() };
+    if (data.name)    updates.name    = data.name;
+    if (data.slug)    updates.slug    = data.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    if (data.logoUrl !== undefined) updates.logoUrl = data.logoUrl;
+    await db.update(school).set(updates).where(eq(school.id, schoolId));
+    revalidatePath('/admin/schools');
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: String(error) };
+  }
+}
+
+export async function deleteSchool(schoolId: string) {
+  try {
+    await isAdmin();
+    await db.delete(school).where(eq(school.id, schoolId));
+    revalidatePath('/admin/schools');
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: String(error) };
   }
 }

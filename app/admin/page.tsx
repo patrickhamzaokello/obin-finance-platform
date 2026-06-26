@@ -2,135 +2,132 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getAllCourses, getAllUsers } from '@/app/actions/admin';
 import { getUserWithRole } from '@/lib/user-utils';
+import { BookOpen, Users, LayoutDashboard, ChevronRight } from 'lucide-react';
+import { SignOutButton } from '@/components/sign-out-button';
 
 export default async function AdminDashboard() {
   const userWithRole = await getUserWithRole();
 
-  if (!userWithRole || userWithRole.role !== 'admin') {
-    redirect('/sign-in');
-  }
+  if (!userWithRole || userWithRole.role !== 'admin') redirect('/sign-in');
 
   const coursesResult = await getAllCourses();
   const usersResult = await getAllUsers();
 
   const courses = coursesResult.success ? coursesResult.data : [];
   const users = usersResult.success ? usersResult.data : [];
+  const publishedCount = courses.filter((c: any) => c.isPublished).length;
+  const adminCount = users.filter((u: any) => u.role === 'admin').length;
+
+  const stats = [
+    { label: 'Total Courses', value: courses.length },
+    { label: 'Published', value: publishedCount },
+    { label: 'Total Users', value: users.length },
+    { label: 'Admins', value: adminCount },
+  ];
+
+  const navLinks = [
+    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/admin/courses', label: 'Courses', icon: BookOpen },
+    { href: '/admin/users', label: 'Users', icon: Users },
+  ];
 
   return (
-    <div className='min-h-screen bg-gray-50'>
-      <header className='bg-white shadow'>
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex justify-between items-center'>
-          <div>
-            <h1 className='text-3xl font-bold text-gray-900'>Admin Dashboard</h1>
-            <p className='text-gray-600 mt-1'>Obin Finance Learning Platform</p>
+    <div className='min-h-screen bg-[#f9fafb]'>
+      {/* Header */}
+      <header className='bg-white border-b border-border'>
+        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex items-center justify-between'>
+          <div className='flex items-center gap-4'>
+            <div className='w-[3px] h-9 bg-primary rounded-full' />
+            <div>
+              <h1 className='text-xl font-bold text-foreground tracking-tight'>Admin Panel</h1>
+              <p className='text-xs text-muted-foreground mt-0.5'>Obin Finance Learning Platform</p>
+            </div>
           </div>
-          <button
-            onClick={async () => {
-              'use server';
-              await auth.api.signOut({ headers: await headers() });
-              redirect('/');
-            }}
-            className='px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition'
-          >
-            Sign Out
-          </button>
+          <SignOutButton className='px-4 py-2 text-sm font-semibold border border-border text-foreground rounded hover:bg-secondary transition-colors' />
         </div>
       </header>
 
-      <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
-        {/* Navigation */}
-        <nav className='mb-8 flex gap-4'>
-          <Link
-            href='/admin'
-            className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold'
-          >
-            Dashboard
-          </Link>
-          <Link
-            href='/admin/courses'
-            className='px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 transition font-semibold'
-          >
-            Courses
-          </Link>
-          <Link
-            href='/admin/users'
-            className='px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 transition font-semibold'
-          >
-            Users
-          </Link>
+      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
+
+        {/* Nav tabs */}
+        <nav className='flex gap-1 mb-8 bg-white border border-border rounded p-1 w-fit'>
+          {navLinks.map(({ href, label, icon: Icon }) => {
+            const isActive = href === '/admin';
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded text-sm font-semibold transition-colors ${
+                  isActive
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
+                }`}
+              >
+                <Icon size={14} />
+                {label}
+              </Link>
+            );
+          })}
         </nav>
 
-        {/* Statistics */}
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12'>
-          <div className='bg-white rounded-lg shadow p-6'>
-            <h3 className='text-gray-600 text-sm font-semibold'>Total Courses</h3>
-            <p className='text-3xl font-bold text-gray-900 mt-2'>{courses.length}</p>
-          </div>
-          <div className='bg-white rounded-lg shadow p-6'>
-            <h3 className='text-gray-600 text-sm font-semibold'>Published Courses</h3>
-            <p className='text-3xl font-bold text-gray-900 mt-2'>
-              {courses.filter((c: any) => c.isPublished).length}
-            </p>
-          </div>
-          <div className='bg-white rounded-lg shadow p-6'>
-            <h3 className='text-gray-600 text-sm font-semibold'>Total Users</h3>
-            <p className='text-3xl font-bold text-gray-900 mt-2'>{users.length}</p>
-          </div>
-          <div className='bg-white rounded-lg shadow p-6'>
-            <h3 className='text-gray-600 text-sm font-semibold'>Admin Users</h3>
-            <p className='text-3xl font-bold text-gray-900 mt-2'>{users.filter((u: any) => u.role === 'admin').length}</p>
-          </div>
+        {/* Stats — left-border cards */}
+        <div className='grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10'>
+          {stats.map(({ label, value }) => (
+            <div key={label} className='card-accent p-5'>
+              <p className='text-xs font-semibold text-muted-foreground uppercase tracking-wider'>{label}</p>
+              <p className='text-3xl font-bold text-foreground mt-2'>{value}</p>
+            </div>
+          ))}
         </div>
 
         {/* Recent Courses */}
-        <section className='mb-12'>
-          <div className='flex justify-between items-center mb-6'>
-            <h2 className='text-2xl font-bold text-gray-900'>Recent Courses</h2>
+        <section className='mb-10'>
+          <div className='flex items-center justify-between mb-5'>
+            <h2 className='text-base font-semibold text-foreground'>Recent Courses</h2>
             <Link
               href='/admin/courses/new'
-              className='px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition'
+              className='inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded hover:bg-primary/90 transition-colors'
             >
-              Create Course
+              + New Course
             </Link>
           </div>
 
           {courses.length === 0 ? (
-            <p className='text-gray-600'>No courses yet. Create your first course!</p>
+            <div className='card-accent p-8 text-center'>
+              <p className='text-sm text-muted-foreground mb-3'>No courses yet.</p>
+              <Link href='/admin/courses/new' className='text-sm font-semibold text-primary hover:underline'>
+                Create your first course →
+              </Link>
+            </div>
           ) : (
-            <div className='bg-white rounded-lg shadow overflow-hidden'>
+            <div className='bg-white border border-border rounded overflow-hidden'>
               <table className='w-full'>
-                <thead className='bg-gray-100 border-b'>
-                  <tr>
-                    <th className='px-6 py-3 text-left text-sm font-semibold text-gray-900'>Title</th>
-                    <th className='px-6 py-3 text-left text-sm font-semibold text-gray-900'>Instructor</th>
-                    <th className='px-6 py-3 text-left text-sm font-semibold text-gray-900'>Status</th>
-                    <th className='px-6 py-3 text-left text-sm font-semibold text-gray-900'>Created</th>
-                    <th className='px-6 py-3 text-left text-sm font-semibold text-gray-900'>Actions</th>
+                <thead>
+                  <tr className='border-b border-border bg-secondary'>
+                    <th className='px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider'>Title</th>
+                    <th className='px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell'>Instructor</th>
+                    <th className='px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider'>Status</th>
+                    <th className='px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell'>Created</th>
+                    <th className='px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider'>Action</th>
                   </tr>
                 </thead>
-                <tbody className='divide-y'>
+                <tbody className='divide-y divide-border'>
                   {courses.slice(0, 5).map((c: any) => (
-                    <tr key={c.id} className='hover:bg-gray-50'>
-                      <td className='px-6 py-4 text-sm text-gray-900'>{c.title}</td>
-                      <td className='px-6 py-4 text-sm text-gray-600'>{c.instructor || 'N/A'}</td>
-                      <td className='px-6 py-4 text-sm'>
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                            c.isPublished
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}
-                        >
+                    <tr key={c.id} className='hover:bg-secondary/50 transition-colors'>
+                      <td className='px-5 py-4 text-sm font-medium text-foreground'>{c.title}</td>
+                      <td className='px-5 py-4 text-sm text-muted-foreground hidden sm:table-cell'>{c.instructor || '—'}</td>
+                      <td className='px-5 py-4'>
+                        <span className={c.isPublished ? 'badge-published' : 'badge-draft'}>
                           {c.isPublished ? 'Published' : 'Draft'}
                         </span>
                       </td>
-                      <td className='px-6 py-4 text-sm text-gray-600'>
+                      <td className='px-5 py-4 text-sm text-muted-foreground hidden md:table-cell'>
                         {new Date(c.createdAt).toLocaleDateString()}
                       </td>
-                      <td className='px-6 py-4 text-sm'>
+                      <td className='px-5 py-4'>
                         <Link
                           href={`/admin/courses/${c.id}`}
-                          className='text-blue-600 hover:text-blue-700 font-semibold'
+                          className='text-sm font-semibold text-primary hover:underline'
                         >
                           Edit
                         </Link>
@@ -143,30 +140,37 @@ export default async function AdminDashboard() {
           )}
         </section>
 
-        {/* Quick Links */}
-        <section className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-          <div className='bg-blue-50 rounded-lg shadow p-6 border-l-4 border-blue-600'>
-            <h3 className='text-lg font-semibold text-gray-900'>Course Management</h3>
-            <p className='text-gray-600 mt-2'>Create, edit, and manage your courses and course content.</p>
+        {/* Quick Links — left-border cards */}
+        <section className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+          <div className='card-accent p-6'>
+            <div className='flex items-center gap-3 mb-3'>
+              <BookOpen size={16} className='text-primary' />
+              <h3 className='font-semibold text-foreground'>Course Management</h3>
+            </div>
+            <p className='text-sm text-muted-foreground mb-4'>Create, edit, and manage your courses and all course content.</p>
             <Link
               href='/admin/courses'
-              className='mt-4 inline-block text-blue-600 hover:text-blue-700 font-semibold'
+              className='inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline'
             >
-              Go to Courses →
+              Go to Courses <ChevronRight size={14} />
             </Link>
           </div>
-          <div className='bg-purple-50 rounded-lg shadow p-6 border-l-4 border-purple-600'>
-            <h3 className='text-lg font-semibold text-gray-900'>User Management</h3>
-            <p className='text-gray-600 mt-2'>Manage user accounts and assign admin roles.</p>
+          <div className='card-accent p-6'>
+            <div className='flex items-center gap-3 mb-3'>
+              <Users size={16} className='text-primary' />
+              <h3 className='font-semibold text-foreground'>User Management</h3>
+            </div>
+            <p className='text-sm text-muted-foreground mb-4'>Manage user accounts, assign admin roles, and review registrations.</p>
             <Link
               href='/admin/users'
-              className='mt-4 inline-block text-purple-600 hover:text-purple-700 font-semibold'
+              className='inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline'
             >
-              Go to Users →
+              Go to Users <ChevronRight size={14} />
             </Link>
           </div>
         </section>
-      </main>
+
+      </div>
     </div>
   );
 }

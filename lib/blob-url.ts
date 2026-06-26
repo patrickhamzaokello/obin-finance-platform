@@ -1,46 +1,35 @@
-/**
- * Converts a Vercel Blob URL to a local API route URL for authenticated access
- * This allows learners to access private blob files through our secure API
- */
-export function convertBlobUrlToApiUrl(blobUrl: string): string {
-  if (!blobUrl) return '';
-  
-  // Extract file path from blob URL
-  // Blob URLs look like: https://blob.vercelusercontent.com/[hash]/course-media/...
-  // We need to extract just the course-media/... part
-  
-  try {
-    const url = new URL(blobUrl);
-    const pathname = url.pathname;
-    
-    // Remove leading slash and extract the file path after the hash
-    // pathname is usually /[hash]/course-media/...
-    const parts = pathname.split('/').filter(Boolean);
-    
-    if (parts.length < 2) {
-      return blobUrl; // Fallback to original if parsing fails
-    }
-    
-    // Find where course-media starts (it should be at index 1 or later)
-    const courseMediaIndex = parts.findIndex(p => p.startsWith('course-media'));
-    if (courseMediaIndex === -1) {
-      return blobUrl;
-    }
-    
-    // Reconstruct the path from course-media onwards
-    const filePath = parts.slice(courseMediaIndex).join('/');
-    
-    // Return the new API URL
-    return `/api/files/${filePath}`;
-  } catch (error) {
-    console.error('[v0] Error converting blob URL:', error);
-    return blobUrl;
-  }
-}
+const CF_BASE = process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN || process.env.AWS_CLOUDFRONT_DOMAIN || '';
 
 /**
- * Check if a URL is a Vercel Blob URL
+ * Resolve any stored media URL to a directly-servable URL.
+ * - CloudFront / S3 URLs → returned as-is (publicly served via CloudFront)
+ * - Legacy Vercel Blob URLs → proxied through /api/files (backward compat)
+ * - Anything else → returned as-is
  */
-export function isBlobUrl(url: string): boolean {
+export function convertBlobUrlToApiUrl(url: string): string {
+  if (!url) return '';
+  if (isLegacyBlobUrl(url)) {
+    // Proxy old Vercel Blob files through the /api/files route
+    try {
+      const parsed   = new URL(url);
+      const parts    = parsed.pathname.split('/').filter(Boolean);
+      const idx      = parts.findIndex((p) => p.startsWith('course-media'));
+      if (idx !== -1) return `/api/files/${parts.slice(idx).join('/')}`;
+    } catch { /* fall through */ }
+  }
+  return url;
+}
+
+/** True if this is an old Vercel Blob URL that needs the /api/files proxy */
+export function isLegacyBlobUrl(url: string): boolean {
   return typeof url === 'string' && url.includes('blob.vercelusercontent.com');
+}
+
+/** True for any URL that is already a directly-servable media URL (S3 / CloudFront / external) */
+export function isBlobUrl(url: string): boolean {
+  // Keep the old name for call-site compatibility; now also matches CloudFront URLs
+  if (!url) return false;
+  if (isLegacyBlobUrl(url)) return true;
+  if (CF_BASE && url.startsWith(CF_BASE)) return true;
+  return false;
 }

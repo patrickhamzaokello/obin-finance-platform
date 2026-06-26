@@ -48,15 +48,25 @@ export const verification = pgTable('verification', {
 });
 
 // App-specific tables
-export const course = pgTable('course', {
-  id: text('id').primaryKey(),
-  title: text('title').notNull(),
-  description: text('description'),
-  thumbnail: text('thumbnail'),
-  instructor: text('instructor'),
-  isPublished: boolean('isPublished').notNull().default(false),
+export const school = pgTable('school', {
+  id:        text('id').primaryKey(),
+  slug:      text('slug').notNull().unique(),   // used as the S3 folder prefix
+  name:      text('name').notNull(),
+  logoUrl:   text('logoUrl'),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+});
+
+export const course = pgTable('course', {
+  id:          text('id').primaryKey(),
+  schoolId:    text('schoolId'),               // nullable for backward compat with existing rows
+  title:       text('title').notNull(),
+  description: text('description'),
+  thumbnail:   text('thumbnail'),
+  instructor:  text('instructor'),
+  isPublished: boolean('isPublished').notNull().default(false),
+  createdAt:   timestamp('createdAt').notNull().defaultNow(),
+  updatedAt:   timestamp('updatedAt').notNull().defaultNow(),
 });
 
 export const module = pgTable('module', {

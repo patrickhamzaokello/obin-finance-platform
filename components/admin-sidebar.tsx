@@ -1,57 +1,71 @@
+'use client';
+
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
+import { LayoutDashboard, BookOpen, Users, PanelLeftClose, PanelLeft, Home } from 'lucide-react';
+
+const menuItems = [
+  { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+  { label: 'Courses',   href: '/admin/courses', icon: BookOpen },
+  { label: 'Users',     href: '/admin/users', icon: Users },
+];
 
 export default function AdminSidebar() {
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
 
-  const isActive = (path: string) => pathname.startsWith(path);
-
-  const menuItems = [
-    { label: 'Dashboard', href: '/admin', icon: '📊' },
-    { label: 'Courses', href: '/admin/courses', icon: '📚' },
-    { label: 'Users', href: '/admin/users', icon: '👥' },
-  ];
+  const isActive = (href: string) => pathname === href || (href !== '/admin' && pathname.startsWith(href));
 
   return (
-    <div className={`${isOpen ? 'w-64' : 'w-20'} bg-slate-900 text-white min-h-screen transition-all duration-300 flex flex-col`}>
-      <div className='p-4 flex items-center justify-between border-b border-slate-700'>
-        {isOpen && <h1 className='font-bold text-lg'>Obin Admin</h1>}
+    <aside
+      className={`${collapsed ? 'w-16' : 'w-56'} bg-white border-r border-border min-h-screen flex flex-col transition-all duration-200`}
+    >
+      {/* Logo row */}
+      <div className='flex items-center justify-between px-4 py-5 border-b border-border'>
+        {!collapsed && (
+          <span className='text-sm font-bold text-primary tracking-tight'>Obin Admin</span>
+        )}
         <button
-          onClick={() => setIsOpen(!isOpen)}
-          className='p-2 hover:bg-slate-800 rounded transition'
+          onClick={() => setCollapsed(!collapsed)}
+          className='p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary rounded transition-colors'
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          {isOpen ? '←' : '→'}
+          {collapsed ? <PanelLeft size={16} /> : <PanelLeftClose size={16} />}
         </button>
       </div>
 
-      <nav className='flex-1 p-4 space-y-2'>
-        {menuItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-              isActive(item.href)
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-300 hover:bg-slate-800'
-            }`}
-          >
-            <span className='text-xl'>{item.icon}</span>
-            {isOpen && <span>{item.label}</span>}
-          </Link>
-        ))}
+      {/* Nav */}
+      <nav className='flex-1 px-2 py-4 space-y-0.5'>
+        {menuItems.map(({ label, href, icon: Icon }) => {
+          const active = isActive(href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded text-sm font-semibold transition-colors ${
+                active
+                  ? 'bg-primary/8 text-primary border-l-[3px] border-l-primary pl-[9px]'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-secondary border-l-[3px] border-l-transparent'
+              }`}
+            >
+              <Icon size={16} className='shrink-0' />
+              {!collapsed && <span>{label}</span>}
+            </Link>
+          );
+        })}
       </nav>
 
-      <div className='p-4 border-t border-slate-700'>
+      {/* Footer */}
+      <div className='px-2 py-4 border-t border-border'>
         <Link
           href='/'
-          className='flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-slate-800 transition'
+          className='flex items-center gap-3 px-3 py-2.5 rounded text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors'
         >
-          <span className='text-xl'>🏠</span>
-          {isOpen && <span>Back to App</span>}
+          <Home size={16} className='shrink-0' />
+          {!collapsed && <span>Back to App</span>}
         </Link>
       </div>
-    </div>
+    </aside>
   );
 }

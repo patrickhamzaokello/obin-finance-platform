@@ -1,208 +1,266 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getCourseWithEnrollmentStatus } from '@/app/actions/courses';
-import { EnrollButton } from '@/components/enroll-button';
+import { useRouter } from 'next/navigation';
+import { getCourseWithEnrollmentStatus, enrollCourse } from '@/app/actions/courses';
 import { convertBlobUrlToApiUrl } from '@/lib/blob-url';
 import Link from 'next/link';
-import { ArrowLeft, BookOpen, Play, FileText } from 'lucide-react';
-
-interface CourseDetails {
-  id: string;
-  title: string;
-  description: string;
-  thumbnail: string;
-  instructor: string;
-  isPublished: boolean;
-  modules: Array<{
-    id: string;
-    title: string;
-    description: string;
-    videos: Array<{ id: string; title: string }>;
-    pdfs: Array<{ id: string; title: string }>;
-  }>;
-  isEnrolled?: boolean;
-}
+import {
+  ArrowLeft, BookOpen, Play, FileText, Clock,
+  CheckCircle2, ChevronRight, GraduationCap, Loader2,
+} from 'lucide-react';
 
 export default function CoursePage({ params }: { params: Promise<{ courseId: string }> }) {
-  const [course, setCourse] = useState<CourseDetails | null>(null);
+  const router = useRouter();
+  const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [enrolling, setEnrolling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [courseId, setCourseId] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadCourse = async () => {
-      const resolvedParams = await params;
-      setCourseId(resolvedParams.courseId);
-      const result = await getCourseWithEnrollmentStatus(resolvedParams.courseId);
-      if (result.success) {
-        setCourse(result.data as any);
-      } else {
-        setError(result.error || 'Failed to load course');
-      }
-      setLoading(false);
-    };
-
-    loadCourse();
+    params.then(({ courseId: id }) => {
+      setCourseId(id);
+      getCourseWithEnrollmentStatus(id).then((result) => {
+        if (result.success) setCourse(result.data as any);
+        else setError(result.error || 'Failed to load course');
+        setLoading(false);
+      });
+    });
   }, [params]);
+
+  const handleEnroll = async () => {
+    if (!courseId) return;
+    setEnrolling(true);
+    setError(null);
+    const result = await enrollCourse(courseId);
+    if (result.success) {
+      router.push(`/learning/${courseId}`);
+    } else {
+      setError(result.error || 'Enrollment failed');
+      setEnrolling(false);
+    }
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading course details...</p>
-        </div>
+      <div className='min-h-screen bg-white flex items-center justify-center'>
+        <div className='w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin' />
       </div>
     );
   }
 
-  if (error || !course) {
+  if (!course) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center max-w-md">
-          <h2 className="text-2xl font-semibold text-foreground mb-2">Course Not Found</h2>
-          <p className="text-muted-foreground mb-6">{error || 'The course you are looking for does not exist.'}</p>
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-          >
-            <ArrowLeft size={16} />
-            Back to Dashboard
+      <div className='min-h-screen bg-white flex items-center justify-center px-4'>
+        <div className='card-accent p-10 max-w-md w-full text-center'>
+          <h2 className='text-xl font-semibold text-foreground mb-2'>Course not found</h2>
+          <p className='text-sm text-muted-foreground mb-6'>{error || "This course doesn't exist."}</p>
+          <Link href='/dashboard' className='inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded hover:bg-primary/90 transition-colors'>
+            <ArrowLeft size={14} /> Back to Courses
           </Link>
         </div>
       </div>
     );
   }
 
-  const totalVideos = course.modules.reduce((sum, mod) => sum + mod.videos.length, 0);
-  const totalPdfs = course.modules.reduce((sum, mod) => sum + mod.pdfs.length, 0);
+  const totalVideos = course.modules.reduce((s: number, m: any) => s + m.videos.length, 0);
+  const totalPdfs   = course.modules.reduce((s: number, m: any) => s + m.pdfs.length, 0);
+  const totalItems  = totalVideos + totalPdfs;
+  const isEnrolled  = course.isEnrolled;
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-border">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 text-primary hover:text-primary/80 mb-4 transition-colors"
-          >
-            <ArrowLeft size={16} />
-            Back to Courses
+    <div className='min-h-screen bg-[#f4f7f5]'>
+
+      {/* Sticky header */}
+      <header className='bg-white border-b border-border sticky top-0 z-10'>
+        <div className='max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center gap-3'>
+          <Link href='/dashboard' className='inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors'>
+            <ArrowLeft size={14} /> Back to Courses
           </Link>
+          {isEnrolled && (
+            <>
+              <div className='w-px h-4 bg-border' />
+              <span className='inline-flex items-center gap-1.5 text-xs font-semibold text-accent'>
+                <CheckCircle2 size={13} /> Enrolled
+              </span>
+            </>
+          )}
         </div>
-      </div>
+      </header>
 
-      {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Course Info */}
-          <div className="lg:col-span-2">
-            {/* Thumbnail */}
-            {course.thumbnail && (
-              <div className="mb-8 rounded-lg overflow-hidden bg-muted h-80">
-                <img
-                  src={convertBlobUrlToApiUrl(course.thumbnail)}
-                  alt={course.title}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            )}
+      {/* Hero */}
+      {course.thumbnail && (
+        <div className='w-full bg-[#0f1a13] max-h-72 overflow-hidden'>
+          <img
+            src={convertBlobUrlToApiUrl(course.thumbnail)}
+            alt={course.title}
+            className='w-full h-full object-cover opacity-70'
+          />
+        </div>
+      )}
 
-            {/* Course Title and Instructor */}
-            <h1 className="text-4xl font-semibold text-foreground mb-2">{course.title}</h1>
-            {course.instructor && (
-              <p className="text-lg text-muted-foreground mb-6">Taught by {course.instructor}</p>
-            )}
+      <div className='max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
+        <div className='grid grid-cols-1 lg:grid-cols-3 gap-8 items-start'>
 
-            {/* Course Description */}
-            <div className="mb-8">
-              <h2 className="text-xl font-semibold text-foreground mb-4">About This Course</h2>
-              <p className="text-foreground leading-relaxed whitespace-pre-wrap">{course.description}</p>
-            </div>
+          {/* ── Left ─────────────────────────────────────────────────────── */}
+          <div className='lg:col-span-2 space-y-8'>
 
-            {/* Course Stats */}
-            <div className="grid grid-cols-3 gap-4 mb-8 p-4 bg-card rounded-lg border border-border">
-              <div className="text-center">
-                <div className="text-2xl font-semibold text-primary">{course.modules.length}</div>
-                <div className="text-sm text-muted-foreground">Modules</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-semibold text-primary">{totalVideos}</div>
-                <div className="text-sm text-muted-foreground">Videos</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-semibold text-primary">{totalPdfs}</div>
-                <div className="text-sm text-muted-foreground">Resources</div>
-              </div>
-            </div>
-
-            {/* Course Structure */}
+            {/* Title */}
             <div>
-              <h2 className="text-xl font-semibold text-foreground mb-6">Course Structure</h2>
-              <div className="space-y-4">
-                {course.modules.map((mod, index) => (
-                  <div key={mod.id} className="p-4 bg-card rounded-lg border border-border">
-                    <div className="flex items-start gap-3 mb-3">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
-                        {index + 1}
+              <h1 className='text-3xl font-bold text-foreground tracking-tight leading-tight'>{course.title}</h1>
+              {course.instructor && (
+                <p className='text-sm text-muted-foreground mt-2'>
+                  Taught by <span className='font-semibold text-foreground'>{course.instructor}</span>
+                </p>
+              )}
+            </div>
+
+            {/* Stats */}
+            <div className='grid grid-cols-3 gap-3'>
+              {[
+                { icon: BookOpen,  label: 'Modules',   value: course.modules.length },
+                { icon: Play,      label: 'Videos',    value: totalVideos },
+                { icon: FileText,  label: 'Resources', value: totalPdfs },
+              ].map(({ icon: Icon, label, value }) => (
+                <div key={label} className='card-accent px-4 py-4 text-center'>
+                  <div className='text-2xl font-bold text-primary'>{value}</div>
+                  <div className='text-xs text-muted-foreground mt-0.5 flex items-center justify-center gap-1'>
+                    <Icon size={11} /> {label}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Description */}
+            {course.description && (
+              <div>
+                <h2 className='text-base font-semibold text-foreground mb-3 flex items-center gap-2'>
+                  <div className='w-[3px] h-5 bg-primary rounded-full' />
+                  About this course
+                </h2>
+                <p className='text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap'>{course.description}</p>
+              </div>
+            )}
+
+            {/* What you'll learn */}
+            {course.modules.length > 0 && (
+              <div>
+                <h2 className='text-base font-semibold text-foreground mb-4 flex items-center gap-2'>
+                  <div className='w-[3px] h-5 bg-primary rounded-full' />
+                  Course curriculum
+                </h2>
+                <div className='space-y-2'>
+                  {course.modules.map((mod: any, index: number) => {
+                    const itemCount = mod.videos.length + mod.pdfs.length;
+                    return (
+                      <div key={mod.id} className='bg-white border border-border rounded'>
+                        <div className='flex items-start gap-4 px-5 py-4'>
+                          <div className='w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0 mt-0.5'>
+                            {index + 1}
+                          </div>
+                          <div className='flex-1 min-w-0'>
+                            <p className='text-sm font-semibold text-foreground'>{mod.title}</p>
+                            {mod.description && (
+                              <p className='text-xs text-muted-foreground mt-0.5 leading-relaxed'>{mod.description}</p>
+                            )}
+                            {itemCount > 0 && (
+                              <div className='flex items-center gap-3 mt-2'>
+                                {mod.videos.length > 0 && (
+                                  <span className='inline-flex items-center gap-1 text-xs text-muted-foreground'>
+                                    <Play size={10} /> {mod.videos.length} video{mod.videos.length !== 1 ? 's' : ''}
+                                  </span>
+                                )}
+                                {mod.pdfs.length > 0 && (
+                                  <span className='inline-flex items-center gap-1 text-xs text-muted-foreground'>
+                                    <FileText size={10} /> {mod.pdfs.length} resource{mod.pdfs.length !== 1 ? 's' : ''}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          <div className='text-xs text-muted-foreground shrink-0 mt-1'>{itemCount} lesson{itemCount !== 1 ? 's' : ''}</div>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-foreground">{mod.title}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">{mod.description}</p>
-                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── Right: CTA card ──────────────────────────────────────────── */}
+          <div className='lg:col-span-1'>
+            <div className='sticky top-[57px] bg-white border border-border border-l-[3px] border-l-primary rounded overflow-hidden'>
+
+              {/* Course thumbnail (small, inside card) */}
+              {course.thumbnail && (
+                <div className='aspect-video bg-muted overflow-hidden'>
+                  <img
+                    src={convertBlobUrlToApiUrl(course.thumbnail)}
+                    alt={course.title}
+                    className='w-full h-full object-cover'
+                  />
+                </div>
+              )}
+
+              <div className='p-6 space-y-5'>
+
+                {isEnrolled ? (
+                  <>
+                    <div className='flex items-center gap-2 text-sm text-accent font-semibold'>
+                      <CheckCircle2 size={16} />
+                      You're enrolled
                     </div>
+                    <button
+                      onClick={() => router.push(`/learning/${courseId}`)}
+                      className='w-full flex items-center justify-center gap-2 px-5 py-3 bg-primary text-primary-foreground font-semibold text-sm rounded hover:bg-primary/90 transition-colors'
+                    >
+                      <Play size={15} />
+                      Continue Learning
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <span className='badge-published'>Free Course</span>
+                    </div>
+                    <button
+                      onClick={handleEnroll}
+                      disabled={enrolling}
+                      className='w-full flex items-center justify-center gap-2 px-5 py-3 bg-primary text-primary-foreground font-semibold text-sm rounded hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed'
+                    >
+                      {enrolling ? (
+                        <><Loader2 size={15} className='animate-spin' /> Enrolling…</>
+                      ) : (
+                        <><GraduationCap size={15} /> Enroll &amp; Start Learning</>
+                      )}
+                    </button>
+                    {error && <p className='text-xs text-destructive text-center'>{error}</p>}
+                  </>
+                )}
 
-                    {/* Module Content Preview */}
-                    {(mod.videos.length > 0 || mod.pdfs.length > 0) && (
-                      <div className="ml-11 mt-4 space-y-2">
-                        {mod.videos.length > 0 && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Play size={14} />
-                            <span>{mod.videos.length} video{mod.videos.length !== 1 ? 's' : ''}</span>
-                          </div>
-                        )}
-                        {mod.pdfs.length > 0 && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <FileText size={14} />
-                            <span>{mod.pdfs.length} resource{mod.pdfs.length !== 1 ? 's' : ''}</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                {/* Course details list */}
+                <div className='space-y-2.5 pt-1 border-t border-border'>
+                  <p className='text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-1'>This course includes</p>
+                  {[
+                    { icon: BookOpen,      text: `${course.modules.length} module${course.modules.length !== 1 ? 's' : ''}` },
+                    { icon: Play,          text: `${totalVideos} video lesson${totalVideos !== 1 ? 's' : ''}` },
+                    { icon: FileText,      text: `${totalPdfs} PDF resource${totalPdfs !== 1 ? 's' : ''}` },
+                    { icon: Clock,         text: 'Self-paced learning' },
+                    { icon: GraduationCap, text: 'Certificate on completion' },
+                  ].map(({ icon: Icon, text }) => (
+                    <div key={text} className='flex items-center gap-2.5 text-sm text-muted-foreground'>
+                      <Icon size={14} className='text-primary shrink-0' />
+                      {text}
+                    </div>
+                  ))}
+                </div>
+
               </div>
             </div>
           </div>
 
-          {/* Right Column - Enrollment Card */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-6 p-6 bg-white border-2 border-border">
-              <div className="mb-6">
-                <div className="inline-block px-3 py-1 bg-primary/10 text-primary border border-primary rounded text-sm font-semibold mb-4">
-                  Available
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <BookOpen size={16} />
-                    <span>{course.modules.length} modules</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Play size={16} />
-                    <span>{totalVideos} videos</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <FileText size={16} />
-                    <span>{totalPdfs} resources</span>
-                  </div>
-                </div>
-              </div>
-
-              <EnrollButton courseId={course.id} isEnrolled={course.isEnrolled || false} />
-            </div>
-          </div>
         </div>
       </div>
     </div>

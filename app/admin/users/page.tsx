@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getAllUsers, updateUserRole } from '@/app/actions/admin';
+import { BookOpen, LayoutDashboard, Users } from 'lucide-react';
 
 export default function UsersList() {
   const [users, setUsers] = useState<any[]>([]);
@@ -11,12 +12,9 @@ export default function UsersList() {
   useEffect(() => {
     const loadUsers = async () => {
       const result = await getAllUsers();
-      if (result.success) {
-        setUsers(result.data);
-      }
+      if (result.success) setUsers(result.data);
       setLoading(false);
     };
-
     loadUsers();
   }, []);
 
@@ -27,76 +25,107 @@ export default function UsersList() {
     }
   };
 
+  const navLinks = [
+    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/admin/courses', label: 'Courses', icon: BookOpen },
+    { href: '/admin/users', label: 'Users', icon: Users },
+  ];
+
   if (loading) {
     return (
-      <div className='min-h-screen flex items-center justify-center'>
-        <div className='text-lg text-gray-600'>Loading users...</div>
+      <div className='min-h-screen bg-white flex items-center justify-center'>
+        <div className='text-center'>
+          <div className='w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3' />
+          <p className='text-sm text-muted-foreground'>Loading users…</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className='min-h-screen bg-gray-50'>
-      <header className='bg-white shadow'>
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6'>
-          <h1 className='text-3xl font-bold text-gray-900'>User Management</h1>
+    <div className='min-h-screen bg-[#f9fafb]'>
+      {/* Header */}
+      <header className='bg-white border-b border-border'>
+        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex items-center gap-4'>
+          <div className='w-[3px] h-9 bg-primary rounded-full' />
+          <div>
+            <h1 className='text-xl font-bold text-foreground tracking-tight'>User Management</h1>
+            <p className='text-xs text-muted-foreground mt-0.5'>{users.length} registered user{users.length !== 1 ? 's' : ''}</p>
+          </div>
         </div>
       </header>
 
-      <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
-        <div className='mb-6'>
-          <h2 className='text-2xl font-bold text-gray-900'>All Users</h2>
-          <p className='text-gray-600 mt-1'>Total: {users.length}</p>
-        </div>
+      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
+
+        {/* Nav tabs */}
+        <nav className='flex gap-1 mb-8 bg-white border border-border rounded p-1 w-fit'>
+          {navLinks.map(({ href, label, icon: Icon }) => {
+            const isActive = href === '/admin/users';
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded text-sm font-semibold transition-colors ${
+                  isActive
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
+                }`}
+              >
+                <Icon size={14} />
+                {label}
+              </Link>
+            );
+          })}
+        </nav>
 
         {users.length === 0 ? (
-          <div className='bg-white rounded-lg shadow p-8 text-center'>
-            <p className='text-gray-600'>No users found.</p>
+          <div className='card-accent p-10 text-center'>
+            <Users className='w-8 h-8 text-border mx-auto mb-3' />
+            <p className='text-sm text-muted-foreground'>No users found.</p>
           </div>
         ) : (
-          <div className='bg-white rounded-lg shadow overflow-hidden'>
+          <div className='bg-white border border-border rounded overflow-hidden'>
             <table className='w-full'>
-              <thead className='bg-gray-100 border-b'>
-                <tr>
-                  <th className='px-6 py-3 text-left text-sm font-semibold text-gray-900'>Name</th>
-                  <th className='px-6 py-3 text-left text-sm font-semibold text-gray-900'>Email</th>
-                  <th className='px-6 py-3 text-left text-sm font-semibold text-gray-900'>Role</th>
-                  <th className='px-6 py-3 text-left text-sm font-semibold text-gray-900'>Email Verified</th>
-                  <th className='px-6 py-3 text-left text-sm font-semibold text-gray-900'>Joined</th>
-                  <th className='px-6 py-3 text-left text-sm font-semibold text-gray-900'>Actions</th>
+              <thead>
+                <tr className='border-b border-border bg-secondary'>
+                  <th className='px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider'>Name</th>
+                  <th className='px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell'>Email</th>
+                  <th className='px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider'>Role</th>
+                  <th className='px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell'>Verified</th>
+                  <th className='px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell'>Joined</th>
                 </tr>
               </thead>
-              <tbody className='divide-y'>
+              <tbody className='divide-y divide-border'>
                 {users.map((user) => (
-                  <tr key={user.id} className='hover:bg-gray-50'>
-                    <td className='px-6 py-4 text-sm text-gray-900'>{user.name || 'N/A'}</td>
-                    <td className='px-6 py-4 text-sm text-gray-600'>{user.email}</td>
-                    <td className='px-6 py-4 text-sm'>
+                  <tr key={user.id} className='hover:bg-secondary/40 transition-colors'>
+                    <td className='px-5 py-4'>
+                      <p className='text-sm font-medium text-foreground'>{user.name || '—'}</p>
+                      <p className='text-xs text-muted-foreground sm:hidden mt-0.5'>{user.email}</p>
+                    </td>
+                    <td className='px-5 py-4 text-sm text-muted-foreground hidden sm:table-cell'>{user.email}</td>
+                    <td className='px-5 py-4'>
                       <select
                         value={user.role}
                         onChange={(e) => handleRoleChange(user.id, e.target.value as 'learner' | 'admin')}
-                        className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+                        className={`px-2.5 py-1 rounded text-xs font-semibold border appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary/30 ${
                           user.role === 'admin'
-                            ? 'bg-purple-100 text-purple-800 border-purple-300'
-                            : 'bg-blue-100 text-blue-800 border-blue-300'
+                            ? 'bg-primary/10 text-primary border-primary/20'
+                            : 'bg-secondary text-muted-foreground border-border'
                         }`}
                       >
                         <option value='learner'>Learner</option>
                         <option value='admin'>Admin</option>
                       </select>
                     </td>
-                    <td className='px-6 py-4 text-sm'>
+                    <td className='px-5 py-4 hidden md:table-cell'>
                       {user.emailVerified ? (
-                        <span className='text-green-600 font-semibold'>Yes</span>
+                        <span className='text-xs font-semibold text-accent'>Verified</span>
                       ) : (
-                        <span className='text-yellow-600'>No</span>
+                        <span className='text-xs text-muted-foreground'>Pending</span>
                       )}
                     </td>
-                    <td className='px-6 py-4 text-sm text-gray-600'>
+                    <td className='px-5 py-4 text-sm text-muted-foreground hidden lg:table-cell'>
                       {new Date(user.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className='px-6 py-4 text-sm'>
-                      <button className='text-blue-600 hover:text-blue-700 font-semibold'>View</button>
                     </td>
                   </tr>
                 ))}
@@ -106,11 +135,11 @@ export default function UsersList() {
         )}
 
         <div className='mt-8'>
-          <Link href='/admin' className='text-blue-600 hover:text-blue-700 font-semibold'>
+          <Link href='/admin' className='text-sm font-semibold text-primary hover:underline'>
             ← Back to Dashboard
           </Link>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
