@@ -1,89 +1,129 @@
-import { db } from '@/lib/db';
-import { school, user, schoolMember, courseEnrollment, course } from '@/lib/db/schema';
-import { sql } from 'drizzle-orm';
-import { Building2, Users, BookOpen, GraduationCap } from 'lucide-react';
+import { isPlatformOwner } from '@/lib/school-context';
+import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import {
+  Building2, GraduationCap, BarChart2, Shield,
+  ArrowRight, CheckCircle2, Globe,
+} from 'lucide-react';
 
-export default async function PlatformDashboard() {
-  const [schools, totalUsers, totalCourses, totalEnrollments] = await Promise.all([
-    db.select().from(school).orderBy(school.createdAt),
-    db.select({ count: sql<number>`count(*)` }).from(user),
-    db.select({ count: sql<number>`count(*)` }).from(course),
-    db.select({ count: sql<number>`count(*)` }).from(courseEnrollment),
-  ]);
-
-  const stats = [
-    { label: 'Schools',     value: schools.length,                   icon: Building2 },
-    { label: 'Users',       value: Number(totalUsers[0]?.count ?? 0), icon: Users },
-    { label: 'Courses',     value: Number(totalCourses[0]?.count ?? 0), icon: BookOpen },
-    { label: 'Enrollments', value: Number(totalEnrollments[0]?.count ?? 0), icon: GraduationCap },
-  ];
+export default async function PlatformLandingPage() {
+  // Owners go straight to the dashboard
+  if (await isPlatformOwner()) redirect('/platform/admin');
 
   return (
-    <div className='px-8 py-8'>
-      <div className='mb-8'>
-        <h1 className='text-2xl font-bold text-foreground'>Platform Overview</h1>
-        <p className='text-sm text-muted-foreground mt-1'>All schools and activity across the platform</p>
-      </div>
+    <div className='min-h-screen bg-white'>
 
-      {/* Stats */}
-      <div className='grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10'>
-        {stats.map(({ label, value, icon: Icon }) => (
-          <div key={label} className='bg-white border border-border rounded p-5 border-l-[3px] border-l-primary'>
-            <div className='flex items-center justify-between mb-2'>
-              <p className='text-xs font-semibold text-muted-foreground uppercase tracking-wider'>{label}</p>
-              <Icon size={15} className='text-primary' />
+      {/* Nav */}
+      <header className='border-b border-border bg-white sticky top-0 z-10'>
+        <div className='max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between'>
+          <div className='flex items-center gap-2.5'>
+            <div className='w-7 h-7 rounded bg-primary flex items-center justify-center'>
+              <GraduationCap size={15} className='text-primary-foreground' />
             </div>
-            <p className='text-3xl font-bold text-foreground'>{value}</p>
+            <span className='text-base font-bold text-foreground'>EduPlatform</span>
           </div>
-        ))}
-      </div>
-
-      {/* Schools list */}
-      <div className='bg-white border border-border rounded overflow-hidden'>
-        <div className='px-6 py-4 border-b border-border flex items-center justify-between'>
-          <h2 className='text-sm font-semibold text-foreground'>Schools</h2>
-          <Link href='/platform/schools/new'
-            className='inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-semibold rounded hover:bg-primary/90 transition-colors'
+          <Link
+            href='/sign-in'
+            className='inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded hover:bg-primary/90 transition-colors'
           >
-            + Add school
+            Admin sign in
           </Link>
         </div>
-        {schools.length === 0 ? (
-          <div className='px-6 py-12 text-center text-muted-foreground text-sm'>
-            No schools yet. <Link href='/platform/schools/new' className='text-primary underline'>Create the first one.</Link>
+      </header>
+
+      {/* Hero */}
+      <section className='bg-[#f4f7f5] border-b border-border'>
+        <div className='max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center'>
+          <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary text-xs font-semibold rounded-full mb-6'>
+            <Globe size={12} /> Multi-school learning platform
           </div>
-        ) : (
-          <table className='w-full text-sm'>
-            <thead className='bg-secondary text-xs font-semibold text-muted-foreground uppercase tracking-wider'>
-              <tr>
-                <th className='px-6 py-3 text-left'>School</th>
-                <th className='px-6 py-3 text-left'>Slug</th>
-                <th className='px-6 py-3 text-left'>Created</th>
-                <th className='px-6 py-3 text-left'></th>
-              </tr>
-            </thead>
-            <tbody className='divide-y divide-border'>
-              {schools.map((s) => (
-                <tr key={s.id} className='hover:bg-secondary/40 transition-colors'>
-                  <td className='px-6 py-4 font-medium text-foreground'>{s.name}</td>
-                  <td className='px-6 py-4 text-muted-foreground font-mono text-xs'>{s.slug}</td>
-                  <td className='px-6 py-4 text-muted-foreground'>
-                    {new Date(s.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className='px-6 py-4 text-right'>
-                    <Link href={`/platform/schools/${s.id}`}
-                      className='text-primary text-xs font-semibold hover:underline'
-                    >
-                      Manage →
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+          <h1 className='text-4xl sm:text-5xl font-bold text-foreground tracking-tight leading-tight'>
+            Launch your school's<br />
+            <span className='text-primary'>online learning experience</span>
+          </h1>
+          <p className='text-lg text-muted-foreground mt-5 max-w-2xl mx-auto leading-relaxed'>
+            Give every school their own branded platform — courses, learners, and progress tracking,
+            all under one roof. You manage the platform; schools manage their content.
+          </p>
+          <div className='flex items-center justify-center gap-3 mt-8'>
+            <Link
+              href='/sign-in'
+              className='inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-semibold rounded hover:bg-primary/90 transition-colors'
+            >
+              Get started <ArrowRight size={15} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className='max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20'>
+        <h2 className='text-2xl font-bold text-foreground text-center mb-12'>
+          Everything you need to run multiple schools
+        </h2>
+        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
+          {[
+            {
+              icon: Building2,
+              title: 'School management',
+              desc: 'Create and manage unlimited schools, each with its own subdomain, branding, and admin team.',
+            },
+            {
+              icon: GraduationCap,
+              title: 'Course builder',
+              desc: 'Build rich courses with video lessons (YouTube or uploaded), PDF resources, and progress tracking.',
+            },
+            {
+              icon: BarChart2,
+              title: 'Progress analytics',
+              desc: 'Track learner progress, module completion, and enrollment across every school in real time.',
+            },
+            {
+              icon: Shield,
+              title: 'Role-based access',
+              desc: 'Platform owner, school admins, and learners — each sees only what they need.',
+            },
+            {
+              icon: Globe,
+              title: 'Custom subdomains',
+              desc: 'Every school gets its own subdomain (school.yourplatform.com) for a professional experience.',
+            },
+            {
+              icon: CheckCircle2,
+              title: 'Completion tracking',
+              desc: 'Learners mark modules complete and track their journey through every course they enroll in.',
+            },
+          ].map(({ icon: Icon, title, desc }) => (
+            <div key={title} className='bg-white border border-border rounded p-6 border-l-[3px] border-l-primary hover:shadow-sm transition-shadow'>
+              <div className='w-9 h-9 rounded bg-primary/10 flex items-center justify-center mb-4'>
+                <Icon size={17} className='text-primary' />
+              </div>
+              <h3 className='text-sm font-semibold text-foreground mb-1.5'>{title}</h3>
+              <p className='text-sm text-muted-foreground leading-relaxed'>{desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className='bg-primary'>
+        <div className='max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center'>
+          <h2 className='text-2xl font-bold text-primary-foreground mb-3'>Ready to get started?</h2>
+          <p className='text-primary-foreground/80 mb-8'>Sign in to the platform admin to manage your schools.</p>
+          <Link
+            href='/sign-in'
+            className='inline-flex items-center gap-2 px-6 py-3 bg-white text-primary font-semibold rounded hover:bg-white/90 transition-colors'
+          >
+            Sign in <ArrowRight size={15} />
+          </Link>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className='border-t border-border py-6 text-center text-xs text-muted-foreground'>
+        © {new Date().getFullYear()} EduPlatform. All rights reserved.
+      </footer>
+
     </div>
   );
 }

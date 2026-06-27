@@ -6,6 +6,7 @@ import { course, courseEnrollment, module, video, pdf, userProgress } from '@/li
 import { eq, and, desc } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
+import { getCurrentSchool } from '@/lib/school-context';
 
 async function getUserId() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -22,11 +23,11 @@ async function isAdmin() {
 // Course queries
 export async function getPublishedCourses() {
   try {
-    const courses = await db
-      .select()
-      .from(course)
-      .where(eq(course.isPublished, true))
-      .orderBy(desc(course.createdAt));
+    const s = await getCurrentSchool();
+    const where = s
+      ? and(eq(course.isPublished, true), eq(course.schoolId, s.id))
+      : eq(course.isPublished, true);
+    const courses = await db.select().from(course).where(where).orderBy(desc(course.createdAt));
     return { success: true, data: courses };
   } catch (error) {
     console.error('Error fetching courses:', error);

@@ -113,7 +113,7 @@ export default function PlatformSchoolsPage() {
                   <td className='px-6 py-4 text-muted-foreground'>{new Date(s.createdAt).toLocaleDateString()}</td>
                   <td className='px-6 py-4'>
                     <div className='flex items-center gap-3 justify-end'>
-                      <Link href={`/platform/schools/${s.id}`}
+                      <Link href={`/platform/admin/schools/${s.id}`}
                         className='text-primary text-xs font-semibold hover:underline'>
                         Manage
                       </Link>

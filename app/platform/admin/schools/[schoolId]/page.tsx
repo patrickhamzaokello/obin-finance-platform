@@ -28,7 +28,7 @@ export default async function PlatformSchoolDetailPage({
 
   return (
     <div className='px-8 py-8 max-w-4xl'>
-      <Link href='/platform/schools' className='inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary mb-6 transition-colors'>
+      <Link href="/platform/admin/schools" className='inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary mb-6 transition-colors'>
         <ArrowLeft size={14} /> All schools
       </Link>
 

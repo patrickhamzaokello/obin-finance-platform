@@ -5,7 +5,7 @@ import { LayoutDashboard, Building2, LogOut } from 'lucide-react';
 
 export default async function PlatformLayout({ children }: { children: React.ReactNode }) {
   const isOwner = await isPlatformOwner();
-  if (!isOwner) redirect('/platform/sign-in');
+  if (!isOwner) redirect('/sign-in');
 
   return (
     <div className='min-h-screen bg-[#f4f7f5] flex'>
@@ -19,8 +19,8 @@ export default async function PlatformLayout({ children }: { children: React.Rea
         </div>
         <nav className='flex-1 px-3 py-4 space-y-1'>
           {[
-            { href: '/platform',         label: 'Dashboard',  icon: LayoutDashboard },
-            { href: '/platform/schools', label: 'Schools',    icon: Building2 },
+            { href: '/platform/admin',         label: 'Dashboard',  icon: LayoutDashboard },
+            { href: '/platform/admin/schools', label: 'Schools',    icon: Building2 },
           ].map(({ href, label, icon: Icon }) => (
             <Link key={href} href={href}
               className='flex items-center gap-2.5 px-3 py-2 rounded text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors'

@@ -6,7 +6,7 @@ import { eq, desc, and } from 'drizzle-orm';
 import { getUserWithRole } from '@/lib/user-utils';
 import { isYouTubeUrl, extractYouTubeId } from '@/lib/video-url';
 import { revalidatePath } from 'next/cache';
-import { getCurrentSchool, isPlatformOwner } from '@/lib/school-context';
+import { getCurrentSchool, isPlatformOwner, requirePlatformOwner } from '@/lib/school-context';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 
@@ -105,7 +105,7 @@ export async function updateCourse(
 
 export async function deleteCourse(courseId: string) {
   try {
-    await isAdmin();
+    await isSchoolAdmin();
     await db.delete(course).where(eq(course.id, courseId));
     revalidatePath('/admin/courses');
     return { success: true };
@@ -118,7 +118,7 @@ export async function deleteCourse(courseId: string) {
 // Course detail (admin view — returns full course with modules, videos, pdfs)
 export async function getAdminCourse(courseId: string) {
   try {
-    await isAdmin();
+    await isSchoolAdmin();
 
     const courseRows = await db.select().from(course).where(eq(course.id, courseId)).limit(1);
     if (!courseRows.length) return { success: false, error: 'Course not found' };
@@ -155,7 +155,7 @@ export async function getAdminCourse(courseId: string) {
 // Module management
 export async function createModule(courseId: string, data: { title: string; description?: string; order: number }) {
   try {
-    await isAdmin();
+    await isSchoolAdmin();
     const newModule = {
       id: `module-${Date.now()}`,
       courseId,
@@ -175,7 +175,7 @@ export async function updateModule(
   data: { title?: string; description?: string; order?: number }
 ) {
   try {
-    await isAdmin();
+    await isSchoolAdmin();
     await db.update(module).set(data).where(eq(module.id, moduleId));
     revalidatePath('/admin/courses');
     return { success: true };
@@ -187,7 +187,7 @@ export async function updateModule(
 
 export async function deleteModule(moduleId: string) {
   try {
-    await isAdmin();
+    await isSchoolAdmin();
     await db.delete(module).where(eq(module.id, moduleId));
     revalidatePath('/admin/courses');
     return { success: true };
@@ -203,7 +203,7 @@ export async function createVideo(
   data: { title: string; url: string; duration?: number; order: number }
 ) {
   try {
-    await isAdmin();
+    await isSchoolAdmin();
     
     // Separate YouTube URL from regular URL
     let videoUrl = null;
@@ -238,7 +238,7 @@ export async function updateVideo(
   data: { title?: string; url?: string; duration?: number; order?: number }
 ) {
   try {
-    await isAdmin();
+    await isSchoolAdmin();
     
     // Handle YouTube URL separation
     const updateData: any = { ...data };
@@ -263,7 +263,7 @@ export async function updateVideo(
 
 export async function deleteVideo(videoId: string) {
   try {
-    await isAdmin();
+    await isSchoolAdmin();
     await db.delete(video).where(eq(video.id, videoId));
     revalidatePath('/admin/courses');
     return { success: true };
@@ -279,7 +279,7 @@ export async function createPdf(
   data: { title: string; url: string; order: number }
 ) {
   try {
-    await isAdmin();
+    await isSchoolAdmin();
     const newPdf = {
       id: `pdf-${Date.now()}`,
       moduleId,
@@ -296,7 +296,7 @@ export async function createPdf(
 
 export async function updatePdf(pdfId: string, data: { title?: string; url?: string; order?: number }) {
   try {
-    await isAdmin();
+    await isSchoolAdmin();
     await db.update(pdf).set(data).where(eq(pdf.id, pdfId));
     revalidatePath('/admin/courses');
     return { success: true };
@@ -308,7 +308,7 @@ export async function updatePdf(pdfId: string, data: { title?: string; url?: str
 
 export async function deletePdf(pdfId: string) {
   try {
-    await isAdmin();
+    await isSchoolAdmin();
     await db.delete(pdf).where(eq(pdf.id, pdfId));
     revalidatePath('/admin/courses');
     return { success: true };
@@ -318,23 +318,39 @@ export async function deletePdf(pdfId: string) {
   }
 }
 
-// User management
+// User management — school-scoped
 export async function getAllUsers() {
   try {
-    await isAdmin();
-    const users = await db.select().from(user).orderBy(desc(user.createdAt));
-    return { success: true, data: users };
+    await isSchoolAdmin();
+    const s = await getCurrentSchool();
+    if (!s) return { success: false, error: 'No school context' };
+
+    const members = await db
+      .select({
+        id: schoolMember.id,
+        userId: user.id,
+        name: user.name,
+        email: user.email,
+        emailVerified: user.emailVerified,
+        role: schoolMember.role,
+        createdAt: schoolMember.createdAt,
+      })
+      .from(schoolMember)
+      .innerJoin(user, eq(schoolMember.userId, user.id))
+      .where(eq(schoolMember.schoolId, s.id))
+      .orderBy(desc(schoolMember.createdAt));
+
+    return { success: true, data: members };
   } catch (error) {
     console.error('Error fetching users:', error);
     return { success: false, error: 'Failed to fetch users' };
   }
 }
 
-export async function updateUserRole(userId: string, role: 'learner' | 'admin') {
+export async function updateUserRole(memberId: string, role: 'school_admin' | 'learner') {
   try {
-    await isAdmin();
-    await db.update(user).set({ role }).where(eq(user.id, userId));
-    revalidatePath('/admin/users');
+    await isSchoolAdmin();
+    await db.update(schoolMember).set({ role }).where(eq(schoolMember.id, memberId));
     return { success: true };
   } catch (error) {
     console.error('Error updating user role:', error);
@@ -346,7 +362,7 @@ export async function updateUserRole(userId: string, role: 'learner' | 'admin') 
 
 export async function getSchools() {
   try {
-    await isAdmin();
+    await requirePlatformOwner();
     const schools = await db.select().from(school).orderBy(school.name);
     return { success: true, data: schools };
   } catch (error) {
@@ -356,7 +372,7 @@ export async function getSchools() {
 
 export async function createSchool(data: { name: string; slug: string; logoUrl?: string }) {
   try {
-    await isAdmin();
+    await requirePlatformOwner();
     const slug = data.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-');
     const id   = `school-${Date.now()}`;
     await db.insert(school).values({ id, slug, name: data.name, logoUrl: data.logoUrl || null });
@@ -369,7 +385,7 @@ export async function createSchool(data: { name: string; slug: string; logoUrl?:
 
 export async function updateSchool(schoolId: string, data: { name?: string; slug?: string; logoUrl?: string }) {
   try {
-    await isAdmin();
+    await requirePlatformOwner();
     const updates: any = { updatedAt: new Date() };
     if (data.name)    updates.name    = data.name;
     if (data.slug)    updates.slug    = data.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-');
@@ -384,7 +400,7 @@ export async function updateSchool(schoolId: string, data: { name?: string; slug
 
 export async function deleteSchool(schoolId: string) {
   try {
-    await isAdmin();
+    await requirePlatformOwner();
     await db.delete(school).where(eq(school.id, schoolId));
     revalidatePath('/admin/schools');
     return { success: true };
