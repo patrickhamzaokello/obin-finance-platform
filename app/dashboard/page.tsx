@@ -7,7 +7,7 @@ import { headers } from 'next/headers';
 // Platform owners → /platform/admin. Everyone else → /sign-in.
 export default async function DashboardPage() {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) redirect('/sign-in');
+  if (!session?.user) redirect('/platform');
   if (await isPlatformOwner()) redirect('/platform/admin');
-  redirect('/sign-in');
+  redirect('/platform');
 }

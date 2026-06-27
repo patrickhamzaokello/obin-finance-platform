@@ -38,7 +38,10 @@ export function proxy(request: NextRequest) {
   // ── No school slug → platform owner context (apex domain) ───────────────
   if (!schoolSlug) {
     if (pathname === '/') {
-      return NextResponse.redirect(new URL('/platform', request.url));
+      // Use nextUrl (server-side URL) to avoid http/https mismatch with reverse proxies
+      const dest = request.nextUrl.clone();
+      dest.pathname = '/platform';
+      return NextResponse.redirect(dest);
     }
     return NextResponse.next();
   }
