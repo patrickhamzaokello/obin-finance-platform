@@ -8,17 +8,19 @@ WORKDIR /app
 RUN apk add --no-cache libc6-compat
 
 COPY package*.json ./
-RUN npm ci --omit=dev --ignore-scripts
+# Install ALL deps (including devDeps needed for the build).
+# This layer is cached and reused by the builder — npm ci only reruns
+# when package.json or package-lock.json change.
+RUN npm ci --ignore-scripts --prefer-offline --no-audit --no-fund
 
 
 # ── 2. builder ─────────────────────────────────────────────────────────────────
 FROM node:22-alpine AS builder
 WORKDIR /app
 
-# Need devDeps for the build
-COPY package*.json ./
-RUN npm ci --ignore-scripts
-
+# Reuse the already-installed node_modules from the deps layer.
+# No second npm ci means the build starts immediately on code changes.
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Next.js telemetry off in CI

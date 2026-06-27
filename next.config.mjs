@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',   // required for the Docker multi-stage build
+  output: 'standalone',
+  swcMinify: true,
   typescript: {
     ignoreBuildErrors: true,
   },
