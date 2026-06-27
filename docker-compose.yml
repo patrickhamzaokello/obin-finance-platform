@@ -1,6 +1,5 @@
 services:
 
-  # ── Next.js app ──────────────────────────────────────────────────────────────
   app:
     build:
       context: .
@@ -13,40 +12,4 @@ services:
     ports:
       - "3000:3000"
     env_file:
-      - .env.production        # create from .env.example — never commit real values
-    environment:
-      # Override DATABASE_URL to point at the compose postgres service
-      DATABASE_URL: postgres://${POSTGRES_USER:-obin}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-obin_finance}
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - obin-net
-
-  # ── PostgreSQL ────────────────────────────────────────────────────────────────
-  postgres:
-    image: postgres:16-alpine
-    container_name: obin-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER:     ${POSTGRES_USER:-obin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
-      POSTGRES_DB:       ${POSTGRES_DB:-obin_finance}
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    # ports:
-    #   - "5432:5432"          # expose for local tooling (Drizzle Studio, psql); remove in prod
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-obin} -d ${POSTGRES_DB:-obin_finance}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - obin-net
-
-volumes:
-  postgres-data:
-
-networks:
-  obin-net:
-    driver: bridge
+      - .env.production   # must contain DATABASE_URL pointing at Neon
