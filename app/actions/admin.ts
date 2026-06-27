@@ -1,12 +1,36 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { course, module, video, pdf, user, school } from '@/lib/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { course, module, video, pdf, user, school, schoolMember } from '@/lib/db/schema';
+import { eq, desc, and } from 'drizzle-orm';
 import { getUserWithRole } from '@/lib/user-utils';
 import { isYouTubeUrl, extractYouTubeId } from '@/lib/video-url';
 import { revalidatePath } from 'next/cache';
+import { getCurrentSchool, isPlatformOwner } from '@/lib/school-context';
+import { auth } from '@/lib/auth';
+import { headers } from 'next/headers';
 
+/** Returns true if the current user is a school_admin for the active school OR the platform owner. */
+async function isSchoolAdmin() {
+  if (await isPlatformOwner()) return true;
+
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session?.user) throw new Error('Unauthorized');
+
+  const s = await getCurrentSchool();
+  if (!s) throw new Error('No school context');
+
+  const membership = await db.select().from(schoolMember)
+    .where(and(eq(schoolMember.userId, session.user.id), eq(schoolMember.schoolId, s.id)))
+    .limit(1);
+
+  if (!membership.length || membership[0].role !== 'school_admin') {
+    throw new Error('Unauthorized: school admin required');
+  }
+  return true;
+}
+
+// Keep the old isAdmin for backward compat during transition
 async function isAdmin() {
   const userWithRole = await getUserWithRole();
   if (!userWithRole || userWithRole.role !== 'admin') {
@@ -18,8 +42,11 @@ async function isAdmin() {
 // Course management
 export async function getAllCourses() {
   try {
-    await isAdmin();
-    const courses = await db.select().from(course).orderBy(desc(course.createdAt));
+    await isSchoolAdmin();
+    const s = await getCurrentSchool();
+    const courses = s
+      ? await db.select().from(course).where(eq(course.schoolId, s.id)).orderBy(desc(course.createdAt))
+      : await db.select().from(course).orderBy(desc(course.createdAt)); // platform owner sees all
     return { success: true, data: courses };
   } catch (error) {
     console.error('Error fetching courses:', error);
@@ -35,17 +62,17 @@ export async function createCourse(data: {
   schoolId?: string | null;
   }) {
   try {
-    console.log('[v0] Creating course with data:', data);
-    const admin = await isAdmin();
-    console.log('[v0] Admin check passed:', admin);
+    await isSchoolAdmin();
+    // If no schoolId passed, auto-assign from current school context
+    const s = await getCurrentSchool();
+    const resolvedSchoolId = data.schoolId || s?.id || null;
     const newCourse = {
       id: `course-${Date.now()}`,
       ...data,
+      schoolId: resolvedSchoolId,
       isPublished: false,
     };
-    console.log('[v0] Inserting course:', newCourse);
     await db.insert(course).values(newCourse);
-    console.log('[v0] Course inserted successfully');
     revalidatePath('/admin/courses');
     return { success: true, data: newCourse };
   } catch (error) {
@@ -66,7 +93,7 @@ export async function updateCourse(
   }
 ) {
   try {
-    await isAdmin();
+    await isSchoolAdmin();
     await db.update(course).set(data).where(eq(course.id, courseId));
     revalidatePath('/admin/courses');
     return { success: true };

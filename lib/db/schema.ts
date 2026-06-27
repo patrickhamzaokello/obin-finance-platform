@@ -3,14 +3,17 @@ import { sql } from 'drizzle-orm';
 
 // Better Auth tables
 export const user = pgTable('user', {
-  id: text('id').primaryKey(),
-  name: text('name'),
-  email: text('email').notNull().unique(),
+  id:            text('id').primaryKey(),
+  name:          text('name'),
+  email:         text('email').notNull().unique(),
   emailVerified: boolean('emailVerified').notNull().default(false),
-  image: text('image'),
-  role: text('role').notNull().default('learner'),
-  createdAt: timestamp('createdAt').notNull().defaultNow(),
-  updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+  image:         text('image'),
+  // Legacy field kept for Better Auth compatibility
+  role:          text('role').notNull().default('user'),
+  // Platform-level role: 'owner' = you (the SaaS owner), 'user' = everyone else
+  platformRole:  text('platformRole').notNull().default('user'),
+  createdAt:     timestamp('createdAt').notNull().defaultNow(),
+  updatedAt:     timestamp('updatedAt').notNull().defaultNow(),
 });
 
 export const session = pgTable('session', {
@@ -48,6 +51,15 @@ export const verification = pgTable('verification', {
 });
 
 // App-specific tables
+// Links a user to a school with a role. One school per user (unique on userId).
+export const schoolMember = pgTable('school_member', {
+  id:        text('id').primaryKey(),
+  userId:    text('userId').notNull().unique(), // one school per user
+  schoolId:  text('schoolId').notNull(),
+  role:      text('role').notNull().default('learner'), // 'school_admin' | 'learner'
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+});
+
 export const school = pgTable('school', {
   id:        text('id').primaryKey(),
   slug:      text('slug').notNull().unique(),   // used as the S3 folder prefix
