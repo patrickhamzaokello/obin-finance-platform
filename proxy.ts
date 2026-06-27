@@ -5,7 +5,7 @@ const BASE_DOMAIN = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'localhost';
 // Paths that should never be rewritten (API, static, Next internals)
 const BYPASS = /^\/(api|_next|_static|favicon\.ico)/;
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
 
   if (BYPASS.test(pathname)) return NextResponse.next();
@@ -37,7 +37,6 @@ export function middleware(request: NextRequest) {
 
   // ── No school slug → platform owner context (apex domain) ───────────────
   if (!schoolSlug) {
-    // Redirect bare / to platform dashboard
     if (pathname === '/') {
       return NextResponse.redirect(new URL('/platform', request.url));
     }
@@ -62,13 +61,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all paths except:
-     * - _next/static (static files)
-     * - _next/image  (image optimization)
-     * - favicon.ico
-     */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };
