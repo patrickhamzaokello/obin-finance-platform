@@ -11,7 +11,9 @@ __v0_jsx-dev-runtime.ts
 !.v0/inject-built-with-v0.mjs
 
 # Environment variables
-.env*.local
+.env
+.env.*
+!.env.example
 
 # Common ignores
 node_modules
