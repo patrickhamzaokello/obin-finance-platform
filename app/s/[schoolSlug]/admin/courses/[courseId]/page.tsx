@@ -12,6 +12,7 @@ import {
   createVideo, deleteVideo,
   createPdf, deletePdf,
 } from '@/app/actions/admin';
+import { AccessCodesPanel } from './access-codes-panel';
 import {
   ChevronDown, ChevronUp, Play, FileText, Plus, Trash2,
   BookOpen, Check, AlertCircle, Video, Upload, Link2, ArrowLeft,
@@ -258,6 +259,9 @@ export default function CourseEditor() {
                 <p className="text-xs text-muted-foreground">Add your first module to build the curriculum.</p>
               </div>
             )}
+
+            {/* Access Codes */}
+            <AccessCodesPanel courseId={courseId} showToast={showToast} />
           </div>
         ) : (
           <div className="lg:col-span-2">
