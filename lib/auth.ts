@@ -38,16 +38,13 @@ export const auth = betterAuth({
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // 1 day
   },
-  // Dev only: force cross-site cookies so the session cookie works in
-  // the v0 preview iframe (cross-origin). Production uses browser defaults.
-  ...(process.env.NODE_ENV === 'development'
-    ? {
-        advanced: {
-          defaultCookieAttributes: {
-            sameSite: 'none' as const,
-            secure: true,
-          },
-        },
-      }
-    : {}),
+  advanced: {
+    // Unique prefix prevents platform-admin cookies (set on the apex domain in a
+    // previous config with domain: '.pkasemer.com') from colliding with school
+    // user cookies on subdomains.
+    cookiePrefix: 'ba',
+    ...(process.env.NODE_ENV === 'development'
+      ? { defaultCookieAttributes: { sameSite: 'none' as const, secure: true } }
+      : {}),
+  },
 })
