@@ -17,8 +17,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
   const [enrolling, setEnrolling] = useState(false);
   const [error,     setError]     = useState<string | null>(null);
   const [courseId,  setCourseId]  = useState<string | null>(null);
-
-  const [descExpanded,  setDescExpanded]  = useState(false);
+  const [descExpanded, setDescExpanded] = useState(false);
   const [descOverflows, setDescOverflows] = useState(false);
   const descRef = useRef<HTMLParagraphElement>(null);
 
@@ -75,95 +74,57 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
     else { setError(result.error || 'Enrollment failed'); setEnrolling(false); }
   };
 
-  // ── CTA Card — shared between hero (desktop) and body (mobile) ──
-  const CtaCard = ({ className = '' }: { className?: string }) => (
-    <div className={`bg-white rounded-2xl shadow-lg overflow-hidden ${className}`}>
-      {thumbnailUrl && (
-        <div className='aspect-video overflow-hidden'>
-          <img src={thumbnailUrl} alt={course.title} className='w-full h-full object-cover' />
-        </div>
-      )}
-      <div className='p-6 space-y-5'>
-        {/* Price */}
-        {!isEnrolled && (
-          <div>
-            {isFree ? (
-              <span className='text-3xl font-bold text-primary'>Free</span>
-            ) : (
-              <div className='flex items-end gap-2.5'>
-                <span className='text-3xl font-bold text-foreground'>UGX {discountedPrice.toLocaleString()}</span>
-                {discountActive && (
-                  <div className='flex items-center gap-1.5 mb-1'>
-                    <span className='text-sm text-muted-foreground line-through'>UGX {price.toLocaleString()}</span>
-                    <span className='text-xs font-bold px-2 py-0.5 bg-red-50 text-red-600 rounded-full'>-{course.discountPercent}%</span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* CTA button */}
-        {isEnrolled ? (
-          <div className='space-y-3'>
-            <div className='flex items-center gap-2 text-sm font-semibold text-primary'>
-              <CheckCircle2 size={15} /> You&apos;re enrolled
-            </div>
-            <button onClick={() => router.push(`/learning/${courseId}`)}
-              className='w-full flex items-center justify-center gap-2 px-5 py-3.5 bg-primary text-primary-foreground font-bold text-sm rounded-xl hover:bg-primary/90 transition-colors'>
-              <Play size={15} /> Continue Learning
-            </button>
-          </div>
-        ) : (
-          <div className='space-y-3'>
-            <button onClick={handleEnroll} disabled={enrolling}
-              className='w-full flex items-center justify-center gap-2 px-5 py-3.5 bg-primary text-primary-foreground font-bold text-sm rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-60'>
-              {enrolling
-                ? <><Loader2 size={15} className='animate-spin' /> Enrolling…</>
-                : <><GraduationCap size={15} /> {isFree ? 'Enroll for Free' : 'Enroll Now'}</>}
-            </button>
-            {error && <p className='text-xs text-destructive text-center'>{error}</p>}
-          </div>
-        )}
-
-        {/* Course includes */}
-        <div className='space-y-2.5 pt-4 border-t border-black/[0.06]'>
-          <p className='text-[10px] font-bold text-muted-foreground uppercase tracking-wider'>This course includes</p>
-          {[
-            { icon: BookOpen,      text: `${course.modules.length} module${course.modules.length !== 1 ? 's' : ''}` },
-            { icon: Play,          text: `${totalVideos} video${totalVideos !== 1 ? 's' : ''}` },
-            { icon: FileText,      text: `${totalPdfs} PDF resource${totalPdfs !== 1 ? 's' : ''}` },
-            { icon: Clock,         text: 'Self-paced' },
-            { icon: GraduationCap, text: 'Certificate on completion' },
-          ].map(({ icon: Icon, text }) => (
-            <div key={text} className='flex items-center gap-2.5 text-sm text-muted-foreground'>
-              <Icon size={13} className='text-primary shrink-0' /> {text}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div className='min-h-screen bg-[#F5F5F7]'>
 
-      {/* ── Hero ── */}
-      <div className='bg-white border-b border-black/[0.06]'>
-        <div className='max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
-          {/* Back link */}
+      {/* ── Slim nav bar ── */}
+      <header className='bg-white/80 backdrop-blur-xl border-b border-black/[0.06] sticky top-0 z-20'>
+        <div className='max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center gap-3'>
           <Link href='/dashboard'
-            className='inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary transition-colors mb-8'>
-            <ArrowLeft size={14} /> Back to Courses
+            className='inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary transition-colors'>
+            <ArrowLeft size={14} /> Courses
           </Link>
+          {isEnrolled && (
+            <>
+              <div className='w-px h-4 bg-border' />
+              <span className='inline-flex items-center gap-1.5 text-xs font-semibold text-primary'>
+                <CheckCircle2 size={12} /> Enrolled
+              </span>
+            </>
+          )}
+        </div>
+      </header>
 
-          <div className='flex gap-10 items-start'>
-            {/* Left: course info */}
-            <div className='flex-1 min-w-0 max-w-2xl py-2'>
+      {/* ── Large thumbnail ── */}
+      <div className='w-full bg-secondary' style={{ height: '420px' }}>
+        {thumbnailUrl ? (
+          <img
+            src={thumbnailUrl}
+            alt={course.title}
+            className='w-full h-full object-cover'
+          />
+        ) : (
+          <div className='w-full h-full flex items-center justify-center'>
+            <div className='w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center'>
+              <BookOpen size={36} className='text-primary' />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Main content ── */}
+      <div className='max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 pb-16'>
+        <div className='flex gap-6 items-start'>
+
+          {/* ── Left column ── */}
+          <div className='flex-1 min-w-0 space-y-4'>
+
+            {/* Title card — floats above thumbnail */}
+            <div className='bg-white rounded-2xl shadow-sm px-7 py-6'>
               {/* Badges */}
-              <div className='flex items-center gap-2 mb-4'>
+              <div className='flex items-center gap-2 mb-3'>
                 <span className='inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full'>
-                  <BookOpen size={11} /> Course
+                  <BookOpen size={10} /> Course
                 </span>
                 {discountActive && !isEnrolled && (
                   <span className='inline-flex items-center px-2.5 py-1 bg-red-50 text-red-600 text-xs font-bold rounded-full'>
@@ -172,58 +133,50 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
                 )}
               </div>
 
-              <h1 className='text-3xl sm:text-4xl font-bold text-foreground leading-tight tracking-tight mb-4'>
+              <h1 className='text-2xl sm:text-3xl font-bold text-foreground tracking-tight leading-tight mb-3'>
                 {course.title}
               </h1>
 
-              {course.description && (
-                <p className='text-muted-foreground text-base leading-relaxed line-clamp-2 mb-6'>
-                  {course.description}
-                </p>
-              )}
-
-              {/* Stats row */}
-              <div className='flex flex-wrap items-center gap-5 text-sm text-muted-foreground'>
-                {course.instructor && (
-                  <div className='flex items-center gap-2'>
-                    <div className='w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center'>
-                      <Users size={11} className='text-primary' />
-                    </div>
-                    <span className='text-foreground font-medium'>{course.instructor}</span>
+              {course.instructor && (
+                <div className='flex items-center gap-2 mb-4'>
+                  <div className='w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0'>
+                    <Users size={13} className='text-primary' />
                   </div>
-                )}
-                <span className='flex items-center gap-1.5'><BookOpen size={13} className='text-primary' /> {course.modules.length} modules</span>
-                <span className='flex items-center gap-1.5'><Play size={13} className='text-primary' /> {totalVideos} videos</span>
-                <span className='flex items-center gap-1.5'><FileText size={13} className='text-primary' /> {totalPdfs} PDFs</span>
-                <span className='flex items-center gap-1.5'><Clock size={13} className='text-primary' /> Self-paced</span>
-              </div>
-
-              {isEnrolled && (
-                <div className='mt-6 inline-flex items-center gap-2 px-3.5 py-2 bg-primary/10 text-primary text-sm font-semibold rounded-xl'>
-                  <CheckCircle2 size={14} /> You&apos;re enrolled
+                  <span className='text-sm text-muted-foreground'>Instructor: <span className='font-semibold text-foreground'>{course.instructor}</span></span>
                 </div>
               )}
+
+              {/* Quick stats chips */}
+              <div className='flex flex-wrap gap-2'>
+                {[
+                  { icon: BookOpen, label: `${course.modules.length} module${course.modules.length !== 1 ? 's' : ''}` },
+                  { icon: Play,     label: `${totalVideos} video${totalVideos !== 1 ? 's' : ''}` },
+                  { icon: FileText, label: `${totalPdfs} PDF${totalPdfs !== 1 ? 's' : ''}` },
+                  { icon: Clock,    label: 'Self-paced' },
+                ].map(({ icon: Icon, label }) => (
+                  <span key={label} className='inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary rounded-xl text-xs font-medium text-muted-foreground'>
+                    <Icon size={11} className='text-primary' /> {label}
+                  </span>
+                ))}
+              </div>
             </div>
 
-            {/* Right: CTA — desktop only in hero */}
-            <div className='hidden lg:block w-80 shrink-0'>
-              <CtaCard />
+            {/* Mobile CTA */}
+            <div className='lg:hidden'>
+              <CtaCard
+                isFree={isFree} isEnrolled={isEnrolled} enrolling={enrolling}
+                price={price} discountedPrice={discountedPrice}
+                discountActive={discountActive} discountPercent={course.discountPercent}
+                error={error} onEnroll={handleEnroll}
+                onContinue={() => router.push(`/learning/${courseId}`)}
+                modules={course.modules.length} videos={totalVideos} pdfs={totalPdfs}
+              />
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Body ── */}
-      <div className='max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
-        <div className='flex gap-8 items-start'>
-
-          {/* Left column */}
-          <div className='flex-1 min-w-0 space-y-6'>
 
             {/* Description */}
             {course.description && (
-              <div className='bg-white rounded-2xl shadow-sm px-6 py-5'>
-                <h2 className='text-base font-bold text-foreground mb-3'>About this course</h2>
+              <div className='bg-white rounded-2xl shadow-sm px-7 py-5'>
+                <h2 className='text-sm font-bold text-foreground mb-3'>About this course</h2>
                 <p
                   ref={descRef}
                   className={`text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap ${descExpanded ? '' : 'line-clamp-4'}`}
@@ -233,7 +186,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
                 {(descOverflows || descExpanded) && (
                   <button onClick={() => setDescExpanded(!descExpanded)}
                     className='mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline'>
-                    {descExpanded ? <><ChevronUp size={13} /> Show less</> : <><ChevronDown size={13} /> Read more</>}
+                    {descExpanded ? <><ChevronUp size={12} /> Show less</> : <><ChevronDown size={12} /> Read more</>}
                   </button>
                 )}
               </div>
@@ -242,10 +195,10 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
             {/* Curriculum */}
             {course.modules.length > 0 && (
               <div className='bg-white rounded-2xl shadow-sm overflow-hidden'>
-                <div className='px-6 py-4 border-b border-black/[0.06]'>
-                  <h2 className='text-base font-bold text-foreground'>Course curriculum</h2>
+                <div className='px-7 py-5 border-b border-black/[0.06]'>
+                  <h2 className='text-sm font-bold text-foreground'>Course curriculum</h2>
                   <p className='text-xs text-muted-foreground mt-0.5'>
-                    {course.modules.length} module{course.modules.length !== 1 ? 's' : ''} · {totalVideos + totalPdfs} resources
+                    {course.modules.length} modules · {totalVideos + totalPdfs} resources total
                   </p>
                 </div>
                 <div className='divide-y divide-black/[0.04]'>
@@ -253,7 +206,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
                     const videoCount = mod.videos.length;
                     const pdfCount   = mod.pdfs.length;
                     return (
-                      <div key={mod.id} className='flex items-start gap-4 px-6 py-4 hover:bg-secondary/40 transition-colors'>
+                      <div key={mod.id} className='flex items-start gap-4 px-7 py-4 hover:bg-[#F5F5F7] transition-colors'>
                         <div className='w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0 mt-0.5'>
                           {index + 1}
                         </div>
@@ -262,19 +215,19 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
                           {mod.description && (
                             <p className='text-xs text-muted-foreground mt-1 leading-relaxed'>{mod.description}</p>
                           )}
-                          <div className='flex items-center gap-3 mt-2'>
+                          <div className='flex items-center gap-2 mt-2'>
                             {videoCount > 0 && (
-                              <span className='inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-secondary px-2 py-1 rounded-lg'>
-                                <Play size={10} className='text-primary' /> {videoCount} video{videoCount !== 1 ? 's' : ''}
+                              <span className='inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-secondary px-2.5 py-1 rounded-lg'>
+                                <Play size={9} className='text-primary' /> {videoCount} video{videoCount !== 1 ? 's' : ''}
                               </span>
                             )}
                             {pdfCount > 0 && (
-                              <span className='inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-secondary px-2 py-1 rounded-lg'>
-                                <FileText size={10} className='text-primary' /> {pdfCount} PDF{pdfCount !== 1 ? 's' : ''}
+                              <span className='inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-secondary px-2.5 py-1 rounded-lg'>
+                                <FileText size={9} className='text-primary' /> {pdfCount} PDF{pdfCount !== 1 ? 's' : ''}
                               </span>
                             )}
                             {videoCount === 0 && pdfCount === 0 && (
-                              <span className='text-xs text-muted-foreground italic'>No resources yet</span>
+                              <span className='text-xs text-muted-foreground/60 italic'>No resources yet</span>
                             )}
                           </div>
                         </div>
@@ -286,15 +239,96 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
             )}
           </div>
 
-          {/* Right: sticky CTA — desktop, scrolls with page body */}
-          <div className='hidden lg:block w-80 shrink-0 sticky top-6'>
-            <CtaCard />
+          {/* ── Right: sticky CTA ── */}
+          <div className='hidden lg:block w-[320px] shrink-0 sticky top-[57px]'>
+            <CtaCard
+              isFree={isFree} isEnrolled={isEnrolled} enrolling={enrolling}
+              price={price} discountedPrice={discountedPrice}
+              discountActive={discountActive} discountPercent={course.discountPercent}
+              error={error} onEnroll={handleEnroll}
+              onContinue={() => router.push(`/learning/${courseId}`)}
+              modules={course.modules.length} videos={totalVideos} pdfs={totalPdfs}
+            />
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
 
-        {/* Mobile CTA — below content */}
-        <div className='lg:hidden mt-6'>
-          <CtaCard />
+// ── CTA card ──────────────────────────────────────────────────────────────────
+
+function CtaCard({
+  isFree, isEnrolled, enrolling,
+  price, discountedPrice, discountActive, discountPercent,
+  error, onEnroll, onContinue,
+  modules, videos, pdfs,
+}: {
+  isFree: boolean; isEnrolled: boolean; enrolling: boolean;
+  price: number; discountedPrice: number; discountActive: boolean; discountPercent: number;
+  error: string | null; onEnroll: () => void; onContinue: () => void;
+  modules: number; videos: number; pdfs: number;
+}) {
+  return (
+    <div className='bg-white rounded-2xl shadow-sm overflow-hidden'>
+      <div className='p-6 space-y-5'>
+
+        {/* Price */}
+        {!isEnrolled && (
+          <div>
+            {isFree ? (
+              <div className='text-3xl font-bold text-primary'>Free</div>
+            ) : (
+              <div>
+                <div className='text-3xl font-bold text-foreground'>UGX {discountedPrice.toLocaleString()}</div>
+                {discountActive && (
+                  <div className='flex items-center gap-2 mt-1'>
+                    <span className='text-sm text-muted-foreground line-through'>UGX {price.toLocaleString()}</span>
+                    <span className='text-xs font-bold px-2 py-0.5 bg-red-50 text-red-600 rounded-full'>-{discountPercent}%</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* CTA button */}
+        {isEnrolled ? (
+          <div className='space-y-3'>
+            <p className='flex items-center gap-1.5 text-sm font-semibold text-primary'>
+              <CheckCircle2 size={14} /> You&apos;re enrolled
+            </p>
+            <button onClick={onContinue}
+              className='w-full flex items-center justify-center gap-2 py-3.5 bg-primary text-primary-foreground font-bold text-sm rounded-xl hover:bg-primary/90 transition-colors'>
+              <Play size={15} /> Continue Learning
+            </button>
+          </div>
+        ) : (
+          <div className='space-y-2'>
+            <button onClick={onEnroll} disabled={enrolling}
+              className='w-full flex items-center justify-center gap-2 py-3.5 bg-primary text-primary-foreground font-bold text-sm rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-60'>
+              {enrolling
+                ? <><Loader2 size={15} className='animate-spin' /> Enrolling…</>
+                : <><GraduationCap size={15} /> {isFree ? 'Enroll for Free' : 'Enroll Now'}</>}
+            </button>
+            {error && <p className='text-xs text-destructive text-center pt-1'>{error}</p>}
+          </div>
+        )}
+
+        {/* Includes list */}
+        <div className='space-y-2.5 pt-4 border-t border-black/[0.06]'>
+          <p className='text-[10px] font-bold text-muted-foreground uppercase tracking-wider'>This course includes</p>
+          {[
+            { icon: BookOpen,      text: `${modules} module${modules !== 1 ? 's' : ''}` },
+            { icon: Play,          text: `${videos} video${videos !== 1 ? 's' : ''}` },
+            { icon: FileText,      text: `${pdfs} PDF resource${pdfs !== 1 ? 's' : ''}` },
+            { icon: Clock,         text: 'Self-paced learning' },
+            { icon: GraduationCap, text: 'Certificate on completion' },
+          ].map(({ icon: Icon, text }) => (
+            <div key={text} className='flex items-center gap-2.5 text-sm text-muted-foreground'>
+              <Icon size={13} className='text-primary shrink-0' /> {text}
+            </div>
+          ))}
         </div>
       </div>
     </div>
