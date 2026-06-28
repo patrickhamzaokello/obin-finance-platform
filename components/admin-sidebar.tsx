@@ -43,10 +43,10 @@ export default function AdminSidebar() {
             <Link
               key={href}
               href={href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded text-sm font-semibold transition-colors ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
                 active
-                  ? 'bg-primary/8 text-primary border-l-[3px] border-l-primary pl-[9px]'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-secondary border-l-[3px] border-l-transparent'
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
               }`}
             >
               <Icon size={16} className='shrink-0' />

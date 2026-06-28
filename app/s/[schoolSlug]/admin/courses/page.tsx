@@ -122,6 +122,25 @@ export default function CoursesList() {
                 {course.instructor && (
                   <p className="text-xs text-muted-foreground mt-2">By {course.instructor}</p>
                 )}
+                <div className="mt-2 flex items-center gap-2">
+                  {(course.price ?? 0) === 0 ? (
+                    <span className="text-xs font-semibold text-primary">Free</span>
+                  ) : (
+                    <>
+                      <span className="text-xs font-semibold text-foreground">
+                        UGX {(course.discountActive && (course.discountPercent ?? 0) > 0
+                          ? Math.round((course.price ?? 0) * (1 - (course.discountPercent ?? 0) / 100))
+                          : (course.price ?? 0)
+                        ).toLocaleString()}
+                      </span>
+                      {course.discountActive && (course.discountPercent ?? 0) > 0 && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 bg-red-50 text-red-600 rounded-full">
+                          -{course.discountPercent}% off
+                        </span>
+                      )}
+                    </>
+                  )}
+                </div>
                 <div className="mt-4 flex gap-2">
                   <Link
                     href={`/admin/courses/${course.id}`}

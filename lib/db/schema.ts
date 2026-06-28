@@ -59,24 +59,28 @@ export const schoolMember = pgTable('school_member', {
 });
 
 export const school = pgTable('school', {
-  id:        text('id').primaryKey(),
-  slug:      text('slug').notNull().unique(),   // used as the S3 folder prefix
-  name:      text('name').notNull(),
-  logoUrl:   text('logoUrl'),
-  createdAt: timestamp('createdAt').notNull().defaultNow(),
-  updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+  id:                text('id').primaryKey(),
+  slug:              text('slug').notNull().unique(),
+  name:              text('name').notNull(),
+  logoUrl:           text('logoUrl'),
+  commissionPercent: integer('commissionPercent').notNull().default(0), // % platform takes per enrollment
+  createdAt:         timestamp('createdAt').notNull().defaultNow(),
+  updatedAt:         timestamp('updatedAt').notNull().defaultNow(),
 });
 
 export const course = pgTable('course', {
-  id:          text('id').primaryKey(),
-  schoolId:    text('schoolId'),               // nullable for backward compat with existing rows
-  title:       text('title').notNull(),
-  description: text('description'),
-  thumbnail:   text('thumbnail'),
-  instructor:  text('instructor'),
-  isPublished: boolean('isPublished').notNull().default(false),
-  createdAt:   timestamp('createdAt').notNull().defaultNow(),
-  updatedAt:   timestamp('updatedAt').notNull().defaultNow(),
+  id:              text('id').primaryKey(),
+  schoolId:        text('schoolId'),
+  title:           text('title').notNull(),
+  description:     text('description'),
+  thumbnail:       text('thumbnail'),
+  instructor:      text('instructor'),
+  isPublished:     boolean('isPublished').notNull().default(false),
+  price:           integer('price').default(0),           // UGX, 0 = free
+  discountPercent: integer('discountPercent').default(0), // 0–100
+  discountActive:  boolean('discountActive').notNull().default(false),
+  createdAt:       timestamp('createdAt').notNull().defaultNow(),
+  updatedAt:       timestamp('updatedAt').notNull().defaultNow(),
 });
 
 export const module = pgTable('module', {
@@ -114,11 +118,13 @@ export const pdf = pgTable('pdf', {
 export const courseEnrollment = pgTable(
   'course_enrollment',
   {
-    id: text('id').primaryKey(),
-    userId: text('userId').notNull(),
-    courseId: text('courseId').notNull(),
-    enrolledAt: timestamp('enrolledAt').notNull().defaultNow(),
-    completedAt: timestamp('completedAt'),
+    id:                  text('id').primaryKey(),
+    userId:              text('userId').notNull(),
+    courseId:            text('courseId').notNull(),
+    enrolledAt:          timestamp('enrolledAt').notNull().defaultNow(),
+    completedAt:         timestamp('completedAt'),
+    priceAtEnrollment:   integer('priceAtEnrollment').notNull().default(0), // effective price when enrolled
+    platformFee:         integer('platformFee').notNull().default(0),       // platform's cut (UGX)
   },
   (table) => [unique('unique_user_course').on(table.userId, table.courseId)]
 );

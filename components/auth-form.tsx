@@ -10,11 +10,11 @@ import { Label } from '@/components/ui/label'
 interface AuthFormProps {
   mode: 'sign-in' | 'sign-up'
   redirectTo?: string
-  // When set, shows school branding and the sign-in/sign-up toggle links use these hrefs
   signInHref?: string
   signUpHref?: string
-  // Hide the toggle link (platform admin sign-in has no self-service sign-up)
   hideToggle?: boolean
+  /** Called after a successful auth before redirecting. Use for side-effects like joining a school. */
+  onSuccess?: () => Promise<void>
 }
 
 export function AuthForm({
@@ -23,6 +23,7 @@ export function AuthForm({
   signInHref = '/sign-in',
   signUpHref = '/sign-up',
   hideToggle = false,
+  onSuccess,
 }: AuthFormProps) {
   const [name, setName]         = useState('')
   const [email, setEmail]       = useState('')
@@ -41,12 +42,13 @@ export function AuthForm({
       ? await authClient.signUp.email({ email, password, name })
       : await authClient.signIn.email({ email, password })
 
-    setLoading(false)
-
     if (error) {
+      setLoading(false)
       setError(error.message ?? 'Something went wrong')
       return
     }
+
+    if (onSuccess) await onSuccess()
 
     // Full page navigation ensures the fresh session cookie is sent with the next request.
     window.location.href = redirectTo

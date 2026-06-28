@@ -10,7 +10,7 @@ export default function UsersList() {
 
   useEffect(() => {
     getAllUsers().then((r) => {
-      if (r.success) setUsers(r.data);
+      if (r.success && r.data) setUsers(r.data);
       setLoading(false);
     });
   }, []);

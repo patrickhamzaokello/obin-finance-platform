@@ -1,8 +1,8 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { course, module, video, pdf, user, school, schoolMember } from '@/lib/db/schema';
-import { eq, desc, and } from 'drizzle-orm';
+import { course, module, video, pdf, user, school, schoolMember, courseAccessCode, courseEnrollment } from '@/lib/db/schema';
+import { eq, desc, and, isNotNull } from 'drizzle-orm';
 import { isYouTubeUrl, extractYouTubeId } from '@/lib/video-url';
 import { revalidatePath } from 'next/cache';
 import { getCurrentSchool, isPlatformOwner, requirePlatformOwner } from '@/lib/school-context';
@@ -50,6 +50,9 @@ export async function createCourse(data: {
   thumbnail?: string;
   instructor?: string;
   schoolId?: string | null;
+  price?: number;
+  discountPercent?: number;
+  discountActive?: boolean;
   }) {
   try {
     await isSchoolAdmin();
@@ -80,6 +83,9 @@ export async function updateCourse(
     instructor?: string;
     isPublished?: boolean;
     schoolId?: string | null;
+    price?: number;
+    discountPercent?: number;
+    discountActive?: boolean;
   }
 ) {
   try {
@@ -360,12 +366,15 @@ export async function getSchools() {
   }
 }
 
-export async function createSchool(data: { name: string; slug: string; logoUrl?: string }) {
+export async function createSchool(data: { name: string; slug: string; logoUrl?: string; commissionPercent?: number }) {
   try {
     await requirePlatformOwner();
     const slug = data.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-');
     const id   = `school-${Date.now()}`;
-    await db.insert(school).values({ id, slug, name: data.name, logoUrl: data.logoUrl || null });
+    await db.insert(school).values({
+      id, slug, name: data.name, logoUrl: data.logoUrl || null,
+      commissionPercent: Math.min(100, Math.max(0, data.commissionPercent ?? 0)),
+    });
     revalidatePath('/admin/schools');
     return { success: true, data: { id, slug, name: data.name } };
   } catch (error) {
@@ -373,13 +382,14 @@ export async function createSchool(data: { name: string; slug: string; logoUrl?:
   }
 }
 
-export async function updateSchool(schoolId: string, data: { name?: string; slug?: string; logoUrl?: string }) {
+export async function updateSchool(schoolId: string, data: { name?: string; slug?: string; logoUrl?: string; commissionPercent?: number }) {
   try {
     await requirePlatformOwner();
     const updates: any = { updatedAt: new Date() };
     if (data.name)    updates.name    = data.name;
     if (data.slug)    updates.slug    = data.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-');
     if (data.logoUrl !== undefined) updates.logoUrl = data.logoUrl;
+    if (data.commissionPercent !== undefined) updates.commissionPercent = Math.min(100, Math.max(0, data.commissionPercent));
     await db.update(school).set(updates).where(eq(school.id, schoolId));
     revalidatePath('/admin/schools');
     return { success: true };
@@ -395,6 +405,80 @@ export async function deleteSchool(schoolId: string) {
     revalidatePath('/admin/schools');
     return { success: true };
   } catch (error) {
+    return { success: false, error: String(error) };
+  }
+}
+
+/** Platform-owner only: full access-code activation report across all schools. */
+export async function getRevenueReport() {
+  try {
+    await requirePlatformOwner();
+
+    // All activated access codes joined with course, school, and the learner user
+    const rows = await db
+      .select({
+        codeId:          courseAccessCode.id,
+        code:            courseAccessCode.code,
+        label:           courseAccessCode.label,
+        usedAt:          courseAccessCode.usedAt,
+        accessExpiresAt: courseAccessCode.accessExpiresAt,
+        courseId:        course.id,
+        courseTitle:     course.title,
+        coursePrice:     course.price,
+        discountPercent: course.discountPercent,
+        discountActive:  course.discountActive,
+        schoolId:        school.id,
+        schoolName:      school.name,
+        schoolSlug:      school.slug,
+        learnerId:       user.id,
+        learnerName:     user.name,
+        learnerEmail:    user.email,
+      })
+      .from(courseAccessCode)
+      .innerJoin(course, eq(courseAccessCode.courseId, course.id))
+      .innerJoin(school, eq(course.schoolId, school.id))
+      .innerJoin(user, eq(courseAccessCode.usedBy, user.id))
+      .where(isNotNull(courseAccessCode.usedBy))
+      .orderBy(desc(courseAccessCode.usedAt));
+
+    return { success: true, data: rows };
+  } catch (error) {
+    console.error('Error fetching revenue report:', error);
+    return { success: false, error: String(error) };
+  }
+}
+
+/** Platform-owner only: earnings from enrollment commissions. */
+export async function getEarningsReport() {
+  try {
+    await requirePlatformOwner();
+
+    const rows = await db
+      .select({
+        enrollmentId:      courseEnrollment.id,
+        enrolledAt:        courseEnrollment.enrolledAt,
+        priceAtEnrollment: courseEnrollment.priceAtEnrollment,
+        platformFee:       courseEnrollment.platformFee,
+        courseId:          course.id,
+        courseTitle:       course.title,
+        schoolId:          school.id,
+        schoolName:        school.name,
+        schoolSlug:        school.slug,
+        commissionPercent: school.commissionPercent,
+        learnerId:         user.id,
+        learnerName:       user.name,
+        learnerEmail:      user.email,
+      })
+      .from(courseEnrollment)
+      .innerJoin(course, eq(courseEnrollment.courseId, course.id))
+      .innerJoin(school, eq(course.schoolId, school.id))
+      .innerJoin(user, eq(courseEnrollment.userId, user.id))
+      .where(isNotNull(course.schoolId))
+      .orderBy(desc(courseEnrollment.enrolledAt));
+
+    return { success: true, data: rows };
+  } catch (error) {
+    console.error('Error fetching earnings report:', error);
     return { success: false, error: String(error) };
   }
 }

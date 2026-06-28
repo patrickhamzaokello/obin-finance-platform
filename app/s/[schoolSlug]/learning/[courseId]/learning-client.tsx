@@ -71,7 +71,7 @@ export default function LearningClient({ courseId }: { courseId: string }) {
         setCompletedModules(done);
 
         if (progressResult.data.length > 0) {
-          const last = progressResult.data[progressResult.data.length - 1];
+          const last = progressResult.data[0]; // ordered by updatedAt DESC — first is most recent
           setCurrentModuleId(last.moduleId);
           setExpandedModules(new Set([last.moduleId]));
           if (last.videoId) { setCurrentType('video'); setCurrentContentId(last.videoId); }
@@ -314,6 +314,9 @@ export default function LearningClient({ courseId }: { courseId: string }) {
                       <div className="flex-1 min-w-0">
                         <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Module {index + 1}</p>
                         <p className={`text-sm font-semibold leading-snug truncate ${isActive ? 'text-primary' : 'text-foreground'}`}>{mod.title}</p>
+                        {mod.description && (
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2 leading-relaxed">{mod.description}</p>
+                        )}
                         <p className="text-xs text-muted-foreground mt-0.5">{itemCount} lesson{itemCount !== 1 ? 's' : ''}</p>
                       </div>
                       <div className="flex items-center gap-1.5 mt-1 shrink-0">

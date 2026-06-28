@@ -1,60 +1,70 @@
 import type { Metadata } from 'next';
 export const metadata: Metadata = { title: 'Platform Overview' };
 
+import { getEarningsReport } from '@/app/actions/admin';
 import { db } from '@/lib/db';
-import { school, user, schoolMember, courseEnrollment, course } from '@/lib/db/schema';
+import { school, user, courseEnrollment, course } from '@/lib/db/schema';
 import { sql } from 'drizzle-orm';
-import { Building2, Users, BookOpen, GraduationCap } from 'lucide-react';
+import { Building2, Users, BookOpen, GraduationCap, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
+import { EarningsDashboard } from './earnings-dashboard';
 
 export default async function PlatformDashboard() {
-  const [schools, totalUsers, totalCourses, totalEnrollments] = await Promise.all([
+  const [schools, totalUsers, totalCourses, totalEnrollments, earningsResult] = await Promise.all([
     db.select().from(school).orderBy(school.createdAt),
     db.select({ count: sql<number>`count(*)` }).from(user),
     db.select({ count: sql<number>`count(*)` }).from(course),
     db.select({ count: sql<number>`count(*)` }).from(courseEnrollment),
+    getEarningsReport(),
   ]);
 
+  const earningsRows = earningsResult.success && earningsResult.data ? earningsResult.data : [];
+  const totalEarnings = earningsRows.reduce((s, r) => s + (r.platformFee ?? 0), 0);
+
   const stats = [
-    { label: 'Schools',     value: schools.length,                   icon: Building2 },
-    { label: 'Users',       value: Number(totalUsers[0]?.count ?? 0), icon: Users },
-    { label: 'Courses',     value: Number(totalCourses[0]?.count ?? 0), icon: BookOpen },
-    { label: 'Enrollments', value: Number(totalEnrollments[0]?.count ?? 0), icon: GraduationCap },
+    { label: 'Schools',     value: schools.length,                        icon: Building2,   color: 'bg-blue-50 text-blue-600' },
+    { label: 'Users',       value: Number(totalUsers[0]?.count ?? 0),     icon: Users,       color: 'bg-purple-50 text-purple-600' },
+    { label: 'Courses',     value: Number(totalCourses[0]?.count ?? 0),   icon: BookOpen,    color: 'bg-orange-50 text-orange-600' },
+    { label: 'Enrollments', value: Number(totalEnrollments[0]?.count ?? 0), icon: GraduationCap, color: 'bg-pink-50 text-pink-600' },
+    { label: 'My Earnings', value: `UGX ${totalEarnings.toLocaleString()}`, icon: TrendingUp, color: 'bg-green-50 text-green-600' },
   ];
 
   return (
-    <div className='px-8 py-8'>
-      <div className='mb-8'>
+    <div className='px-8 py-8 space-y-8'>
+      <div>
         <h1 className='text-2xl font-bold text-foreground'>Platform Overview</h1>
-        <p className='text-sm text-muted-foreground mt-1'>All schools and activity across the platform</p>
+        <p className='text-sm text-muted-foreground mt-1'>All schools and earnings across the platform</p>
       </div>
 
       {/* Stats */}
-      <div className='grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10'>
-        {stats.map(({ label, value, icon: Icon }) => (
+      <div className='grid grid-cols-2 lg:grid-cols-5 gap-4'>
+        {stats.map(({ label, value, icon: Icon, color }) => (
           <div key={label} className='bg-white rounded-2xl shadow-sm p-5'>
-            <div className='flex items-center justify-between mb-2'>
-              <p className='text-xs font-semibold text-muted-foreground uppercase tracking-wider'>{label}</p>
-              <Icon size={15} className='text-primary' />
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${color}`}>
+              <Icon size={16} />
             </div>
-            <p className='text-3xl font-bold text-foreground'>{value}</p>
+            <p className='text-xl font-bold text-foreground'>{value}</p>
+            <p className='text-xs text-muted-foreground mt-0.5'>{label}</p>
           </div>
         ))}
       </div>
+
+      {/* Earnings dashboard (client — monthly chart + per-school table) */}
+      <EarningsDashboard rows={earningsRows} />
 
       {/* Schools list */}
       <div className='bg-white rounded-2xl shadow-sm overflow-hidden'>
         <div className='px-6 py-4 border-b border-black/[0.06] flex items-center justify-between'>
           <h2 className='text-sm font-semibold text-foreground'>Schools</h2>
-          <Link href='/platform/admin/schools/new'
+          <Link href='/platform/admin/schools'
             className='inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:bg-primary/90 transition-colors'
           >
-            + Add school
+            Manage schools
           </Link>
         </div>
         {schools.length === 0 ? (
           <div className='px-6 py-12 text-center text-muted-foreground text-sm'>
-            No schools yet. <Link href='/platform/admin/schools/new' className='text-primary underline'>Create the first one.</Link>
+            No schools yet. <Link href='/platform/admin/schools' className='text-primary underline'>Create the first one.</Link>
           </div>
         ) : (
           <table className='w-full text-sm'>
@@ -62,27 +72,28 @@ export default async function PlatformDashboard() {
               <tr>
                 <th className='px-6 py-3 text-left'>School</th>
                 <th className='px-6 py-3 text-left'>Slug</th>
-                <th className='px-6 py-3 text-left'>Created</th>
+                <th className='px-6 py-3 text-left'>Commission</th>
+                <th className='px-6 py-3 text-left'>My Earnings</th>
                 <th className='px-6 py-3 text-left'></th>
               </tr>
             </thead>
             <tbody className='divide-y divide-border'>
-              {schools.map((s) => (
-                <tr key={s.id} className='hover:bg-secondary/40 transition-colors'>
-                  <td className='px-6 py-4 font-medium text-foreground'>{s.name}</td>
-                  <td className='px-6 py-4 text-muted-foreground font-mono text-xs'>{s.slug}</td>
-                  <td className='px-6 py-4 text-muted-foreground'>
-                    {new Date(s.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className='px-6 py-4 text-right'>
-                    <Link href={`/platform/admin/schools/${s.id}`}
-                      className='text-primary text-xs font-semibold hover:underline'
-                    >
-                      Manage →
-                    </Link>
-                  </td>
-                </tr>
-              ))}
+              {schools.map((s) => {
+                const schoolEarnings = earningsRows.filter((r) => r.schoolId === s.id).reduce((sum, r) => sum + (r.platformFee ?? 0), 0);
+                return (
+                  <tr key={s.id} className='hover:bg-secondary/40 transition-colors'>
+                    <td className='px-6 py-4 font-medium text-foreground'>{s.name}</td>
+                    <td className='px-6 py-4 text-muted-foreground font-mono text-xs'>{s.slug}</td>
+                    <td className='px-6 py-4 text-muted-foreground'>{s.commissionPercent ?? 0}%</td>
+                    <td className='px-6 py-4 font-semibold text-foreground'>UGX {schoolEarnings.toLocaleString()}</td>
+                    <td className='px-6 py-4 text-right'>
+                      <Link href={`/platform/admin/schools/${s.id}`} className='text-primary text-xs font-semibold hover:underline'>
+                        Manage →
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}

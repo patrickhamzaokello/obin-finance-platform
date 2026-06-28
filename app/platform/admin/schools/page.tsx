@@ -8,11 +8,12 @@ import Link from 'next/link';
 export default function PlatformSchoolsPage() {
   const [schools, setSchools]   = useState<any[]>([]);
   const [loading, setLoading]   = useState(true);
-  const [creating, setCreating] = useState(false);
-  const [name, setName]         = useState('');
-  const [slug, setSlug]         = useState('');
-  const [showForm, setShowForm] = useState(false);
-  const [error, setError]       = useState('');
+  const [creating, setCreating]       = useState(false);
+  const [name, setName]               = useState('');
+  const [slug, setSlug]               = useState('');
+  const [commission, setCommission]   = useState(0);
+  const [showForm, setShowForm]       = useState(false);
+  const [error, setError]             = useState('');
 
   useEffect(() => {
     getSchools().then((r) => {
@@ -25,11 +26,11 @@ export default function PlatformSchoolsPage() {
     if (!name.trim() || !slug.trim()) { setError('Name and slug are required'); return; }
     setCreating(true);
     setError('');
-    const r = await createSchool({ name: name.trim(), slug: slug.trim() });
+    const r = await createSchool({ name: name.trim(), slug: slug.trim(), commissionPercent: commission });
     setCreating(false);
     if (r.success) {
       setSchools((prev) => [...prev, r.data]);
-      setName(''); setSlug(''); setShowForm(false);
+      setName(''); setSlug(''); setCommission(0); setShowForm(false);
     } else {
       setError((r as any).error || 'Failed to create school');
     }
@@ -69,6 +70,16 @@ export default function PlatformSchoolsPage() {
               <input value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                 className={inputCls} placeholder='URL slug (e.g. obin)' />
               <span className='text-xs text-muted-foreground whitespace-nowrap'>.platform.com</span>
+            </div>
+            <div>
+              <label className='block text-xs font-semibold text-muted-foreground mb-1'>Platform commission (%)</label>
+              <div className='relative'>
+                <input type='number' min='0' max='100' step='1' value={commission}
+                  onChange={(e) => setCommission(Math.min(100, Math.max(0, Number(e.target.value))))}
+                  className={`${inputCls} pr-8`} placeholder='e.g. 10' />
+                <span className='absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground'>%</span>
+              </div>
+              <p className='text-[10px] text-muted-foreground mt-1'>% of each course enrollment price you keep as platform fee</p>
             </div>
           </div>
           {error && <p className='text-xs text-destructive'>{error}</p>}

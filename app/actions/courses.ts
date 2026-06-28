@@ -2,8 +2,8 @@
 
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { course, courseEnrollment, module, video, pdf, userProgress } from '@/lib/db/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { course, courseEnrollment, module, video, pdf, userProgress, schoolMember, school } from '@/lib/db/schema';
+import { eq, and, desc, count, inArray } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { getCurrentSchool } from '@/lib/school-context';
@@ -145,10 +145,27 @@ export async function enrollCourse(courseId: string) {
       return { success: false, error: 'You are already enrolled in this course' };
     }
 
+    // Snapshot effective price and platform fee at time of enrollment
+    const c = courseData[0];
+    const rawPrice = c.price ?? 0;
+    const effectivePrice = (c.discountActive && (c.discountPercent ?? 0) > 0)
+      ? Math.round(rawPrice * (1 - (c.discountPercent ?? 0) / 100))
+      : rawPrice;
+
+    let platformFee = 0;
+    if (effectivePrice > 0 && c.schoolId) {
+      const schoolRows = await db.select({ commissionPercent: school.commissionPercent }).from(school).where(eq(school.id, c.schoolId)).limit(1);
+      if (schoolRows.length) {
+        platformFee = Math.round(effectivePrice * (schoolRows[0].commissionPercent ?? 0) / 100);
+      }
+    }
+
     await db.insert(courseEnrollment).values({
       id: `enrollment-${Date.now()}`,
       userId,
       courseId,
+      priceAtEnrollment: effectivePrice,
+      platformFee,
     });
 
     revalidatePath('/dashboard');
@@ -168,20 +185,39 @@ export async function getUserEnrolledCourses() {
       .from(courseEnrollment)
       .where(eq(courseEnrollment.userId, userId));
 
-    if (!enrollments.length) {
-      return { success: true, data: [] };
-    }
+    if (!enrollments.length) return { success: true, data: [] };
 
     const courseIds = enrollments.map((e) => e.courseId);
-    const courses = await db.select().from(course).where((c) => {
-      const conditions: any[] = [];
-      courseIds.forEach((id) => {
-        conditions.push(eq(c.id, id));
-      });
-      return conditions.length > 1 ? conditions.reduce((a, b) => ({ or: [a, b] }) as any) : conditions[0];
-    });
 
-    return { success: true, data: courses };
+    const [courses, moduleCounts, completedCounts] = await Promise.all([
+      db.select().from(course).where(inArray(course.id, courseIds)),
+      db
+        .select({ courseId: module.courseId, total: count() })
+        .from(module)
+        .where(inArray(module.courseId, courseIds))
+        .groupBy(module.courseId),
+      db
+        .select({ courseId: userProgress.courseId, done: count() })
+        .from(userProgress)
+        .where(and(
+          eq(userProgress.userId, userId),
+          inArray(userProgress.courseId, courseIds),
+          eq(userProgress.isModuleCompleted, true),
+        ))
+        .groupBy(userProgress.courseId),
+    ]);
+
+    const totalMap    = Object.fromEntries(moduleCounts.map((r) => [r.courseId, Number(r.total)]));
+    const completedMap = Object.fromEntries(completedCounts.map((r) => [r.courseId, Number(r.done)]));
+
+    return {
+      success: true,
+      data: courses.map((c) => ({
+        ...c,
+        moduleCount:          totalMap[c.id]     ?? 0,
+        completedModuleCount: completedMap[c.id] ?? 0,
+      })),
+    };
   } catch (error) {
     console.error('Error fetching enrolled courses:', error);
     return { success: false, error: 'Failed to fetch enrolled courses' };
@@ -238,7 +274,8 @@ export async function getUserProgress(courseId: string) {
     const progress = await db
       .select()
       .from(userProgress)
-      .where(and(eq(userProgress.userId, session.user.id), eq(userProgress.courseId, courseId)));
+      .where(and(eq(userProgress.userId, session.user.id), eq(userProgress.courseId, courseId)))
+      .orderBy(desc(userProgress.updatedAt));
 
     return { success: true, data: progress };
   } catch (error) {
@@ -278,5 +315,38 @@ export async function markModuleComplete(courseId: string, moduleId: string) {
   } catch (error) {
     console.error('Error marking module complete:', error);
     return { success: false, error: 'Failed to mark module complete' };
+  }
+}
+
+/** Upsert a schoolMember row for the current user on the current school subdomain.
+ *  Called client-side after a successful sign-up so the user appears in the admin members list. */
+export async function joinSchool() {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user) return { success: false, error: 'Not authenticated' };
+
+    const s = await getCurrentSchool();
+    if (!s) return { success: false, error: 'No school context' };
+
+    // Skip if already a member (userId is UNIQUE on schoolMember)
+    const existing = await db
+      .select({ id: schoolMember.id })
+      .from(schoolMember)
+      .where(eq(schoolMember.userId, session.user.id))
+      .limit(1);
+
+    if (existing.length) return { success: true };
+
+    await db.insert(schoolMember).values({
+      id:       `member-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      userId:   session.user.id,
+      schoolId: s.id,
+      role:     'learner',
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error joining school:', error);
+    return { success: false, error: 'Failed to join school' };
   }
 }

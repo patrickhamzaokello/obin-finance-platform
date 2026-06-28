@@ -147,20 +147,14 @@
   label { @apply text-sm font-medium text-foreground; }
 }
 
-/* ─── Signature card pattern ─────────────────────────────────────────────── */
-/* Use .card-accent for any card that should carry the left-border treatment  */
-.card-accent {
-  @apply bg-white border border-border border-l-[3px] border-l-primary rounded;
-}
-
 /* ─── Status badges ──────────────────────────────────────────────────────── */
 .badge-published {
-  @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-semibold
-         bg-primary/10 text-primary border border-primary/20;
+  @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold
+         bg-primary/10 text-primary;
 }
 .badge-draft {
-  @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-semibold
-         bg-muted text-muted-foreground border border-border;
+  @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold
+         bg-muted text-muted-foreground;
 }
 
 /* ─── Page section spacing ───────────────────────────────────────────────── */

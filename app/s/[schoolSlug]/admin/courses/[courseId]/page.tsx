@@ -8,14 +8,14 @@ import { FileOrUrlInput } from '@/components/file-or-url-input';
 import {
   getAdminCourse,
   createCourse, updateCourse, deleteCourse,
-  createModule, deleteModule,
+  createModule, updateModule, deleteModule,
   createVideo, deleteVideo,
   createPdf, deletePdf,
 } from '@/app/actions/admin';
 import { AccessCodesPanel } from './access-codes-panel';
 import {
-  ChevronDown, ChevronUp, Play, FileText, Plus, Trash2,
-  BookOpen, Check, AlertCircle, Video, Upload, Link2, ArrowLeft,
+  ChevronDown, ChevronUp, Play, FileText, Plus, Trash2, Pencil,
+  BookOpen, Check, AlertCircle, Video, Upload, Link2, ArrowLeft, Loader2,
 } from 'lucide-react';
 
 type Toast = { type: 'success' | 'error'; message: string; id: number };
@@ -77,14 +77,20 @@ export default function CourseEditor() {
         setLoading(false);
       });
     } else {
-      setCourse({ id: 'new', title: '', description: '', thumbnail: '', instructor: '', isPublished: false, modules: [] });
+      setCourse({ id: 'new', title: '', description: '', thumbnail: '', instructor: '', isPublished: false, price: 0, discountPercent: 0, discountActive: false, modules: [] });
     }
   }, [courseId, isNew]);
 
   const handleSaveCourse = async () => {
     if (!course?.title.trim()) { showToast('error', 'Course title is required'); return; }
     setSaving(true);
-    const data = { title: course.title, description: course.description, thumbnail: course.thumbnail, instructor: course.instructor, isPublished: course.isPublished };
+    const data = {
+      title: course.title, description: course.description, thumbnail: course.thumbnail,
+      instructor: course.instructor, isPublished: course.isPublished,
+      price: Number(course.price) || 0,
+      discountPercent: Math.min(100, Math.max(0, Number(course.discountPercent) || 0)),
+      discountActive: Boolean(course.discountActive),
+    };
     const result = isNew ? await createCourse(data) : await updateCourse(courseId, data);
     setSaving(false);
     if (result.success) {
@@ -175,6 +181,57 @@ export default function CourseEditor() {
                 <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">Instructor</label>
                 <input type="text" value={course.instructor} onChange={(e) => setCourse({ ...course, instructor: e.target.value })} className={inputCls} placeholder="Instructor name" />
               </div>
+
+              {/* Price */}
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">Price (UGX)</label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted-foreground">UGX</span>
+                  <input
+                    type="number" min="0" step="500"
+                    value={course.price ?? 0}
+                    onChange={(e) => setCourse({ ...course, price: Number(e.target.value) })}
+                    className={`${inputCls} pl-12`}
+                    placeholder="0"
+                  />
+                </div>
+                {(course.price ?? 0) === 0 && (
+                  <p className="text-[10px] text-muted-foreground mt-1">Set to 0 to mark the course as free</p>
+                )}
+              </div>
+
+              {/* Discount */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Discount</label>
+                  <button
+                    type="button"
+                    onClick={() => setCourse({ ...course, discountActive: !course.discountActive })}
+                    className={`relative w-9 h-5 rounded-full transition-colors duration-200 ${course.discountActive ? 'bg-primary' : 'bg-border'}`}
+                    role="switch" aria-checked={course.discountActive}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${course.discountActive ? 'translate-x-4' : ''}`} />
+                  </button>
+                </div>
+                {course.discountActive && (
+                  <div className="relative">
+                    <input
+                      type="number" min="1" max="100" step="1"
+                      value={course.discountPercent ?? 0}
+                      onChange={(e) => setCourse({ ...course, discountPercent: Math.min(100, Math.max(0, Number(e.target.value))) })}
+                      className={`${inputCls} pr-10`}
+                      placeholder="e.g. 20"
+                    />
+                    <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted-foreground">%</span>
+                  </div>
+                )}
+                {course.discountActive && (course.price ?? 0) > 0 && (course.discountPercent ?? 0) > 0 && (
+                  <p className="text-[10px] text-primary font-semibold">
+                    Discounted price: UGX {Math.round((course.price ?? 0) * (1 - (course.discountPercent ?? 0) / 100)).toLocaleString()}
+                  </p>
+                )}
+              </div>
+
               <FileOrUrlInput
                 value={course.thumbnail}
                 onChange={(value) => setCourse({ ...course, thumbnail: value })}
@@ -317,16 +374,35 @@ function ModuleCard({ module, index, schoolSlug, onDelete, onUpdate, showToast }
   onDelete: () => void; onUpdate: (m: any) => void;
   showToast: (t: 'success' | 'error', m: string) => void;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded]   = useState(false);
+  const [editing, setEditing]     = useState(false);
+  const [editTitle, setEditTitle] = useState(module.title ?? '');
+  const [editDesc, setEditDesc]   = useState(module.description ?? '');
+  const [saving, setSaving]       = useState(false);
   const videoCount = module.videos?.length || 0;
   const pdfCount   = module.pdfs?.length || 0;
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editTitle.trim()) return;
+    setSaving(true);
+    const r = await updateModule(module.id, { title: editTitle.trim(), description: editDesc.trim() || undefined });
+    setSaving(false);
+    if (r.success) {
+      onUpdate({ ...module, title: editTitle.trim(), description: editDesc.trim() || undefined });
+      setEditing(false);
+      showToast('success', 'Module updated');
+    } else {
+      showToast('error', 'Failed to update module');
+    }
+  };
 
   return (
     <div className={`bg-white rounded-2xl shadow-sm overflow-hidden transition-all duration-150 ${expanded ? 'ring-2 ring-primary/20' : ''}`}>
       <div
         role="button" tabIndex={0}
-        onClick={() => setExpanded(!expanded)}
-        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setExpanded(!expanded)}
+        onClick={() => { if (!editing) setExpanded(!expanded); }}
+        onKeyDown={(e) => !editing && (e.key === 'Enter' || e.key === ' ') && setExpanded(!expanded)}
         className="flex items-center gap-4 px-5 py-4 cursor-pointer select-none group"
       >
         <span className="shrink-0 w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">
@@ -334,13 +410,23 @@ function ModuleCard({ module, index, schoolSlug, onDelete, onUpdate, showToast }
         </span>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-foreground truncate">{module.title}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {videoCount === 0 && pdfCount === 0
-              ? 'No content yet'
-              : `${videoCount} video${videoCount !== 1 ? 's' : ''}${pdfCount > 0 ? ` · ${pdfCount} PDF${pdfCount !== 1 ? 's' : ''}` : ''}`}
-          </p>
+          {module.description
+            ? <p className="text-xs text-muted-foreground mt-0.5 truncate">{module.description}</p>
+            : <p className="text-xs text-muted-foreground mt-0.5">
+                {videoCount === 0 && pdfCount === 0
+                  ? 'No content yet'
+                  : `${videoCount} video${videoCount !== 1 ? 's' : ''}${pdfCount > 0 ? ` · ${pdfCount} PDF${pdfCount !== 1 ? 's' : ''}` : ''}`}
+              </p>
+          }
         </div>
         <div className="flex items-center gap-1 shrink-0">
+          <button
+            onClick={(e) => { e.stopPropagation(); setEditTitle(module.title ?? ''); setEditDesc(module.description ?? ''); setEditing(true); setExpanded(true); }}
+            className="p-2 text-muted-foreground hover:text-primary rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+            title="Edit module"
+          >
+            <Pencil size={13} />
+          </button>
           <button
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
             className="p-2 text-muted-foreground hover:text-destructive rounded-lg transition-colors opacity-0 group-hover:opacity-100"
@@ -350,6 +436,38 @@ function ModuleCard({ module, index, schoolSlug, onDelete, onUpdate, showToast }
           {expanded ? <ChevronUp size={15} className="text-muted-foreground" /> : <ChevronDown size={15} className="text-muted-foreground" />}
         </div>
       </div>
+
+      {editing && (
+        <form onSubmit={handleSave} onClick={(e) => e.stopPropagation()} className="border-t border-black/[0.04] px-5 py-4 space-y-3">
+          <div className="space-y-2">
+            <input
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              placeholder="Module title"
+              className="w-full px-3 py-2 text-sm border border-border rounded-xl focus:border-primary focus:outline-none bg-white"
+              required
+              autoFocus
+            />
+            <textarea
+              value={editDesc}
+              onChange={(e) => setEditDesc(e.target.value)}
+              placeholder="Module description (optional) — shown to learners"
+              rows={2}
+              className="w-full px-3 py-2 text-sm border border-border rounded-xl focus:border-primary focus:outline-none bg-white resize-none"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <button type="submit" disabled={saving || !editTitle.trim()}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:bg-primary/90 disabled:opacity-60 transition-colors">
+              {saving ? <><Loader2 size={12} className="animate-spin" /> Saving…</> : 'Save changes'}
+            </button>
+            <button type="button" onClick={() => setEditing(false)}
+              className="px-3.5 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground border border-border rounded-lg hover:bg-secondary transition-colors">
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
 
       {expanded && (
         <div className="border-t border-black/[0.04]">
