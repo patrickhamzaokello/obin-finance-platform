@@ -512,35 +512,55 @@ function AddVideoForm({ moduleId, schoolSlug, onAdd, onCancel, showToast }: {
   onAdd: (v: any) => void; onCancel: () => void;
   showToast: (t: 'success' | 'error', m: string) => void;
 }) {
-  const [title, setTitle]           = useState('');
-  const [source, setSource]         = useState<'youtube' | 'upload'>('youtube');
-  const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [title, setTitle]             = useState('');
+  const [source, setSource]           = useState<'youtube' | 'upload'>('youtube');
+  const [youtubeUrl, setYoutubeUrl]   = useState('');
   const [uploadedUrl, setUploadedUrl] = useState('');
-  const [progress, setProgress]     = useState(0);
-  const [uploading, setUploading]   = useState(false);
-  const [busy, setBusy]             = useState(false);
+  const [progress, setProgress]       = useState(0);
+  const [uploading, setUploading]     = useState(false);
+  const [busy, setBusy]               = useState(false);
+  const titleRef                      = useRef<HTMLInputElement>(null);
+  // Track pending auto-save URL so we can trigger submit after title is filled
+  const pendingUrl                    = useRef<string>('');
+
+  const saveToDb = async (resolvedTitle: string, url: string) => {
+    setBusy(true);
+    const result = await createVideo(moduleId, { title: resolvedTitle, url, order: 999 });
+    setBusy(false);
+    if (result.success) onAdd(result.data);
+    else showToast('error', (result as any).error || 'Failed to save video');
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
     setProgress(0);
+    // Pre-fill title from filename (strip extension)
+    const autoTitle = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+    if (!title.trim()) setTitle(autoTitle);
     const result = await uploadToBlob(file, 'video', schoolSlug, setProgress);
     setUploading(false);
-    if (result.success) { setUploadedUrl(result.url); showToast('success', 'Uploaded — click "Add Video"'); }
-    else showToast('error', result.error);
     e.target.value = '';
+    if (!result.success) { showToast('error', result.error); return; }
+    // Auto-save: use current title or the auto-filled one
+    const resolvedTitle = title.trim() || autoTitle;
+    if (resolvedTitle) {
+      await saveToDb(resolvedTitle, result.url);
+    } else {
+      // Title still empty — store url and focus title so user can complete
+      setUploadedUrl(result.url);
+      pendingUrl.current = result.url;
+      setTimeout(() => titleRef.current?.focus(), 50);
+      showToast('success', 'Upload done — enter a title and click Save');
+    }
   };
 
   const submit = async () => {
-    if (!title.trim()) { showToast('error', 'Video title is required'); return; }
-    const url = source === 'youtube' ? youtubeUrl.trim() : uploadedUrl;
+    if (!title.trim()) { showToast('error', 'Video title is required'); titleRef.current?.focus(); return; }
+    const url = source === 'youtube' ? youtubeUrl.trim() : (uploadedUrl || pendingUrl.current);
     if (!url) { showToast('error', source === 'youtube' ? 'Paste a YouTube URL' : 'Upload a video first'); return; }
-    setBusy(true);
-    const result = await createVideo(moduleId, { title: title.trim(), url, order: 999 });
-    setBusy(false);
-    if (result.success) onAdd(result.data);
-    else showToast('error', (result as any).error || 'Failed to add video');
+    await saveToDb(title.trim(), url);
   };
 
   return (
@@ -559,7 +579,7 @@ function AddVideoForm({ moduleId, schoolSlug, onAdd, onCancel, showToast }: {
       </div>
 
       <div className="p-4 space-y-3">
-        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className={inputCls}
+        <input ref={titleRef} type="text" value={title} onChange={(e) => setTitle(e.target.value)} className={inputCls}
           placeholder="Video title" autoFocus />
 
         {source === 'youtube' && (
@@ -585,10 +605,15 @@ function AddVideoForm({ moduleId, schoolSlug, onAdd, onCancel, showToast }: {
               <div className="flex items-center gap-3 px-3 py-2.5 bg-green-50 rounded-xl">
                 <Check size={14} className="text-green-600 shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-green-700">Uploaded</p>
+                  <p className="text-xs font-semibold text-green-700">Uploaded — add a title and click Save</p>
                   <p className="text-xs text-muted-foreground truncate mt-0.5">{uploadedUrl}</p>
                 </div>
-                <button onClick={() => setUploadedUrl('')} className="text-muted-foreground hover:text-foreground"><Trash2 size={12} /></button>
+                <button onClick={() => { setUploadedUrl(''); pendingUrl.current = ''; }} className="text-muted-foreground hover:text-foreground"><Trash2 size={12} /></button>
+              </div>
+            ) : busy ? (
+              <div className="flex items-center gap-2 px-3 py-2.5 bg-primary/5 rounded-xl">
+                <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin shrink-0" />
+                <p className="text-xs text-primary font-medium">Saving to course…</p>
               </div>
             ) : (
               <label htmlFor={`video-${moduleId}`}
@@ -596,7 +621,7 @@ function AddVideoForm({ moduleId, schoolSlug, onAdd, onCancel, showToast }: {
               >
                 <Upload size={20} className="text-muted-foreground" />
                 <span className="text-sm font-medium text-foreground">Click to choose a video</span>
-                <span className="text-xs text-muted-foreground">MP4, WebM, MOV</span>
+                <span className="text-xs text-muted-foreground">Uploads and saves automatically · MP4, WebM, MOV</span>
               </label>
             )}
           </div>
@@ -606,9 +631,9 @@ function AddVideoForm({ moduleId, schoolSlug, onAdd, onCancel, showToast }: {
           <button onClick={submit} disabled={busy || uploading}
             className="flex-1 py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-50 shadow-sm"
           >
-            {busy ? 'Saving…' : 'Add Video'}
+            {busy ? 'Saving…' : 'Save Video'}
           </button>
-          <button onClick={onCancel} className="px-4 py-2.5 bg-white text-muted-foreground text-sm font-semibold rounded-xl hover:bg-muted transition-colors">
+          <button onClick={onCancel} disabled={busy || uploading} className="px-4 py-2.5 bg-white text-muted-foreground text-sm font-semibold rounded-xl hover:bg-muted transition-colors disabled:opacity-40">
             Cancel
           </button>
         </div>
@@ -623,35 +648,51 @@ function AddPdfForm({ moduleId, schoolSlug, onAdd, onCancel, showToast }: {
   onAdd: (p: any) => void; onCancel: () => void;
   showToast: (t: 'success' | 'error', m: string) => void;
 }) {
-  const [title, setTitle]           = useState('');
-  const [source, setSource]         = useState<'url' | 'upload'>('url');
-  const [pdfUrl, setPdfUrl]         = useState('');
+  const [title, setTitle]             = useState('');
+  const [source, setSource]           = useState<'url' | 'upload'>('url');
+  const [pdfUrl, setPdfUrl]           = useState('');
   const [uploadedUrl, setUploadedUrl] = useState('');
-  const [progress, setProgress]     = useState(0);
-  const [uploading, setUploading]   = useState(false);
-  const [busy, setBusy]             = useState(false);
+  const [progress, setProgress]       = useState(0);
+  const [uploading, setUploading]     = useState(false);
+  const [busy, setBusy]               = useState(false);
+  const titleRef                      = useRef<HTMLInputElement>(null);
+  const pendingUrl                    = useRef<string>('');
+
+  const saveToDb = async (resolvedTitle: string, url: string) => {
+    setBusy(true);
+    const result = await createPdf(moduleId, { title: resolvedTitle, url, order: 999 });
+    setBusy(false);
+    if (result.success) onAdd(result.data);
+    else showToast('error', (result as any).error || 'Failed to save PDF');
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
     setProgress(0);
+    const autoTitle = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+    if (!title.trim()) setTitle(autoTitle);
     const result = await uploadToBlob(file, 'pdf', schoolSlug, setProgress);
     setUploading(false);
-    if (result.success) { setUploadedUrl(result.url); showToast('success', 'Uploaded — click "Add PDF"'); }
-    else showToast('error', result.error);
     e.target.value = '';
+    if (!result.success) { showToast('error', result.error); return; }
+    const resolvedTitle = title.trim() || autoTitle;
+    if (resolvedTitle) {
+      await saveToDb(resolvedTitle, result.url);
+    } else {
+      setUploadedUrl(result.url);
+      pendingUrl.current = result.url;
+      setTimeout(() => titleRef.current?.focus(), 50);
+      showToast('success', 'Upload done — enter a title and click Save');
+    }
   };
 
   const submit = async () => {
-    if (!title.trim()) { showToast('error', 'PDF title is required'); return; }
-    const url = source === 'url' ? pdfUrl.trim() : uploadedUrl;
+    if (!title.trim()) { showToast('error', 'PDF title is required'); titleRef.current?.focus(); return; }
+    const url = source === 'url' ? pdfUrl.trim() : (uploadedUrl || pendingUrl.current);
     if (!url) { showToast('error', source === 'url' ? 'Enter a URL' : 'Upload a PDF first'); return; }
-    setBusy(true);
-    const result = await createPdf(moduleId, { title: title.trim(), url, order: 999 });
-    setBusy(false);
-    if (result.success) onAdd(result.data);
-    else showToast('error', (result as any).error || 'Failed to add PDF');
+    await saveToDb(title.trim(), url);
   };
 
   return (
@@ -670,7 +711,7 @@ function AddPdfForm({ moduleId, schoolSlug, onAdd, onCancel, showToast }: {
       </div>
 
       <div className="p-4 space-y-3">
-        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className={inputCls}
+        <input ref={titleRef} type="text" value={title} onChange={(e) => setTitle(e.target.value)} className={inputCls}
           placeholder="PDF title" autoFocus />
 
         {source === 'url' && (
@@ -688,10 +729,15 @@ function AddPdfForm({ moduleId, schoolSlug, onAdd, onCancel, showToast }: {
               <div className="flex items-center gap-3 px-3 py-2.5 bg-green-50 rounded-xl">
                 <Check size={14} className="text-green-600 shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-green-700">Uploaded</p>
+                  <p className="text-xs font-semibold text-green-700">Uploaded — add a title and click Save</p>
                   <p className="text-xs text-muted-foreground truncate mt-0.5">{uploadedUrl}</p>
                 </div>
-                <button onClick={() => setUploadedUrl('')} className="text-muted-foreground hover:text-foreground"><Trash2 size={12} /></button>
+                <button onClick={() => { setUploadedUrl(''); pendingUrl.current = ''; }} className="text-muted-foreground hover:text-foreground"><Trash2 size={12} /></button>
+              </div>
+            ) : busy ? (
+              <div className="flex items-center gap-2 px-3 py-2.5 bg-primary/5 rounded-xl">
+                <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin shrink-0" />
+                <p className="text-xs text-primary font-medium">Saving to course…</p>
               </div>
             ) : (
               <label htmlFor={`pdf-${moduleId}`}
@@ -699,7 +745,7 @@ function AddPdfForm({ moduleId, schoolSlug, onAdd, onCancel, showToast }: {
               >
                 <Upload size={20} className="text-muted-foreground" />
                 <span className="text-sm font-medium text-foreground">Click to choose a PDF</span>
-                <span className="text-xs text-muted-foreground">PDF — max 50 MB</span>
+                <span className="text-xs text-muted-foreground">Uploads and saves automatically · PDF, max 50 MB</span>
               </label>
             )}
           </div>
@@ -709,9 +755,9 @@ function AddPdfForm({ moduleId, schoolSlug, onAdd, onCancel, showToast }: {
           <button onClick={submit} disabled={busy || uploading}
             className="flex-1 py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-50 shadow-sm"
           >
-            {busy ? 'Saving…' : 'Add PDF'}
+            {busy ? 'Saving…' : 'Save PDF'}
           </button>
-          <button onClick={onCancel} className="px-4 py-2.5 bg-white text-muted-foreground text-sm font-semibold rounded-xl hover:bg-muted transition-colors">
+          <button onClick={onCancel} disabled={busy || uploading} className="px-4 py-2.5 bg-white text-muted-foreground text-sm font-semibold rounded-xl hover:bg-muted transition-colors disabled:opacity-40">
             Cancel
           </button>
         </div>
