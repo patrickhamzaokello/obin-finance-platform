@@ -164,10 +164,10 @@ export default function LearningClient({ courseId }: { courseId: string }) {
   const totalItems       = course.modules.reduce((s: number, m: any) => s + m.videos.length + m.pdfs.length, 0);
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] flex flex-col">
+    <div className="h-screen bg-[#F5F5F7] flex flex-col overflow-hidden">
 
       {/* Sticky header */}
-      <header className="bg-white/80 backdrop-blur-xl border-b border-black/[0.06] sticky top-0 z-20">
+      <header className="bg-white/80 backdrop-blur-xl border-b border-black/[0.06] shrink-0 z-20">
         <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center gap-3">
           <Link href="/dashboard"
             className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary transition-colors shrink-0">
@@ -186,11 +186,11 @@ export default function LearningClient({ courseId }: { courseId: string }) {
         </div>
       </header>
 
-      {/* Body */}
-      <div className="flex flex-1 max-w-screen-xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-5 gap-5 items-start">
+      {/* Body — fills remaining height, no outer scroll */}
+      <div className="flex flex-1 min-h-0 max-w-screen-xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-5 gap-5 items-start">
 
-        {/* Main content */}
-        <div className="flex-1 min-w-0 space-y-4">
+        {/* Main content — scrolls independently */}
+        <div className="flex-1 min-w-0 overflow-y-auto h-full pr-1 space-y-4">
           <div className="bg-black rounded-2xl overflow-hidden shadow-sm">
             {youtubeUrl ? (
               <div className="aspect-video">
@@ -215,7 +215,7 @@ export default function LearningClient({ courseId }: { courseId: string }) {
                   <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center mx-auto mb-3 shadow-sm">
                     <Play className="w-6 h-6 text-primary ml-0.5" />
                   </div>
-                  <p className="text-sm font-medium text-foreground">Select a lesson to begin</p>
+                  <p className="text-sm font-medium text-foreground">Select a module to begin</p>
                   <p className="text-xs text-muted-foreground mt-1">Choose from the panel on the right</p>
                 </div>
               </div>
@@ -227,7 +227,7 @@ export default function LearningClient({ courseId }: { courseId: string }) {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <p className="text-[11px] font-semibold text-primary uppercase tracking-wider mb-1">
-                    {currentType === 'video' ? 'Video Lesson' : 'PDF Resource'}
+                    {currentType === 'video' ? 'Video' : 'PDF'}
                     {currentModule && <span className="text-muted-foreground font-normal normal-case tracking-normal ml-2">· {currentModule.title}</span>}
                   </p>
                   <h2 className="text-base font-semibold text-foreground">{currentVideo?.title ?? currentPdf?.title}</h2>
@@ -277,14 +277,15 @@ export default function LearningClient({ courseId }: { courseId: string }) {
           )}
         </div>
 
-        {/* Sidebar */}
-        <aside className="w-80 shrink-0 hidden lg:block sticky top-[57px] max-h-[calc(100vh-72px)] overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-black/[0.06] bg-secondary">
+        {/* Sidebar — fills column height, scrolls internally only */}
+        <aside className="w-80 shrink-0 hidden lg:flex flex-col h-full">
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
+            {/* Header — fixed */}
+            <div className="px-5 py-4 border-b border-black/[0.06] bg-secondary shrink-0">
               <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Course Content</p>
               <p className="text-sm font-semibold text-foreground mt-0.5">
                 {totalModules} module{totalModules !== 1 ? 's' : ''}
-                <span className="font-normal text-muted-foreground"> · {totalItems} lessons</span>
+                <span className="font-normal text-muted-foreground"> · {totalItems} resource{totalItems !== 1 ? 's' : ''}</span>
               </p>
               <div className="mt-3">
                 <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
@@ -297,7 +298,8 @@ export default function LearningClient({ courseId }: { courseId: string }) {
               </div>
             </div>
 
-            <div className="divide-y divide-black/[0.04]">
+            {/* Module list — scrolls */}
+            <div className="overflow-y-auto flex-1 divide-y divide-black/[0.04] py-1">
               {course.modules.map((mod: any, index: number) => {
                 const isExpanded = expandedModules.has(mod.id);
                 const isActive   = currentModuleId === mod.id;
@@ -307,17 +309,20 @@ export default function LearningClient({ courseId }: { courseId: string }) {
                 return (
                   <div key={mod.id}>
                     <button onClick={() => toggleExpanded(mod.id)}
-                      className={`w-full text-left flex items-start justify-between gap-3 px-5 py-4 transition-colors ${
-                        isActive ? 'bg-primary/8 rounded-xl mx-2 px-3' : 'hover:bg-secondary rounded-xl mx-2 px-3'
+                      className={`w-full text-left flex items-start justify-between gap-3 px-4 py-3.5 mx-1 rounded-xl transition-colors ${
+                        isActive ? 'bg-primary/[0.08]' : 'hover:bg-secondary'
                       }`}
+                      style={{ width: 'calc(100% - 8px)' }}
                     >
                       <div className="flex-1 min-w-0">
                         <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Module {index + 1}</p>
-                        <p className={`text-sm font-semibold leading-snug truncate ${isActive ? 'text-primary' : 'text-foreground'}`}>{mod.title}</p>
+                        <p className={`text-sm font-semibold leading-snug ${isActive ? 'text-primary' : 'text-foreground'}`}>{mod.title}</p>
                         {mod.description && (
                           <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2 leading-relaxed">{mod.description}</p>
                         )}
-                        <p className="text-xs text-muted-foreground mt-0.5">{itemCount} lesson{itemCount !== 1 ? 's' : ''}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {itemCount} resource{itemCount !== 1 ? 's' : ''}
+                        </p>
                       </div>
                       <div className="flex items-center gap-1.5 mt-1 shrink-0">
                         {isDone && <CheckCircle2 size={13} className="text-primary" />}
@@ -326,7 +331,7 @@ export default function LearningClient({ courseId }: { courseId: string }) {
                     </button>
 
                     {isExpanded && (
-                      <div className="bg-[#f9fafb] border-t border-black/[0.04] px-4 py-2.5 space-y-0.5">
+                      <div className="bg-[#f9fafb] border-t border-black/[0.04] px-3 py-2 space-y-0.5">
                         {mod.videos.map((v: any, idx: number) => {
                           const active = currentContentId === v.id && currentType === 'video';
                           return (
@@ -347,7 +352,7 @@ export default function LearningClient({ courseId }: { courseId: string }) {
                                 active ? 'bg-primary text-primary-foreground font-semibold' : 'text-foreground hover:bg-white hover:shadow-sm'
                               }`}>
                               <FileText size={12} className="shrink-0" />
-                              <span className="truncate flex-1">{p.title || `Resource ${idx + 1}`}</span>
+                              <span className="truncate flex-1">{p.title || `PDF ${idx + 1}`}</span>
                             </button>
                           );
                         })}
@@ -366,8 +371,8 @@ export default function LearningClient({ courseId }: { courseId: string }) {
         </aside>
       </div>
 
-      {/* Mobile module list */}
-      <div className="lg:hidden px-4 pb-8">
+      {/* Mobile module list — below content, normal page flow */}
+      <div className="lg:hidden px-4 pb-8 shrink-0">
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
           <div className="px-5 py-3 border-b border-black/[0.06] bg-secondary flex items-center justify-between">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Course Content</p>

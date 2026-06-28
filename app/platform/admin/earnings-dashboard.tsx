@@ -49,6 +49,22 @@ export function EarningsDashboard({ rows }: { rows: Row[] }) {
     });
   }, [rows, year]);
 
+  // Per-user breakdown (all time)
+  const byUser = useMemo(() => {
+    const map = new Map<string, { name: string; email: string; schoolName: string; enrollments: number; revenue: number; earnings: number; courses: string[] }>();
+    rows.forEach((r) => {
+      const e = map.get(r.learnerId) ?? { name: r.learnerName ?? r.learnerEmail, email: r.learnerEmail, schoolName: r.schoolName, enrollments: 0, revenue: 0, earnings: 0, courses: [] };
+      map.set(r.learnerId, {
+        ...e,
+        enrollments: e.enrollments + 1,
+        revenue:     e.revenue + (r.priceAtEnrollment ?? 0),
+        earnings:    e.earnings + (r.platformFee ?? 0),
+        courses:     e.courses.includes(r.courseTitle) ? e.courses : [...e.courses, r.courseTitle],
+      });
+    });
+    return Array.from(map.values()).sort((a, b) => b.earnings - a.earnings);
+  }, [rows]);
+
   // Per-school breakdown (all time)
   const bySchool = useMemo(() => {
     const map = new Map<string, { name: string; slug: string; commission: number; enrollments: number; revenue: number; earnings: number }>();
@@ -150,6 +166,52 @@ export function EarningsDashboard({ rows }: { rows: Row[] }) {
             <tfoot className='border-t-2 border-black/[0.08] bg-secondary/40'>
               <tr>
                 <td colSpan={2} className='px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide'>Total</td>
+                <td className='px-6 py-3 text-right font-bold text-foreground'>{rows.length}</td>
+                <td className='px-6 py-3 text-right font-bold text-muted-foreground'>{fmt(rows.reduce((s, r) => s + r.priceAtEnrollment, 0))}</td>
+                <td className='px-6 py-3 text-right font-bold text-primary'>{fmt(rows.reduce((s, r) => s + r.platformFee, 0))}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      )}
+      {/* Per-user earnings table */}
+      {byUser.length > 0 && (
+        <div className='bg-white rounded-2xl shadow-sm overflow-hidden'>
+          <div className='px-6 py-4 border-b border-black/[0.06]'>
+            <h2 className='text-sm font-semibold text-foreground'>Earnings by learner</h2>
+            <p className='text-xs text-muted-foreground mt-0.5'>All time · {byUser.length} learners</p>
+          </div>
+          <table className='w-full text-sm'>
+            <thead className='bg-secondary text-xs font-semibold text-muted-foreground uppercase tracking-wider'>
+              <tr>
+                <th className='px-6 py-3 text-left'>Learner</th>
+                <th className='px-6 py-3 text-left'>School</th>
+                <th className='px-6 py-3 text-left'>Courses</th>
+                <th className='px-6 py-3 text-right'>Enrollments</th>
+                <th className='px-6 py-3 text-right'>Paid</th>
+                <th className='px-6 py-3 text-right'>My Earnings</th>
+              </tr>
+            </thead>
+            <tbody className='divide-y divide-black/[0.04]'>
+              {byUser.map((u) => (
+                <tr key={u.email} className='hover:bg-secondary/40 transition-colors'>
+                  <td className='px-6 py-4'>
+                    <p className='font-medium text-foreground'>{u.name}</p>
+                    <p className='text-xs text-muted-foreground'>{u.email}</p>
+                  </td>
+                  <td className='px-6 py-4 text-muted-foreground text-xs'>{u.schoolName}</td>
+                  <td className='px-6 py-4 max-w-[220px]'>
+                    <p className='text-xs text-muted-foreground truncate' title={u.courses.join(', ')}>{u.courses.join(', ')}</p>
+                  </td>
+                  <td className='px-6 py-4 text-right font-medium text-foreground'>{u.enrollments}</td>
+                  <td className='px-6 py-4 text-right text-muted-foreground'>{fmt(u.revenue)}</td>
+                  <td className='px-6 py-4 text-right font-bold text-primary'>{fmt(u.earnings)}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot className='border-t-2 border-black/[0.08] bg-secondary/40'>
+              <tr>
+                <td colSpan={3} className='px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide'>Total</td>
                 <td className='px-6 py-3 text-right font-bold text-foreground'>{rows.length}</td>
                 <td className='px-6 py-3 text-right font-bold text-muted-foreground'>{fmt(rows.reduce((s, r) => s + r.priceAtEnrollment, 0))}</td>
                 <td className='px-6 py-3 text-right font-bold text-primary'>{fmt(rows.reduce((s, r) => s + r.platformFee, 0))}</td>
