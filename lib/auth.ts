@@ -37,24 +37,17 @@ export const auth = betterAuth({
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // 1 day
-    cookieCache: {
-      enabled: true,
-      maxAge: 60 * 5, // cache session for 5 min to reduce DB reads
-    },
   },
-  advanced: {
-    defaultCookieAttributes: process.env.NODE_ENV === 'development'
-      ? {
-          // In dev (v0 preview iframe), force cross-site cookies
-          sameSite: 'none' as const,
-          secure: true,
-        }
-      : {
-          // In production, scope cookie to root domain so it works on
-          // both pkasemer.com and any school subdomain (obin.pkasemer.com)
-          sameSite: 'lax' as const,
-          secure: true,
-          ...(baseDomain ? { domain: `.${baseDomain}` } : {}),
+  // Dev only: force cross-site cookies so the session cookie works in
+  // the v0 preview iframe (cross-origin). Production uses browser defaults.
+  ...(process.env.NODE_ENV === 'development'
+    ? {
+        advanced: {
+          defaultCookieAttributes: {
+            sameSite: 'none' as const,
+            secure: true,
+          },
         },
-  },
+      }
+    : {}),
 })

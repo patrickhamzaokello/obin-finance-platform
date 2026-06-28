@@ -1,11 +1,12 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { db } from '@/lib/db';
-import { school } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { school, schoolMember } from '@/lib/db/schema';
+import { eq, and } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import { isPlatformOwner } from '@/lib/school-context';
 
 const s3 = new S3Client({
   region: process.env.AWS_REGION!,
@@ -15,7 +16,7 @@ const s3 = new S3Client({
   },
 });
 
-const BUCKET  = 'learningplatform';
+const BUCKET  = 'pkasemerplatform';
 const CF_BASE = (process.env.AWS_CLOUDFRONT_DOMAIN || '').replace(/\/$/, '');
 
 const ALLOWED_TYPES: Record<string, string[]> = {
@@ -31,10 +32,23 @@ const FOLDERS: Record<string, string> = {
 };
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  // Admin-only
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user || (session.user as any).role !== 'admin') {
+  if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // Allow platform owner or any school_admin
+  const ownerAccess = await isPlatformOwner();
+  if (!ownerAccess) {
+    const membership = await db.select().from(schoolMember)
+      .where(and(
+        eq(schoolMember.userId, session.user.id),
+        eq(schoolMember.role, 'school_admin'),
+      ))
+      .limit(1);
+    if (!membership.length) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
   }
 
   let body: { fileType: string; fileName: string; contentType: string; schoolSlug: string };

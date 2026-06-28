@@ -32,16 +32,24 @@ export default async function PlatformSchoolDetailPage({
         <ArrowLeft size={14} /> All schools
       </Link>
 
-      <div className='flex items-start justify-between mb-8'>
-        <div>
-          <h1 className='text-2xl font-bold text-foreground'>{s.name}</h1>
-          <p className='text-sm text-muted-foreground font-mono mt-1'>{s.slug}.platform.com</p>
-        </div>
-        <a href={`http://${s.slug}.localhost:3000`} target='_blank' rel='noreferrer'
-          className='inline-flex items-center gap-2 px-4 py-2 border border-border text-sm font-semibold rounded hover:bg-secondary transition-colors'>
-          <ExternalLink size={14} /> Open school
-        </a>
-      </div>
+      {(() => {
+        const base = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'localhost:3000';
+        const schoolUrl = base.startsWith('localhost')
+          ? `http://${s.slug}.${base}`
+          : `https://${s.slug}.${base}`;
+        return (
+          <div className='flex items-start justify-between mb-8'>
+            <div>
+              <h1 className='text-2xl font-bold text-foreground'>{s.name}</h1>
+              <p className='text-sm text-muted-foreground font-mono mt-1'>{s.slug}.{base}</p>
+            </div>
+            <a href={schoolUrl} target='_blank' rel='noreferrer'
+              className='inline-flex items-center gap-2 px-4 py-2 border border-border text-sm font-semibold rounded hover:bg-secondary transition-colors'>
+              <ExternalLink size={14} /> Open school
+            </a>
+          </div>
+        );
+      })()}
 
       <div className='grid grid-cols-2 gap-4 mb-8'>
         <div className='bg-white border border-border border-l-[3px] border-l-primary rounded p-5'>

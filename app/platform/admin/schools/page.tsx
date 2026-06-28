@@ -117,7 +117,12 @@ export default function PlatformSchoolsPage() {
                         className='text-primary text-xs font-semibold hover:underline'>
                         Manage
                       </Link>
-                      <a href={`http://${s.slug}.localhost:3000`} target='_blank' rel='noreferrer'
+                      <a href={(() => {
+                            const base = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'localhost:3000';
+                            return base.startsWith('localhost')
+                              ? `http://${s.slug}.${base}`
+                              : `https://${s.slug}.${base}`;
+                          })()} target='_blank' rel='noreferrer'
                         className='inline-flex items-center gap-1 text-muted-foreground text-xs hover:text-foreground'>
                         <ExternalLink size={11} /> Preview
                       </a>
