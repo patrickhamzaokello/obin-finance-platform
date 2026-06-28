@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-export const metadata: Metadata = { title: 'Obin Finance Platform' };
+export const metadata: Metadata = { title: 'Pkasemer Platform' };
 
 import { isPlatformOwner } from '@/lib/school-context';
 import { redirect } from 'next/navigation';

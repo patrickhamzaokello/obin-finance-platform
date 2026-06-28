@@ -1,7 +1,7 @@
-# Obin Finance Admin Panel Guide
+# Pkasemer Admin Panel Guide
 
 ## Overview
-The admin panel allows authorized administrators to manage courses, modules, videos, PDFs, and users in the Obin Finance Learning Platform.
+The admin panel allows authorized administrators to manage courses, modules, videos, PDFs, and users in the Pkasemer Learning Platform.
 
 ## Accessing the Admin Panel
 

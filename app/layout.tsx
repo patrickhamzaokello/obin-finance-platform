@@ -11,8 +11,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Obin Finance',
-    template: '%s · Obin Finance',
+    default: 'Pkasemer',
+    template: '%s · Pkasemer',
   },
   description: 'Expert-led financial education courses on budgeting, investing, and wealth management.',
   icons: {

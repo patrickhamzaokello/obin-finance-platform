@@ -64,7 +64,7 @@ export default function PlatformSchoolsPage() {
           <h2 className='text-sm font-semibold text-foreground'>Create school</h2>
           <div className='space-y-3'>
             <input value={name} onChange={(e) => { setName(e.target.value); setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }}
-              className={inputCls} placeholder='School name (e.g. Obin Finance)' />
+              className={inputCls} placeholder='School name (e.g. Pkasemer)' />
             <div className='flex items-center gap-2'>
               <input value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                 className={inputCls} placeholder='URL slug (e.g. obin)' />
