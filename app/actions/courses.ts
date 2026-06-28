@@ -14,12 +14,6 @@ async function getUserId() {
   return session.user.id;
 }
 
-async function isAdmin() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user || session.user.role !== 'admin') throw new Error('Unauthorized: Admin access required');
-  return true;
-}
-
 // Course queries
 export async function getPublishedCourses() {
   try {

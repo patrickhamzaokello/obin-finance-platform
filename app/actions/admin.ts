@@ -3,7 +3,6 @@
 import { db } from '@/lib/db';
 import { course, module, video, pdf, user, school, schoolMember } from '@/lib/db/schema';
 import { eq, desc, and } from 'drizzle-orm';
-import { getUserWithRole } from '@/lib/user-utils';
 import { isYouTubeUrl, extractYouTubeId } from '@/lib/video-url';
 import { revalidatePath } from 'next/cache';
 import { getCurrentSchool, isPlatformOwner, requirePlatformOwner } from '@/lib/school-context';
@@ -28,15 +27,6 @@ async function isSchoolAdmin() {
     throw new Error('Unauthorized: school admin required');
   }
   return true;
-}
-
-// Keep the old isAdmin for backward compat during transition
-async function isAdmin() {
-  const userWithRole = await getUserWithRole();
-  if (!userWithRole || userWithRole.role !== 'admin') {
-    throw new Error('Unauthorized: Admin access required');
-  }
-  return userWithRole;
 }
 
 // Course management

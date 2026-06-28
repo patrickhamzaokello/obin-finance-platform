@@ -8,9 +8,7 @@ export const user = pgTable('user', {
   email:         text('email').notNull().unique(),
   emailVerified: boolean('emailVerified').notNull().default(false),
   image:         text('image'),
-  // Legacy field kept for Better Auth compatibility
-  role:          text('role').notNull().default('user'),
-  // Platform-level role: 'owner' = you (the SaaS owner), 'user' = everyone else
+  // Platform-level role: 'owner' = platform owner, 'user' = everyone else
   platformRole:  text('platformRole').notNull().default('user'),
   createdAt:     timestamp('createdAt').notNull().defaultNow(),
   updatedAt:     timestamp('updatedAt').notNull().defaultNow(),
