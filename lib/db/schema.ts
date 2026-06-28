@@ -143,6 +143,22 @@ export const courseAccessCode = pgTable('course_access_code', {
   label:            text('label'),                       // optional admin note, e.g. "for Aaron Peter"
 });
 
+export const certificate = pgTable(
+  'certificate',
+  {
+    id:             text('id').primaryKey(),
+    userId:         text('userId').notNull(),
+    courseId:       text('courseId').notNull(),
+    issuedAt:       timestamp('issuedAt').notNull().defaultNow(),
+    // Snapshot so the cert stays accurate even if course/user data changes
+    learnerName:    text('learnerName').notNull(),
+    courseTitle:    text('courseTitle').notNull(),
+    instructorName: text('instructorName'),
+    schoolName:     text('schoolName'),
+  },
+  (table) => [unique('unique_cert_user_course').on(table.userId, table.courseId)]
+);
+
 export const userProgress = pgTable(
   'user_progress',
   {

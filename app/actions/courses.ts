@@ -2,7 +2,7 @@
 
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { course, courseEnrollment, module, video, pdf, userProgress, schoolMember, school } from '@/lib/db/schema';
+import { course, courseEnrollment, module, video, pdf, userProgress, schoolMember, school, certificate } from '@/lib/db/schema';
 import { eq, and, desc, count, inArray } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
@@ -286,7 +286,9 @@ export async function getUserProgress(courseId: string) {
 
 export async function markModuleComplete(courseId: string, moduleId: string) {
   try {
-    const userId = await getUserId();
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user) throw new Error('Unauthorized');
+    const userId = session.user.id;
 
     const existing = await db
       .select()
@@ -310,11 +312,72 @@ export async function markModuleComplete(courseId: string, moduleId: string) {
       });
     }
 
+    // Check if all modules are now complete → issue certificate
+    const [allModules, completedRows] = await Promise.all([
+      db.select({ id: module.id }).from(module).where(eq(module.courseId, courseId)),
+      db.select({ moduleId: userProgress.moduleId }).from(userProgress)
+        .where(and(eq(userProgress.userId, userId), eq(userProgress.courseId, courseId), eq(userProgress.isModuleCompleted, true))),
+    ]);
+
+    if (allModules.length > 0 && completedRows.length >= allModules.length) {
+      const alreadyCerted = await db.select({ id: certificate.id })
+        .from(certificate)
+        .where(and(eq(certificate.userId, userId), eq(certificate.courseId, courseId)))
+        .limit(1);
+
+      if (!alreadyCerted.length) {
+        const courseRow = await db.select().from(course).where(eq(course.id, courseId)).limit(1);
+        const s         = await getCurrentSchool();
+        await db.insert(certificate).values({
+          id:             `cert-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          userId,
+          courseId,
+          learnerName:    session.user.name ?? session.user.email ?? 'Learner',
+          courseTitle:    courseRow[0]?.title ?? 'Course',
+          instructorName: courseRow[0]?.instructor ?? null,
+          schoolName:     s?.name ?? null,
+        });
+        // Mark enrollment completed
+        await db.update(courseEnrollment)
+          .set({ completedAt: new Date() })
+          .where(and(eq(courseEnrollment.userId, userId), eq(courseEnrollment.courseId, courseId)));
+      }
+    }
+
     revalidatePath(`/learning/${courseId}`);
     return { success: true };
   } catch (error) {
     console.error('Error marking module complete:', error);
     return { success: false, error: 'Failed to mark module complete' };
+  }
+}
+
+export async function getMyAchievements() {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user) return { success: false, error: 'Not authenticated' };
+    const rows = await db
+      .select()
+      .from(certificate)
+      .where(eq(certificate.userId, session.user.id))
+      .orderBy(desc(certificate.issuedAt));
+    return { success: true, data: rows };
+  } catch (error) {
+    return { success: false, error: String(error) };
+  }
+}
+
+export async function getCertificate(certId: string) {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user) return { success: false, error: 'Not authenticated' };
+    const rows = await db.select().from(certificate)
+      .where(and(eq(certificate.id, certId), eq(certificate.userId, session.user.id)))
+      .limit(1);
+    if (!rows.length) return { success: false, error: 'Certificate not found' };
+    return { success: true, data: rows[0] };
+  } catch (error) {
+    return { success: false, error: String(error) };
   }
 }
 
