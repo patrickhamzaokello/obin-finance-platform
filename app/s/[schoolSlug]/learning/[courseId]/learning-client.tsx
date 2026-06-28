@@ -71,7 +71,7 @@ export default function LearningClient({ courseId }: { courseId: string }) {
         setCompletedModules(done);
 
         if (progressResult.data.length > 0) {
-          const last = progressResult.data[0]; // ordered by updatedAt DESC — first is most recent
+          const last = progressResult.data[0];
           setCurrentModuleId(last.moduleId);
           setExpandedModules(new Set([last.moduleId]));
           if (last.videoId) { setCurrentType('video'); setCurrentContentId(last.videoId); }
@@ -134,10 +134,10 @@ export default function LearningClient({ courseId }: { courseId: string }) {
   };
 
   if (loading) return (
-    <div className="min-h-screen bg-[#F5F5F7] flex items-center justify-center">
+    <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center">
       <div className="text-center">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-        <p className="text-sm text-muted-foreground">Loading course…</p>
+        <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-3" />
+        <p className="text-sm text-white/50">Loading course…</p>
       </div>
     </div>
   );
@@ -148,50 +148,50 @@ export default function LearningClient({ courseId }: { courseId: string }) {
   const currentVideo   = currentType === 'video' && currentModule ? currentModule.videos.find((v: any) => v.id === currentContentId) : null;
   const currentPdf     = currentType === 'pdf'   && currentModule ? currentModule.pdfs.find((p: any) => p.id === currentContentId)   : null;
 
-  const youtubeUrl     = currentVideo ? resolveYouTubeEmbed(currentVideo)  : null;
-  const fileVideoUrl   = currentVideo ? resolveFileVideoUrl(currentVideo)   : null;
-  const pdfUrl         = currentPdf   ? resolvePdfUrl(currentPdf)           : null;
-  const hasContent     = !!(youtubeUrl || fileVideoUrl || pdfUrl);
+  const youtubeUrl   = currentVideo ? resolveYouTubeEmbed(currentVideo)  : null;
+  const fileVideoUrl = currentVideo ? resolveFileVideoUrl(currentVideo)   : null;
+  const pdfUrl       = currentPdf   ? resolvePdfUrl(currentPdf)           : null;
+  const hasContent   = !!(youtubeUrl || fileVideoUrl || pdfUrl);
 
-  const totalModules   = course.modules.length;
-  const doneCount      = completedModules.size;
-  const progressPct    = totalModules > 0 ? Math.round((doneCount / totalModules) * 100) : 0;
+  const totalModules = course.modules.length;
+  const doneCount    = completedModules.size;
+  const progressPct  = totalModules > 0 ? Math.round((doneCount / totalModules) * 100) : 0;
 
   const currentModuleIdx = course.modules.findIndex((m: any) => m.id === currentModuleId);
   const hasNextModule    = currentModuleIdx < totalModules - 1;
   const isCurrentDone    = currentModuleId ? completedModules.has(currentModuleId) : false;
   const allDone          = doneCount === totalModules && totalModules > 0;
-  const totalItems       = course.modules.reduce((s: number, m: any) => s + m.videos.length + m.pdfs.length, 0);
 
   return (
-    <div className="h-screen bg-[#F5F5F7] flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-[#0f0f0f] text-white">
 
-      {/* Sticky header */}
-      <header className="bg-white/80 backdrop-blur-xl border-b border-black/[0.06] shrink-0 z-20">
-        <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center gap-3">
+      {/* ── Header ── */}
+      <header className="sticky top-0 z-30 bg-[#0f0f0f]/95 backdrop-blur-md border-b border-white/[0.06]">
+        <div className="flex items-center gap-3 px-4 py-3 max-w-screen-2xl mx-auto">
           <Link href="/dashboard"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary transition-colors shrink-0">
-            <ArrowLeft size={14} /> Courses
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-white/50 hover:text-white transition-colors shrink-0">
+            <ArrowLeft size={15} /> Back
           </Link>
-          <div className="w-px h-4 bg-border shrink-0" />
-          <h1 className="text-sm font-semibold text-foreground truncate flex-1">{course.title}</h1>
-
+          <div className="w-px h-4 bg-white/10 shrink-0" />
+          <h1 className="text-sm font-semibold text-white truncate flex-1">{course.title}</h1>
           <div className="hidden sm:flex items-center gap-3 shrink-0">
-            <span className="text-xs text-muted-foreground">{doneCount}/{totalModules} modules</span>
-            <div className="w-24 h-1.5 bg-secondary rounded-full overflow-hidden">
-              <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${progressPct}%` }} />
+            <span className="text-xs text-white/40">{doneCount}/{totalModules} modules</span>
+            <div className="w-28 h-1 bg-white/10 rounded-full overflow-hidden">
+              <div className="h-full bg-[#4F46E5] rounded-full transition-all duration-500" style={{ width: `${progressPct}%` }} />
             </div>
-            <span className="text-xs font-semibold text-primary">{progressPct}%</span>
+            <span className="text-xs font-semibold text-[#818cf8]">{progressPct}%</span>
           </div>
         </div>
       </header>
 
-      {/* Body — fills remaining height, no outer scroll */}
-      <div className="flex flex-1 min-h-0 max-w-screen-xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-5 gap-5 items-start">
+      {/* ── Two-column layout — single scroll ── */}
+      <div className="max-w-screen-2xl mx-auto flex gap-0 lg:gap-6 px-0 lg:px-6 py-0 lg:py-6 items-start">
 
-        {/* Main content — scrolls independently */}
-        <div className="flex-1 min-w-0 overflow-y-auto h-full pr-1 space-y-4">
-          <div className="bg-black rounded-2xl overflow-hidden shadow-sm">
+        {/* ── Left: player + info ── */}
+        <div className="flex-1 min-w-0">
+
+          {/* Player */}
+          <div className="bg-black lg:rounded-2xl overflow-hidden">
             {youtubeUrl ? (
               <div className="aspect-video">
                 <iframe key={youtubeUrl} src={youtubeUrl}
@@ -206,140 +206,166 @@ export default function LearningClient({ courseId }: { courseId: string }) {
                   poster={course.thumbnail ? convertBlobUrlToApiUrl(course.thumbnail) : undefined} />
               </div>
             ) : pdfUrl ? (
-              <div className="bg-white rounded-2xl" style={{ height: '70vh' }}>
-                <iframe key={pdfUrl} src={pdfUrl} className="w-full h-full border-0 rounded-2xl" title={currentPdf?.title || 'PDF'} />
+              <div style={{ height: '72vh' }}>
+                <iframe key={pdfUrl} src={pdfUrl} className="w-full h-full border-0" title={currentPdf?.title || 'PDF'} />
               </div>
             ) : (
-              <div className="aspect-video flex items-center justify-center bg-[#F5F5F7]">
+              <div className="aspect-video flex items-center justify-center bg-[#1a1a1a]">
                 <div className="text-center">
-                  <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center mx-auto mb-3 shadow-sm">
-                    <Play className="w-6 h-6 text-primary ml-0.5" />
+                  <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-4">
+                    <Play className="w-6 h-6 text-white/60 ml-1" />
                   </div>
-                  <p className="text-sm font-medium text-foreground">Select a module to begin</p>
-                  <p className="text-xs text-muted-foreground mt-1">Choose from the panel on the right</p>
+                  <p className="text-sm font-medium text-white/60">Select a resource to begin</p>
+                  <p className="text-xs text-white/30 mt-1">Choose from the panel on the right</p>
                 </div>
               </div>
             )}
           </div>
 
-          {hasContent && (
-            <div className="bg-white rounded-2xl shadow-sm px-5 py-4 space-y-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-semibold text-primary uppercase tracking-wider mb-1">
-                    {currentType === 'video' ? 'Video' : 'PDF'}
-                    {currentModule && <span className="text-muted-foreground font-normal normal-case tracking-normal ml-2">· {currentModule.title}</span>}
+          {/* Info panel below player */}
+          <div className="px-4 lg:px-0 py-5 space-y-4">
+
+            {/* Title + status */}
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                {currentModule && (
+                  <p className="text-xs font-semibold text-[#818cf8] uppercase tracking-wider mb-1.5">
+                    {currentModule.title}
                   </p>
-                  <h2 className="text-base font-semibold text-foreground">{currentVideo?.title ?? currentPdf?.title}</h2>
-                </div>
-                {isCurrentDone && (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary shrink-0 mt-1">
-                    <CheckCircle2 size={14} /> Completed
-                  </span>
                 )}
+                <h2 className="text-lg font-bold text-white leading-snug">
+                  {currentVideo?.title ?? currentPdf?.title ?? course.title}
+                </h2>
               </div>
-
-              {pdfUrl && (
-                <div className="flex gap-2">
-                  <a href={pdfUrl} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary text-xs font-semibold rounded-lg hover:bg-primary/20 transition-colors">
-                    <FileText size={12} /> Open in new tab
-                  </a>
-                </div>
+              {isCurrentDone && (
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400 shrink-0 mt-1 bg-emerald-400/10 px-2.5 py-1 rounded-full">
+                  <CheckCircle2 size={13} /> Completed
+                </span>
               )}
+            </div>
 
-              <div className="pt-1 border-t border-black/[0.06] flex flex-wrap items-center gap-3">
+            {/* Actions */}
+            {hasContent && (
+              <div className="flex flex-wrap items-center gap-3 pt-1 border-t border-white/[0.06]">
+                {pdfUrl && (
+                  <a href={pdfUrl} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white/10 hover:bg-white/15 text-white text-sm font-medium rounded-xl transition-colors">
+                    <FileText size={13} /> Open PDF
+                  </a>
+                )}
+
                 {!isCurrentDone ? (
                   <button onClick={handleMarkComplete} disabled={marking}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-60 shadow-sm">
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-[#4F46E5] hover:bg-[#4338ca] text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-60">
                     {marking
                       ? <><Loader2 size={14} className="animate-spin" /> Saving…</>
                       : <><CheckCircle2 size={14} /> Mark module complete</>}
                   </button>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
+                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-400">
                     <CheckCircle2 size={15} /> Module complete
                   </span>
                 )}
 
                 {(isCurrentDone || justCompleted) && hasNextModule && (
                   <button onClick={goToNextModule}
-                    className="inline-flex items-center gap-2 px-4 py-2 border border-border text-foreground text-sm font-semibold rounded-xl hover:bg-secondary transition-colors">
+                    className="inline-flex items-center gap-2 px-4 py-2 border border-white/20 hover:border-white/40 text-white text-sm font-semibold rounded-xl transition-colors ml-auto">
                     Next module <ChevronRight size={14} />
                   </button>
                 )}
 
                 {allDone && (
-                  <span className="text-xs font-semibold text-primary ml-auto">Course complete!</span>
+                  <span className="text-sm font-semibold text-[#818cf8] ml-auto">🎉 Course complete!</span>
                 )}
               </div>
-            </div>
-          )}
+            )}
+
+            {/* Module description */}
+            {currentModule?.description && (
+              <div className="bg-white/[0.04] rounded-xl px-4 py-3.5 border border-white/[0.06]">
+                <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-1.5">About this module</p>
+                <p className="text-sm text-white/70 leading-relaxed">{currentModule.description}</p>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Sidebar — fills column height, scrolls internally only */}
-        <aside className="w-80 shrink-0 hidden lg:flex flex-col h-full">
-          <div className="bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
-            {/* Header — fixed */}
-            <div className="px-5 py-4 border-b border-black/[0.06] bg-secondary shrink-0">
-              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Course Content</p>
-              <p className="text-sm font-semibold text-foreground mt-0.5">
-                {totalModules} module{totalModules !== 1 ? 's' : ''}
-                <span className="font-normal text-muted-foreground"> · {totalItems} resource{totalItems !== 1 ? 's' : ''}</span>
-              </p>
-              <div className="mt-3">
-                <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                  <span>{doneCount} completed</span>
-                  <span>{progressPct}%</span>
+        {/* ── Right: module playlist ── */}
+        <aside className="hidden lg:block w-96 shrink-0">
+          <div className="bg-[#1a1a1a] rounded-2xl overflow-hidden border border-white/[0.06]">
+
+            {/* Playlist header */}
+            <div className="px-5 py-4 border-b border-white/[0.06]">
+              <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-0.5">Course content</p>
+              <p className="text-sm font-semibold text-white">{course.title}</p>
+              <div className="mt-3 flex items-center gap-3">
+                <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
+                  <div className="h-full bg-[#4F46E5] rounded-full transition-all duration-500" style={{ width: `${progressPct}%` }} />
                 </div>
-                <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
-                  <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${progressPct}%` }} />
-                </div>
+                <span className="text-xs text-white/40 shrink-0">{doneCount}/{totalModules}</span>
               </div>
             </div>
 
-            {/* Module list — scrolls */}
-            <div className="overflow-y-auto flex-1 divide-y divide-black/[0.04] py-1">
+            {/* Module list */}
+            <div className="divide-y divide-white/[0.04]">
               {course.modules.map((mod: any, index: number) => {
                 const isExpanded = expandedModules.has(mod.id);
                 const isActive   = currentModuleId === mod.id;
                 const isDone     = completedModules.has(mod.id);
-                const itemCount  = mod.videos.length + mod.pdfs.length;
+                const videoCount = mod.videos.length;
+                const pdfCount   = mod.pdfs.length;
 
                 return (
                   <div key={mod.id}>
-                    <button onClick={() => toggleExpanded(mod.id)}
-                      className={`w-full text-left flex items-start justify-between gap-3 px-4 py-3.5 mx-1 rounded-xl transition-colors ${
-                        isActive ? 'bg-primary/[0.08]' : 'hover:bg-secondary'
+                    {/* Module row */}
+                    <button
+                      onClick={() => toggleExpanded(mod.id)}
+                      className={`w-full text-left flex items-start gap-3 px-5 py-4 transition-colors ${
+                        isActive ? 'bg-[#4F46E5]/20' : 'hover:bg-white/[0.04]'
                       }`}
-                      style={{ width: 'calc(100% - 8px)' }}
                     >
+                      {/* Index / done indicator */}
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
+                        isDone
+                          ? 'bg-emerald-500/20 text-emerald-400'
+                          : isActive
+                          ? 'bg-[#4F46E5] text-white'
+                          : 'bg-white/10 text-white/50'
+                      }`}>
+                        {isDone ? <CheckCircle2 size={13} /> : index + 1}
+                      </div>
+
                       <div className="flex-1 min-w-0">
-                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Module {index + 1}</p>
-                        <p className={`text-sm font-semibold leading-snug ${isActive ? 'text-primary' : 'text-foreground'}`}>{mod.title}</p>
-                        {mod.description && (
-                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2 leading-relaxed">{mod.description}</p>
-                        )}
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {itemCount} resource{itemCount !== 1 ? 's' : ''}
+                        <p className={`text-sm font-semibold leading-snug ${isActive ? 'text-white' : isDone ? 'text-white/60' : 'text-white/80'}`}>
+                          {mod.title}
+                        </p>
+                        <p className="text-xs text-white/30 mt-0.5">
+                          {[videoCount > 0 && `${videoCount} video${videoCount !== 1 ? 's' : ''}`, pdfCount > 0 && `${pdfCount} PDF${pdfCount !== 1 ? 's' : ''}`].filter(Boolean).join(' · ') || 'No resources'}
                         </p>
                       </div>
-                      <div className="flex items-center gap-1.5 mt-1 shrink-0">
-                        {isDone && <CheckCircle2 size={13} className="text-primary" />}
-                        {isExpanded ? <ChevronUp size={13} className="text-muted-foreground" /> : <ChevronDown size={13} className="text-muted-foreground" />}
+
+                      <div className="shrink-0 mt-1">
+                        {isExpanded
+                          ? <ChevronUp size={14} className="text-white/30" />
+                          : <ChevronDown size={14} className="text-white/30" />}
                       </div>
                     </button>
 
+                    {/* Expanded resources */}
                     {isExpanded && (
-                      <div className="bg-[#f9fafb] border-t border-black/[0.04] px-3 py-2 space-y-0.5">
+                      <div className="bg-black/20 border-t border-white/[0.04] px-4 py-2 space-y-0.5">
                         {mod.videos.map((v: any, idx: number) => {
                           const active = currentContentId === v.id && currentType === 'video';
                           return (
                             <button key={v.id} onClick={() => selectContent(mod.id, 'video', v.id)}
-                              className={`w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
-                                active ? 'bg-primary text-primary-foreground font-semibold' : 'text-foreground hover:bg-white hover:shadow-sm'
+                              className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                                active
+                                  ? 'bg-[#4F46E5] text-white'
+                                  : 'text-white/60 hover:text-white hover:bg-white/[0.06]'
                               }`}>
-                              <Play size={12} className="shrink-0" />
+                              <div className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 ${active ? 'bg-white/20' : 'bg-white/[0.06]'}`}>
+                                <Play size={10} className={active ? 'text-white ml-0.5' : 'text-white/40 ml-0.5'} />
+                              </div>
                               <span className="truncate flex-1">{v.title || `Video ${idx + 1}`}</span>
                             </button>
                           );
@@ -348,17 +374,21 @@ export default function LearningClient({ courseId }: { courseId: string }) {
                           const active = currentContentId === p.id && currentType === 'pdf';
                           return (
                             <button key={p.id} onClick={() => selectContent(mod.id, 'pdf', p.id)}
-                              className={`w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
-                                active ? 'bg-primary text-primary-foreground font-semibold' : 'text-foreground hover:bg-white hover:shadow-sm'
+                              className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                                active
+                                  ? 'bg-[#4F46E5] text-white'
+                                  : 'text-white/60 hover:text-white hover:bg-white/[0.06]'
                               }`}>
-                              <FileText size={12} className="shrink-0" />
+                              <div className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 ${active ? 'bg-white/20' : 'bg-white/[0.06]'}`}>
+                                <FileText size={10} className={active ? 'text-white' : 'text-white/40'} />
+                              </div>
                               <span className="truncate flex-1">{p.title || `PDF ${idx + 1}`}</span>
                             </button>
                           );
                         })}
-                        {itemCount === 0 && (
-                          <div className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground">
-                            <Lock size={11} /> No content yet
+                        {videoCount === 0 && pdfCount === 0 && (
+                          <div className="flex items-center gap-2 px-3 py-2 text-xs text-white/30">
+                            <Lock size={11} /> No resources yet
                           </div>
                         )}
                       </div>
@@ -371,34 +401,34 @@ export default function LearningClient({ courseId }: { courseId: string }) {
         </aside>
       </div>
 
-      {/* Mobile module list — below content, normal page flow */}
-      <div className="lg:hidden px-4 pb-8 shrink-0">
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          <div className="px-5 py-3 border-b border-black/[0.06] bg-secondary flex items-center justify-between">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Course Content</p>
-            <span className="text-xs text-primary font-semibold">{progressPct}% done</span>
+      {/* ── Mobile playlist ── */}
+      <div className="lg:hidden px-4 pb-8">
+        <div className="bg-[#1a1a1a] rounded-2xl overflow-hidden border border-white/[0.06]">
+          <div className="px-5 py-3.5 border-b border-white/[0.06] flex items-center justify-between">
+            <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">Course content</p>
+            <span className="text-xs font-semibold text-[#818cf8]">{progressPct}%</span>
           </div>
           {course.modules.map((mod: any, index: number) => {
             const isExpanded = expandedModules.has(mod.id);
             const isActive   = currentModuleId === mod.id;
             const isDone     = completedModules.has(mod.id);
             return (
-              <div key={mod.id} className="border-b border-black/[0.04] last:border-0">
+              <div key={mod.id} className="border-b border-white/[0.04] last:border-0">
                 <button onClick={() => toggleExpanded(mod.id)}
-                  className={`w-full text-left flex items-center gap-3 px-5 py-3.5 transition-colors ${isActive ? 'bg-primary/8 rounded-xl mx-2 px-3 w-auto' : ''}`}>
-                  <span className={`text-sm font-semibold flex-1 truncate ${isActive ? 'text-primary' : 'text-foreground'}`}>
-                    {index + 1}. {mod.title}
-                  </span>
-                  {isDone && <CheckCircle2 size={13} className="text-primary shrink-0" />}
-                  {isExpanded ? <ChevronUp size={13} className="text-muted-foreground shrink-0" /> : <ChevronDown size={13} className="text-muted-foreground shrink-0" />}
+                  className={`w-full text-left flex items-center gap-3 px-5 py-4 transition-colors ${isActive ? 'bg-[#4F46E5]/20' : 'hover:bg-white/[0.04]'}`}>
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${isDone ? 'bg-emerald-500/20 text-emerald-400' : isActive ? 'bg-[#4F46E5] text-white' : 'bg-white/10 text-white/50'}`}>
+                    {isDone ? <CheckCircle2 size={11} /> : index + 1}
+                  </div>
+                  <span className={`text-sm font-semibold flex-1 truncate ${isActive ? 'text-white' : 'text-white/70'}`}>{mod.title}</span>
+                  {isExpanded ? <ChevronUp size={13} className="text-white/30 shrink-0" /> : <ChevronDown size={13} className="text-white/30 shrink-0" />}
                 </button>
                 {isExpanded && (
-                  <div className="bg-[#f9fafb] border-t border-black/[0.04] px-4 py-2 space-y-0.5">
+                  <div className="bg-black/20 border-t border-white/[0.04] px-4 py-2 space-y-0.5">
                     {mod.videos.map((v: any, idx: number) => {
                       const active = currentContentId === v.id && currentType === 'video';
                       return (
                         <button key={v.id} onClick={() => selectContent(mod.id, 'video', v.id)}
-                          className={`w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${active ? 'bg-primary text-primary-foreground font-semibold' : 'text-foreground hover:bg-white'}`}>
+                          className={`w-full text-left flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-colors ${active ? 'bg-[#4F46E5] text-white' : 'text-white/60 hover:text-white hover:bg-white/[0.06]'}`}>
                           <Play size={11} className="shrink-0" />
                           <span className="truncate">{v.title || `Video ${idx + 1}`}</span>
                         </button>
@@ -408,9 +438,9 @@ export default function LearningClient({ courseId }: { courseId: string }) {
                       const active = currentContentId === p.id && currentType === 'pdf';
                       return (
                         <button key={p.id} onClick={() => selectContent(mod.id, 'pdf', p.id)}
-                          className={`w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${active ? 'bg-primary text-primary-foreground font-semibold' : 'text-foreground hover:bg-white'}`}>
+                          className={`w-full text-left flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-colors ${active ? 'bg-[#4F46E5] text-white' : 'text-white/60 hover:text-white hover:bg-white/[0.06]'}`}>
                           <FileText size={11} className="shrink-0" />
-                          <span className="truncate">{p.title || `Resource ${idx + 1}`}</span>
+                          <span className="truncate">{p.title || `PDF ${idx + 1}`}</span>
                         </button>
                       );
                     })}
