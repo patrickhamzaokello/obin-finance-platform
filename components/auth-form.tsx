@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { authClient } from '@/lib/auth-client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -35,8 +34,9 @@ export function AuthForm({ mode }: { mode: 'sign-in' | 'sign-up' }) {
       return
     }
 
-    router.push('/dashboard')
-    router.refresh()
+    // Full page navigation so the new session cookie is included in the request.
+    // router.push uses RSC fetch which can race with the cookie being committed.
+    window.location.href = '/dashboard'
   }
 
   return (
