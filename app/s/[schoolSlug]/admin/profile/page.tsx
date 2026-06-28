@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { usePathname } from 'next/navigation';
 import { getCreatorProfile, updateCreatorProfile } from '@/app/actions/admin';
 import { uploadToBlob } from '@/lib/upload-client';
 import { convertBlobUrlToApiUrl } from '@/lib/blob-url';
@@ -138,10 +137,7 @@ function ImageUploadField({
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function CreatorProfilePage() {
-  const pathname   = usePathname();
-  // pathname is like /s/alex/admin/profile  →  segment[2] is the slug
-  const schoolSlug = pathname.split('/')[2] ?? '';
-
+  const [schoolSlug, setSchoolSlug] = useState('');
   const [loading,  setLoading]  = useState(true);
   const [saving,   setSaving]   = useState(false);
   const [saved,    setSaved]    = useState(false);
@@ -161,6 +157,7 @@ export default function CreatorProfilePage() {
     getCreatorProfile().then((r) => {
       if (r.success && r.data) {
         const p = r.data as any;
+        setSchoolSlug(p.slug ?? '');
         setName(p.name ?? '');
         setBio(p.bio ?? '');
         setCategory(p.category ?? '');
