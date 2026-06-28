@@ -13,7 +13,7 @@ export function SignUpClient({ schoolName }: { schoolName: string }) {
             <BookOpen className="w-6 h-6 text-primary-foreground" />
           </div>
           <h1 className="text-xl font-bold text-foreground tracking-tight">{schoolName}</h1>
-          <p className="text-sm text-muted-foreground mt-1">Create your learner account</p>
+          <p className="text-sm text-muted-foreground mt-1">Join as a fan and start learning</p>
         </div>
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <AuthForm

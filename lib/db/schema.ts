@@ -63,7 +63,11 @@ export const school = pgTable('school', {
   slug:              text('slug').notNull().unique(),
   name:              text('name').notNull(),
   logoUrl:           text('logoUrl'),
-  commissionPercent: integer('commissionPercent').notNull().default(0), // % platform takes per enrollment
+  bannerUrl:         text('bannerUrl'),                   // creator profile banner image
+  bio:               text('bio'),                         // creator short bio
+  category:          text('category'),                    // e.g. "Finance", "Tech", "Fitness"
+  socialLinks:       text('socialLinks'),                 // JSON: { twitter, instagram, youtube, website }
+  commissionPercent: integer('commissionPercent').notNull().default(0),
   createdAt:         timestamp('createdAt').notNull().defaultNow(),
   updatedAt:         timestamp('updatedAt').notNull().defaultNow(),
 });

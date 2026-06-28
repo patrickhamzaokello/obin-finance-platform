@@ -28,7 +28,7 @@ export default async function SchoolSignInPage() {
           <h1 className="text-xl font-bold text-foreground tracking-tight">
             {school?.name ?? 'Learning Platform'}
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">Sign in to access your courses</p>
+          <p className="text-sm text-muted-foreground mt-1">Sign in to access exclusive content</p>
         </div>
 
         {/* Card */}

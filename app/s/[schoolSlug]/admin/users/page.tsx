@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { getAllUsers, updateUserRole } from '@/app/actions/admin';
 import { Users } from 'lucide-react';
 
-export default function UsersList() {
+export default function FansList() {
   const [users, setUsers]     = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -30,25 +30,30 @@ export default function UsersList() {
     );
   }
 
+  const fans      = users.filter((u) => u.role === 'learner');
+  const admins    = users.filter((u) => u.role === 'school_admin');
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 
       <div>
-        <h1 className="text-2xl font-bold text-foreground tracking-tight">Members</h1>
-        <p className="text-sm text-muted-foreground mt-1">{users.length} registered member{users.length !== 1 ? 's' : ''}</p>
+        <h1 className="text-2xl font-bold text-foreground tracking-tight">Fans</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          {fans.length} fan{fans.length !== 1 ? 's' : ''} · {admins.length} admin{admins.length !== 1 ? 's' : ''}
+        </p>
       </div>
 
       {users.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
           <Users className="w-8 h-8 text-border mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">No members yet.</p>
+          <p className="text-sm text-muted-foreground">No fans yet. Share your profile to attract your first fans.</p>
         </div>
       ) : (
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
           <table className="w-full">
             <thead>
               <tr className="border-b border-black/[0.05]">
-                <th className="px-6 py-3.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Member</th>
+                <th className="px-6 py-3.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Fan</th>
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Email</th>
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Role</th>
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Joined</th>
@@ -80,10 +85,10 @@ export default function UsersList() {
                         className={`px-3 py-1.5 rounded-full text-xs font-semibold border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors ${
                           member.role === 'school_admin'
                             ? 'bg-primary/10 text-primary'
-                            : 'bg-secondary text-muted-foreground'
+                            : 'bg-pink-50 text-pink-700'
                         }`}
                       >
-                        <option value="learner">Learner</option>
+                        <option value="learner">Fan</option>
                         <option value="school_admin">Admin</option>
                       </select>
                     </td>

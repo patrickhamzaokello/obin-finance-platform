@@ -5,7 +5,7 @@ import { getEarningsReport } from '@/app/actions/admin';
 import { db } from '@/lib/db';
 import { school, user, courseEnrollment, course } from '@/lib/db/schema';
 import { sql } from 'drizzle-orm';
-import { Building2, Users, BookOpen, GraduationCap, TrendingUp } from 'lucide-react';
+import { User, Users, BookOpen, Heart, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import { EarningsDashboard } from './earnings-dashboard';
 
@@ -22,18 +22,18 @@ export default async function PlatformDashboard() {
   const totalEarnings = earningsRows.reduce((s, r) => s + (r.platformFee ?? 0), 0);
 
   const stats = [
-    { label: 'Schools',     value: schools.length,                        icon: Building2,   color: 'bg-blue-50 text-blue-600' },
-    { label: 'Users',       value: Number(totalUsers[0]?.count ?? 0),     icon: Users,       color: 'bg-purple-50 text-purple-600' },
-    { label: 'Courses',     value: Number(totalCourses[0]?.count ?? 0),   icon: BookOpen,    color: 'bg-orange-50 text-orange-600' },
-    { label: 'Enrollments', value: Number(totalEnrollments[0]?.count ?? 0), icon: GraduationCap, color: 'bg-pink-50 text-pink-600' },
-    { label: 'My Earnings', value: `UGX ${totalEarnings.toLocaleString()}`, icon: TrendingUp, color: 'bg-green-50 text-green-600' },
+    { label: 'Creators',    value: schools.length,                          icon: User,      color: 'bg-blue-50 text-blue-600' },
+    { label: 'Fans',        value: Number(totalUsers[0]?.count ?? 0),       icon: Users,     color: 'bg-purple-50 text-purple-600' },
+    { label: 'Courses',     value: Number(totalCourses[0]?.count ?? 0),     icon: BookOpen,  color: 'bg-orange-50 text-orange-600' },
+    { label: 'Enrollments', value: Number(totalEnrollments[0]?.count ?? 0), icon: Heart,     color: 'bg-pink-50 text-pink-600' },
+    { label: 'My Earnings', value: `UGX ${totalEarnings.toLocaleString()}`, icon: TrendingUp,color: 'bg-green-50 text-green-600' },
   ];
 
   return (
     <div className='px-8 py-8 space-y-8'>
       <div>
         <h1 className='text-2xl font-bold text-foreground'>Platform Overview</h1>
-        <p className='text-sm text-muted-foreground mt-1'>All schools and earnings across the platform</p>
+        <p className='text-sm text-muted-foreground mt-1'>All creators and earnings across the platform</p>
       </div>
 
       {/* Stats */}
@@ -55,22 +55,22 @@ export default async function PlatformDashboard() {
       {/* Schools list */}
       <div className='bg-white rounded-2xl shadow-sm overflow-hidden'>
         <div className='px-6 py-4 border-b border-black/[0.06] flex items-center justify-between'>
-          <h2 className='text-sm font-semibold text-foreground'>Schools</h2>
+          <h2 className='text-sm font-semibold text-foreground'>Creators</h2>
           <Link href='/platform/admin/schools'
             className='inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:bg-primary/90 transition-colors'
           >
-            Manage schools
+            Manage creators
           </Link>
         </div>
         {schools.length === 0 ? (
           <div className='px-6 py-12 text-center text-muted-foreground text-sm'>
-            No schools yet. <Link href='/platform/admin/schools' className='text-primary underline'>Create the first one.</Link>
+            No creators yet. <Link href='/platform/admin/schools' className='text-primary underline'>Add the first one.</Link>
           </div>
         ) : (
           <table className='w-full text-sm'>
             <thead className='bg-secondary text-xs font-semibold text-muted-foreground uppercase tracking-wider'>
               <tr>
-                <th className='px-6 py-3 text-left'>School</th>
+                <th className='px-6 py-3 text-left'>Creator</th>
                 <th className='px-6 py-3 text-left'>Slug</th>
                 <th className='px-6 py-3 text-left'>Commission</th>
                 <th className='px-6 py-3 text-left'>My Earnings</th>

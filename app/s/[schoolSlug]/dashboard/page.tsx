@@ -72,7 +72,7 @@ export default async function Dashboard() {
                 </div>
                 <div className="leading-tight">
                   <p className="text-xs font-semibold text-foreground">{userName}</p>
-                  <p className="text-[10px] text-muted-foreground capitalize">{isAdmin ? 'Admin' : 'Learner'}</p>
+                  <p className="text-[10px] text-muted-foreground capitalize">{isAdmin ? 'Creator' : 'Fan'}</p>
                 </div>
               </div>
               <SignOutButton className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-black/[0.04] transition-all" />

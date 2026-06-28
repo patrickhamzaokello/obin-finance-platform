@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
-export const metadata: Metadata = { title: 'Admin Dashboard' };
+export const metadata: Metadata = { title: 'Creator Studio' };
 
 import Link from 'next/link';
 import { getAllCourses, getAllUsers } from '@/app/actions/admin';
 import { getCurrentSchool } from '@/lib/school-context';
-import { BookOpen, Users, TrendingUp, GraduationCap, ChevronRight, Plus } from 'lucide-react';
+import { BookOpen, Users, TrendingUp, Heart, ChevronRight, Plus, ExternalLink } from 'lucide-react';
 
 export default async function AdminDashboard() {
   const [s, coursesResult, usersResult] = await Promise.all([
@@ -13,25 +13,33 @@ export default async function AdminDashboard() {
     getAllUsers(),
   ]);
 
-  const courses        = coursesResult.success ? coursesResult.data : [];
-  const members        = usersResult.success   ? usersResult.data   : [];
+  const courses        = (coursesResult.success ? coursesResult.data : []) ?? [];
+  const members        = (usersResult.success   ? usersResult.data   : []) ?? [];
   const publishedCount = courses.filter((c: any) => c.isPublished).length;
-  const learnerCount   = members.filter((m: any) => m.role === 'learner').length;
+  const fanCount       = members.filter((m: any) => m.role === 'learner').length;
 
   const stats = [
-    { label: 'Total Courses',     value: courses.length,   icon: BookOpen,     color: 'bg-blue-50 text-blue-600' },
-    { label: 'Published',         value: publishedCount,   icon: TrendingUp,   color: 'bg-green-50 text-green-600' },
-    { label: 'Members',           value: members.length,   icon: Users,        color: 'bg-purple-50 text-purple-600' },
-    { label: 'Active Learners',   value: learnerCount,     icon: GraduationCap, color: 'bg-orange-50 text-orange-600' },
+    { label: 'Courses',    value: courses.length, icon: BookOpen,   color: 'bg-blue-50 text-blue-600' },
+    { label: 'Published',  value: publishedCount, icon: TrendingUp, color: 'bg-green-50 text-green-600' },
+    { label: 'Total Fans', value: members.length, icon: Users,      color: 'bg-purple-50 text-purple-600' },
+    { label: 'Active Fans',value: fanCount,       icon: Heart,      color: 'bg-pink-50 text-pink-600' },
   ];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
       {/* Page title */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground tracking-tight">{s?.name ?? 'School'}</h1>
-        <p className="text-sm text-muted-foreground mt-1">Overview of your learning platform</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">{s?.name ?? 'Creator'} Studio</h1>
+          <p className="text-sm text-muted-foreground mt-1">Your creator dashboard</p>
+        </div>
+        {s?.slug && (
+          <a href={`/`} target="_blank" rel="noreferrer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white shadow-sm text-xs font-semibold text-muted-foreground rounded-xl hover:text-primary transition-colors border border-black/[0.06]">
+            <ExternalLink size={12} /> View public profile
+          </a>
+        )}
       </div>
 
       {/* Stats */}
@@ -51,13 +59,11 @@ export default async function AdminDashboard() {
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
         <div className="px-6 py-5 flex items-center justify-between border-b border-black/[0.05]">
           <div>
-            <h2 className="text-base font-semibold text-foreground">Courses</h2>
+            <h2 className="text-base font-semibold text-foreground">Your Courses</h2>
             <p className="text-xs text-muted-foreground mt-0.5">{courses.length} total</p>
           </div>
-          <Link
-            href="/admin/courses/new"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-primary text-primary-foreground text-xs font-semibold rounded-xl hover:bg-primary/90 transition-colors"
-          >
+          <Link href="/admin/courses/new"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-primary text-primary-foreground text-xs font-semibold rounded-xl hover:bg-primary/90 transition-colors">
             <Plus size={13} /> New Course
           </Link>
         </div>
@@ -65,7 +71,7 @@ export default async function AdminDashboard() {
         {courses.length === 0 ? (
           <div className="px-6 py-12 text-center">
             <BookOpen className="w-8 h-8 text-border mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground mb-4">No courses yet.</p>
+            <p className="text-sm text-muted-foreground mb-4">No courses yet. Create your first course to start earning.</p>
             <Link href="/admin/courses/new" className="text-sm font-semibold text-primary hover:underline">
               Create your first course →
             </Link>
@@ -89,9 +95,7 @@ export default async function AdminDashboard() {
                 }`}>
                   {c.isPublished ? 'Live' : 'Draft'}
                 </span>
-                <Link href={`/admin/courses/${c.id}`} className="shrink-0 text-xs font-semibold text-primary hover:underline">
-                  Edit
-                </Link>
+                <Link href={`/admin/courses/${c.id}`} className="shrink-0 text-xs font-semibold text-primary hover:underline">Edit</Link>
               </div>
             ))}
           </div>
@@ -107,13 +111,13 @@ export default async function AdminDashboard() {
       </div>
 
       {/* Quick actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Link href="/admin/courses" className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200">
           <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center mb-4">
             <BookOpen size={18} className="text-blue-600" />
           </div>
-          <h3 className="font-semibold text-foreground mb-1">Course Management</h3>
-          <p className="text-sm text-muted-foreground mb-4">Create, edit, and manage course content.</p>
+          <h3 className="font-semibold text-foreground mb-1">Manage Courses</h3>
+          <p className="text-sm text-muted-foreground mb-4">Create, edit, and publish course content for your fans.</p>
           <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary group-hover:gap-2 transition-all">
             Go to Courses <ChevronRight size={14} />
           </span>
@@ -122,10 +126,20 @@ export default async function AdminDashboard() {
           <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center mb-4">
             <Users size={18} className="text-purple-600" />
           </div>
-          <h3 className="font-semibold text-foreground mb-1">Member Management</h3>
-          <p className="text-sm text-muted-foreground mb-4">Manage school members and roles.</p>
+          <h3 className="font-semibold text-foreground mb-1">Your Fans</h3>
+          <p className="text-sm text-muted-foreground mb-4">See who has joined and is learning from your courses.</p>
           <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary group-hover:gap-2 transition-all">
-            Go to Members <ChevronRight size={14} />
+            View Fans <ChevronRight size={14} />
+          </span>
+        </Link>
+        <Link href="/admin/messages" className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200">
+          <div className="w-10 h-10 rounded-xl bg-pink-50 flex items-center justify-center mb-4">
+            <Heart size={18} className="text-pink-600" />
+          </div>
+          <h3 className="font-semibold text-foreground mb-1">Feedback</h3>
+          <p className="text-sm text-muted-foreground mb-4">Read messages and reviews from your fans.</p>
+          <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary group-hover:gap-2 transition-all">
+            View Feedback <ChevronRight size={14} />
           </span>
         </Link>
       </div>

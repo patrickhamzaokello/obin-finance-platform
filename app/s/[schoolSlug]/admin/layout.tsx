@@ -16,7 +16,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const isAdmin = isOwner || membership?.role === 'school_admin';
   if (!session?.user || !isAdmin) redirect('/sign-in');
 
-  const role = isOwner ? 'Platform Owner' : 'Admin';
+  const role = isOwner ? 'Platform Owner' : 'Creator';
 
   return (
     <div className="min-h-screen bg-[#F5F5F7]">

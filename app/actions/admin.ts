@@ -482,3 +482,35 @@ export async function getEarningsReport() {
     return { success: false, error: String(error) };
   }
 }
+
+export async function getCreatorProfile() {
+  try {
+    await isSchoolAdmin();
+    const s = await getCurrentSchool();
+    if (!s) return { success: false, error: 'No school context' };
+    return { success: true, data: s };
+  } catch (error) {
+    return { success: false, error: String(error) };
+  }
+}
+
+export async function updateCreatorProfile(data: {
+  name?: string;
+  bio?: string;
+  category?: string;
+  logoUrl?: string;
+  bannerUrl?: string;
+  socialLinks?: string; // JSON string
+}) {
+  try {
+    await isSchoolAdmin();
+    const s = await getCurrentSchool();
+    if (!s) return { success: false, error: 'No school context' };
+    await db.update(school).set({ ...data, updatedAt: new Date() }).where(eq(school.id, s.id));
+    revalidatePath('/admin');
+    revalidatePath('/');
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: String(error) };
+  }
+}

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
-import { LayoutDashboard, BookOpen, Users, LogOut, MessageCircle } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Users, LogOut, MessageCircle, UserCircle } from 'lucide-react';
 
 interface AdminNavProps {
   schoolName: string;
@@ -16,10 +16,11 @@ export function AdminNav({ schoolName, userName, userEmail, role }: AdminNavProp
   const pathname = usePathname();
 
   const links = [
-    { href: '/admin',          label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/admin',          label: 'Studio',    icon: LayoutDashboard },
     { href: '/admin/courses',  label: 'Courses',   icon: BookOpen },
-    { href: '/admin/users',    label: 'Members',   icon: Users },
+    { href: '/admin/users',    label: 'Fans',      icon: Users },
     { href: '/admin/messages', label: 'Feedback',  icon: MessageCircle },
+    { href: '/admin/profile',  label: 'Profile',   icon: UserCircle },
   ];
 
   const isActive = (href: string) =>
@@ -40,12 +41,15 @@ export function AdminNav({ schoolName, userName, userEmail, role }: AdminNavProp
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14">
 
-          {/* School name */}
+          {/* Creator name */}
           <div className="flex items-center gap-2.5 shrink-0">
             <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-[10px] font-bold text-primary-foreground">
-              {schoolName?.[0]?.toUpperCase() ?? 'S'}
+              {schoolName?.[0]?.toUpperCase() ?? 'C'}
             </div>
-            <span className="text-sm font-semibold text-foreground tracking-tight">{schoolName}</span>
+            <div className="leading-tight">
+              <p className="text-xs font-bold text-foreground tracking-tight">{schoolName}</p>
+              <p className="text-[10px] text-muted-foreground">Creator Studio</p>
+            </div>
           </div>
 
           {/* Nav links */}
