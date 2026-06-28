@@ -11,7 +11,6 @@ import {
   createModule, deleteModule,
   createVideo, deleteVideo,
   createPdf, deletePdf,
-  getSchools,
 } from '@/app/actions/admin';
 import {
   ChevronDown, ChevronUp, Play, FileText, Plus, Trash2,
@@ -77,18 +76,16 @@ export default function CourseEditor() {
   const isNew = courseId === 'new';
 
   const [course, setCourse]   = useState<any>(null);
-  const [schools, setSchools] = useState<any[]>([]);
   const [loading, setLoading] = useState(!isNew);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving]   = useState(false);
   const [showModuleForm, setShowModuleForm] = useState(false);
   const { toasts, show: showToast } = useToast();
 
-  // Derived: slug of the school currently selected for this course
-  const schoolSlug = schools.find((s) => s.id === course?.schoolId)?.slug || '';
+  // School slug comes from the URL — reliable for both school admins and platform owner
+  const schoolSlug = (params?.schoolSlug as string) || '';
 
   useEffect(() => {
-    getSchools().then((r) => { if (r.success) setSchools(r.data as any[]); });
     if (!isNew) {
       getAdminCourse(courseId).then((result) => {
         if (result.success) {
@@ -234,28 +231,6 @@ export default function CourseEditor() {
                 <div>
                   <label className='block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide'>Instructor</label>
                   <input type='text' value={course.instructor} onChange={(e) => setCourse({ ...course, instructor: e.target.value })} className={inputCls} placeholder='Instructor name' />
-                </div>
-
-                <div>
-                  <label className='block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide'>
-                    School <span className='text-destructive'>*</span>
-                  </label>
-                  {schools.length === 0 ? (
-                    <p className='text-xs text-muted-foreground px-3 py-2 border border-border rounded bg-secondary'>
-                      No schools yet — <a href='/admin/schools' className='text-primary underline'>create one first</a>
-                    </p>
-                  ) : (
-                    <select
-                      value={course.schoolId || ''}
-                      onChange={(e) => setCourse({ ...course, schoolId: e.target.value })}
-                      className={inputCls}
-                    >
-                      <option value=''>— Select school —</option>
-                      {schools.map((s: any) => (
-                        <option key={s.id} value={s.id}>{s.name} ({s.slug})</option>
-                      ))}
-                    </select>
-                  )}
                 </div>
 
                 <div>
@@ -465,11 +440,13 @@ function ModuleCard({
         <div className='border-t border-border'>
           <VideoSection
             module={module}
+            schoolSlug={schoolSlug}
             onUpdate={onUpdate}
             showToast={showToast}
           />
           <ResourceSection
             module={module}
+            schoolSlug={schoolSlug}
             onUpdate={onUpdate}
             showToast={showToast}
           />
@@ -480,8 +457,9 @@ function ModuleCard({
 }
 
 // ─── Video Section ────────────────────────────────────────────────────────────
-function VideoSection({ module, onUpdate, showToast }: {
+function VideoSection({ module, schoolSlug, onUpdate, showToast }: {
   module: any;
+  schoolSlug: string;
   onUpdate: (m: any) => void;
   showToast: (type: 'success' | 'error', msg: string) => void;
 }) {
@@ -555,8 +533,9 @@ function VideoSection({ module, onUpdate, showToast }: {
 }
 
 // ─── Resource (PDF) Section ───────────────────────────────────────────────────
-function ResourceSection({ module, onUpdate, showToast }: {
+function ResourceSection({ module, schoolSlug, onUpdate, showToast }: {
   module: any;
+  schoolSlug: string;
   onUpdate: (m: any) => void;
   showToast: (type: 'success' | 'error', msg: string) => void;
 }) {
