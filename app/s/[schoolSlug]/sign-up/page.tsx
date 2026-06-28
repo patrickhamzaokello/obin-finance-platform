@@ -3,6 +3,9 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { getCurrentSchool } from '@/lib/school-context'
 import { AuthForm } from '@/components/auth-form'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = { title: 'Create Account' }
 import { BookOpen } from 'lucide-react'
 
 export default async function SchoolSignUpPage() {

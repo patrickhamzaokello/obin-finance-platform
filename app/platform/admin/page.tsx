@@ -1,3 +1,6 @@
+import type { Metadata } from 'next';
+export const metadata: Metadata = { title: 'Platform Overview' };
+
 import { db } from '@/lib/db';
 import { school, user, schoolMember, courseEnrollment, course } from '@/lib/db/schema';
 import { sql } from 'drizzle-orm';
@@ -29,7 +32,7 @@ export default async function PlatformDashboard() {
       {/* Stats */}
       <div className='grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10'>
         {stats.map(({ label, value, icon: Icon }) => (
-          <div key={label} className='bg-white border border-border rounded p-5 border-l-[3px] border-l-primary'>
+          <div key={label} className='bg-white rounded-2xl shadow-sm p-5'>
             <div className='flex items-center justify-between mb-2'>
               <p className='text-xs font-semibold text-muted-foreground uppercase tracking-wider'>{label}</p>
               <Icon size={15} className='text-primary' />
@@ -40,11 +43,11 @@ export default async function PlatformDashboard() {
       </div>
 
       {/* Schools list */}
-      <div className='bg-white border border-border rounded overflow-hidden'>
-        <div className='px-6 py-4 border-b border-border flex items-center justify-between'>
+      <div className='bg-white rounded-2xl shadow-sm overflow-hidden'>
+        <div className='px-6 py-4 border-b border-black/[0.06] flex items-center justify-between'>
           <h2 className='text-sm font-semibold text-foreground'>Schools</h2>
           <Link href='/platform/admin/schools/new'
-            className='inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-semibold rounded hover:bg-primary/90 transition-colors'
+            className='inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:bg-primary/90 transition-colors'
           >
             + Add school
           </Link>

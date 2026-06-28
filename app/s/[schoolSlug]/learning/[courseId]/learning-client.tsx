@@ -308,7 +308,7 @@ export default function LearningClient({ courseId }: { courseId: string }) {
                   <div key={mod.id}>
                     <button onClick={() => toggleExpanded(mod.id)}
                       className={`w-full text-left flex items-start justify-between gap-3 px-5 py-4 transition-colors ${
-                        isActive ? 'bg-primary/6 border-l-[3px] border-l-primary pl-[17px]' : 'hover:bg-secondary border-l-[3px] border-l-transparent'
+                        isActive ? 'bg-primary/8 rounded-xl mx-2 px-3' : 'hover:bg-secondary rounded-xl mx-2 px-3'
                       }`}
                     >
                       <div className="flex-1 min-w-0">
@@ -377,7 +377,7 @@ export default function LearningClient({ courseId }: { courseId: string }) {
             return (
               <div key={mod.id} className="border-b border-black/[0.04] last:border-0">
                 <button onClick={() => toggleExpanded(mod.id)}
-                  className={`w-full text-left flex items-center gap-3 px-5 py-3.5 transition-colors ${isActive ? 'bg-primary/6 border-l-[3px] border-l-primary pl-[17px]' : 'border-l-[3px] border-l-transparent'}`}>
+                  className={`w-full text-left flex items-center gap-3 px-5 py-3.5 transition-colors ${isActive ? 'bg-primary/8 rounded-xl mx-2 px-3 w-auto' : ''}`}>
                   <span className={`text-sm font-semibold flex-1 truncate ${isActive ? 'text-primary' : 'text-foreground'}`}>
                     {index + 1}. {mod.title}
                   </span>

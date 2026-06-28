@@ -3,6 +3,9 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { isPlatformOwner } from '@/lib/school-context'
 import { AuthForm } from '@/components/auth-form'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = { title: 'Platform Sign In' }
 
 export default async function PlatformSignInPage() {
   const session = await auth.api.getSession({ headers: await headers() })

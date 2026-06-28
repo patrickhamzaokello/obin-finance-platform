@@ -52,13 +52,13 @@ export default async function PlatformSchoolDetailPage({
       })()}
 
       <div className='grid grid-cols-2 gap-4 mb-8'>
-        <div className='bg-white border border-border border-l-[3px] border-l-primary rounded p-5'>
+        <div className='bg-white rounded-2xl shadow-sm p-5'>
           <div className='flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1'>
             <Users size={13} /> Members
           </div>
           <p className='text-3xl font-bold text-foreground'>{members.length}</p>
         </div>
-        <div className='bg-white border border-border border-l-[3px] border-l-primary rounded p-5'>
+        <div className='bg-white rounded-2xl shadow-sm p-5'>
           <div className='flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1'>
             <BookOpen size={13} /> Courses
           </div>
@@ -67,8 +67,8 @@ export default async function PlatformSchoolDetailPage({
       </div>
 
       {/* Members */}
-      <div className='bg-white border border-border rounded overflow-hidden mb-6'>
-        <div className='px-6 py-4 border-b border-border flex items-center justify-between'>
+      <div className='bg-white rounded-2xl shadow-sm overflow-hidden mb-6'>
+        <div className='px-6 py-4 border-b border-black/[0.06] flex items-center justify-between'>
           <h2 className='text-sm font-semibold text-foreground'>Members</h2>
           <AddSchoolAdminForm schoolId={schoolId} />
         </div>
@@ -105,7 +105,7 @@ export default async function PlatformSchoolDetailPage({
       </div>
 
       {/* Courses */}
-      <div className='bg-white border border-border rounded overflow-hidden'>
+      <div className='bg-white rounded-2xl shadow-sm overflow-hidden'>
         <div className='px-6 py-4 border-b border-border'>
           <h2 className='text-sm font-semibold text-foreground'>Courses</h2>
         </div>

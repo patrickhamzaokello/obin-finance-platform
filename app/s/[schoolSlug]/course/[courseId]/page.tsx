@@ -53,7 +53,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
   if (!course) {
     return (
       <div className='min-h-screen bg-white flex items-center justify-center px-4'>
-        <div className='card-accent p-10 max-w-md w-full text-center'>
+        <div className='bg-white rounded-2xl shadow-sm p-10 max-w-md w-full text-center'>
           <h2 className='text-xl font-semibold text-foreground mb-2'>Course not found</h2>
           <p className='text-sm text-muted-foreground mb-6'>{error || "This course doesn't exist."}</p>
           <Link href='/dashboard' className='inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded hover:bg-primary/90 transition-colors'>
@@ -70,10 +70,10 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
   const isEnrolled  = course.isEnrolled;
 
   return (
-    <div className='min-h-screen bg-[#f4f7f5]'>
+    <div className='min-h-screen bg-[#F5F5F7]'>
 
       {/* Sticky header */}
-      <header className='bg-white border-b border-border sticky top-0 z-10'>
+      <header className='bg-white/80 backdrop-blur-xl border-b border-black/[0.06] sticky top-0 z-10'>
         <div className='max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center gap-3'>
           <Link href='/dashboard' className='inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors'>
             <ArrowLeft size={14} /> Back to Courses
@@ -123,7 +123,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
                 { icon: Play,      label: 'Videos',    value: totalVideos },
                 { icon: FileText,  label: 'Resources', value: totalPdfs },
               ].map(({ icon: Icon, label, value }) => (
-                <div key={label} className='card-accent px-4 py-4 text-center'>
+                <div key={label} className='bg-white rounded-2xl shadow-sm px-4 py-4 text-center'>
                   <div className='text-2xl font-bold text-primary'>{value}</div>
                   <div className='text-xs text-muted-foreground mt-0.5 flex items-center justify-center gap-1'>
                     <Icon size={11} /> {label}
@@ -135,10 +135,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
             {/* Description */}
             {course.description && (
               <div>
-                <h2 className='text-base font-semibold text-foreground mb-3 flex items-center gap-2'>
-                  <div className='w-[3px] h-5 bg-primary rounded-full' />
-                  About this course
-                </h2>
+                <h2 className='text-base font-semibold text-foreground mb-3'>About this course</h2>
                 <p className='text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap'>{course.description}</p>
               </div>
             )}
@@ -146,15 +143,12 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
             {/* What you'll learn */}
             {course.modules.length > 0 && (
               <div>
-                <h2 className='text-base font-semibold text-foreground mb-4 flex items-center gap-2'>
-                  <div className='w-[3px] h-5 bg-primary rounded-full' />
-                  Course curriculum
-                </h2>
+                <h2 className='text-base font-semibold text-foreground mb-4'>Course curriculum</h2>
                 <div className='space-y-2'>
                   {course.modules.map((mod: any, index: number) => {
                     const itemCount = mod.videos.length + mod.pdfs.length;
                     return (
-                      <div key={mod.id} className='bg-white border border-border rounded'>
+                      <div key={mod.id} className='bg-white rounded-2xl shadow-sm'>
                         <div className='flex items-start gap-4 px-5 py-4'>
                           <div className='w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0 mt-0.5'>
                             {index + 1}
@@ -191,7 +185,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
 
           {/* ── Right: CTA card ──────────────────────────────────────────── */}
           <div className='lg:col-span-1'>
-            <div className='sticky top-[57px] bg-white border border-border border-l-[3px] border-l-primary rounded overflow-hidden'>
+            <div className='sticky top-[57px] bg-white rounded-2xl shadow-sm overflow-hidden'>
 
               {/* Course thumbnail (small, inside card) */}
               {course.thumbnail && (

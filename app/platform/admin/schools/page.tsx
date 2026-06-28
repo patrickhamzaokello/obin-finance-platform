@@ -52,7 +52,7 @@ export default function PlatformSchoolsPage() {
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className='inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded hover:bg-primary/90 transition-colors'
+          className='inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors'
         >
           <Plus size={14} /> New school
         </button>
@@ -60,7 +60,7 @@ export default function PlatformSchoolsPage() {
 
       {/* Create form */}
       {showForm && (
-        <div className='bg-white border border-border rounded p-6 mb-6 border-l-[3px] border-l-primary space-y-4 max-w-lg'>
+        <div className='bg-white rounded-2xl shadow-sm p-6 mb-6 space-y-4 max-w-lg'>
           <h2 className='text-sm font-semibold text-foreground'>Create school</h2>
           <div className='space-y-3'>
             <input value={name} onChange={(e) => { setName(e.target.value); setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }}
@@ -90,12 +90,12 @@ export default function PlatformSchoolsPage() {
           <Loader2 size={15} className='animate-spin' /> Loading…
         </div>
       ) : schools.length === 0 ? (
-        <div className='bg-white border border-border rounded py-16 text-center text-muted-foreground text-sm'>
+        <div className='bg-white rounded-2xl shadow-sm py-16 text-center text-muted-foreground text-sm'>
           <Building2 className='w-8 h-8 mx-auto mb-3 opacity-30' />
           No schools yet. Create the first one above.
         </div>
       ) : (
-        <div className='bg-white border border-border rounded overflow-hidden'>
+        <div className='bg-white rounded-2xl shadow-sm overflow-hidden'>
           <table className='w-full text-sm'>
             <thead className='bg-secondary text-xs font-semibold text-muted-foreground uppercase tracking-wider'>
               <tr>

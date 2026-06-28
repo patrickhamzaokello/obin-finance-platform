@@ -1,3 +1,6 @@
+import type { Metadata } from 'next';
+export const metadata: Metadata = { title: 'Obin Finance Platform' };
+
 import { isPlatformOwner } from '@/lib/school-context';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
@@ -32,7 +35,7 @@ export default async function PlatformLandingPage() {
       </header>
 
       {/* Hero */}
-      <section className='bg-[#f4f7f5] border-b border-border'>
+      <section className='bg-[#F5F5F7] border-b border-black/[0.06]'>
         <div className='max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center'>
           <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary text-xs font-semibold rounded-full mb-6'>
             <Globe size={12} /> Multi-school learning platform
@@ -94,7 +97,7 @@ export default async function PlatformLandingPage() {
               desc: 'Learners mark modules complete and track their journey through every course they enroll in.',
             },
           ].map(({ icon: Icon, title, desc }) => (
-            <div key={title} className='bg-white border border-border rounded p-6 border-l-[3px] border-l-primary hover:shadow-sm transition-shadow'>
+            <div key={title} className='bg-white rounded-2xl shadow-sm p-6 hover:shadow-md transition-shadow'>
               <div className='w-9 h-9 rounded bg-primary/10 flex items-center justify-center mb-4'>
                 <Icon size={17} className='text-primary' />
               </div>

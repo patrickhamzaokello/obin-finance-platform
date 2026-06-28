@@ -1,5 +1,8 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+
+export const metadata: Metadata = { title: 'My Dashboard' }
 import { getPublishedCourses, getUserEnrolledCourses } from '@/app/actions/courses';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';

@@ -1,3 +1,6 @@
+import type { Metadata } from 'next';
+export const metadata: Metadata = { title: 'Admin Dashboard' };
+
 import Link from 'next/link';
 import { getAllCourses, getAllUsers } from '@/app/actions/admin';
 import { getCurrentSchool } from '@/lib/school-context';

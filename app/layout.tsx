@@ -10,34 +10,20 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Obin Finance - Learn, Grow, Succeed',
-  description: 'Master financial literacy with Obin Finance. Expert-led courses on budgeting, investing, and wealth management.',
-  generator: 'v0.app',
+  title: {
+    default: 'Obin Finance',
+    template: '%s · Obin Finance',
+  },
+  description: 'Expert-led financial education courses on budgeting, investing, and wealth management.',
   icons: {
-    icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
-    ],
-    apple: '/apple-icon.png',
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
   },
 }
 
 export const viewport: Viewport = {
-  colorScheme: 'light dark',
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f9f8f7' },
-    { media: '(prefers-color-scheme: dark)', color: '#1f1f1f' },
-  ],
+  colorScheme: 'light',
+  themeColor: '#4F46E5',
 }
 
 export default function RootLayout({
