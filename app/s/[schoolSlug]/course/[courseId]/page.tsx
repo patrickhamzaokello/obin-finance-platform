@@ -3,12 +3,14 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCourseWithEnrollmentStatus, enrollCourse } from '@/app/actions/courses';
+import { getCourseReviews, getMyReview } from '@/app/actions/feedback';
 import { convertBlobUrlToApiUrl } from '@/lib/blob-url';
 import Link from 'next/link';
 import {
   ArrowLeft, BookOpen, Play, FileText, Clock,
-  CheckCircle2, GraduationCap, Loader2, ChevronDown, ChevronUp, Users,
+  CheckCircle2, GraduationCap, Loader2, ChevronDown, ChevronUp, Users, Star,
 } from 'lucide-react';
+import { ReviewsSection } from './reviews';
 
 export default function CoursePage({ params }: { params: Promise<{ courseId: string }> }) {
   const router = useRouter();
@@ -20,13 +22,27 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
   const [descExpanded,  setDescExpanded]  = useState(false);
   const [descOverflows, setDescOverflows] = useState(false);
   const descRef = useRef<HTMLParagraphElement>(null);
+  const [reviews,      setReviews]      = useState<any[]>([]);
+  const [avgRating,    setAvgRating]    = useState<number | null>(null);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [myReview,     setMyReview]     = useState<any>(null);
 
   useEffect(() => {
     params.then(({ courseId: id }) => {
       setCourseId(id);
-      getCourseWithEnrollmentStatus(id).then((result) => {
-        if (result.success) setCourse(result.data as any);
-        else setError(result.error || 'Failed to load course');
+      Promise.all([
+        getCourseWithEnrollmentStatus(id),
+        getCourseReviews(id),
+        getMyReview(id),
+      ]).then(([courseResult, reviewsResult, myReviewResult]) => {
+        if (courseResult.success) setCourse(courseResult.data as any);
+        else setError(courseResult.error || 'Failed to load course');
+        if (reviewsResult.success) {
+          setReviews(reviewsResult.data ?? []);
+          setAvgRating(reviewsResult.avgRating ?? null);
+          setTotalReviews(reviewsResult.totalReviews ?? 0);
+        }
+        setMyReview(myReviewResult.data ?? null);
         setLoading(false);
       });
     });
@@ -153,6 +169,11 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
                     <Icon size={11} className='text-primary' /> {label}
                   </span>
                 ))}
+                {avgRating && (
+                  <span className='inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 rounded-xl text-xs font-semibold text-amber-700 shadow-sm'>
+                    <Star size={11} className='fill-amber-400 text-amber-400' /> {avgRating} ({totalReviews})
+                  </span>
+                )}
               </div>
             </div>
 
@@ -232,6 +253,16 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
                 </div>
               </div>
             )}
+
+            {/* Reviews */}
+            <ReviewsSection
+              courseId={courseId!}
+              isEnrolled={isEnrolled}
+              reviews={reviews}
+              avgRating={avgRating}
+              totalReviews={totalReviews}
+              myReview={myReview}
+            />
           </div>
 
           {/* ── Right: sticky CTA ── */}

@@ -7,7 +7,7 @@ import { getPublishedCourses, getUserEnrolledCourses, joinSchool } from '@/app/a
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { getCurrentSchool, getCurrentMembership } from '@/lib/school-context';
-import { BookOpen, ChevronRight, LayoutDashboard, Award } from 'lucide-react';
+import { BookOpen, ChevronRight, LayoutDashboard, Award, MessageCircle } from 'lucide-react';
 import { SignOutButton } from '@/components/sign-out-button';
 
 export default async function Dashboard() {
@@ -53,6 +53,11 @@ export default async function Dashboard() {
                 className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-black/[0.04] transition-all"
               >
                 <Award size={13} /> Achievements
+              </Link>
+              <Link href="/contact"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-black/[0.04] transition-all"
+              >
+                <MessageCircle size={13} /> Contact
               </Link>
               {isAdmin && (
                 <Link href="/admin"

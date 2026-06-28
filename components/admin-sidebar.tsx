@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { LayoutDashboard, BookOpen, Users, PanelLeftClose, PanelLeft, Home } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Users, PanelLeftClose, PanelLeft, Home, MessageCircle } from 'lucide-react';
 
 const menuItems = [
-  { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-  { label: 'Courses',   href: '/admin/courses', icon: BookOpen },
-  { label: 'Users',     href: '/admin/users', icon: Users },
+  { label: 'Dashboard', href: '/admin',          icon: LayoutDashboard },
+  { label: 'Courses',   href: '/admin/courses',  icon: BookOpen },
+  { label: 'Users',     href: '/admin/users',    icon: Users },
+  { label: 'Feedback',  href: '/admin/messages', icon: MessageCircle },
 ];
 
 export default function AdminSidebar() {

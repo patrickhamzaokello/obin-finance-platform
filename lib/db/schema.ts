@@ -159,6 +159,37 @@ export const certificate = pgTable(
   (table) => [unique('unique_cert_user_course').on(table.userId, table.courseId)]
 );
 
+export const courseReview = pgTable(
+  'course_review',
+  {
+    id:        text('id').primaryKey(),
+    userId:    text('userId').notNull(),
+    courseId:  text('courseId').notNull(),
+    schoolId:  text('schoolId'),
+    rating:    integer('rating').notNull(),        // 1–5
+    comment:   text('comment'),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+    // Snapshot so review stays meaningful if user/course changes
+    learnerName:  text('learnerName'),
+    courseTitle:  text('courseTitle'),
+  },
+  (table) => [unique('unique_review_user_course').on(table.userId, table.courseId)]
+);
+
+export const supportMessage = pgTable('support_message', {
+  id:        text('id').primaryKey(),
+  userId:    text('userId').notNull(),
+  schoolId:  text('schoolId').notNull(),
+  subject:   text('subject').notNull(),
+  body:      text('body').notNull(),
+  status:    text('status').notNull().default('open'),   // 'open' | 'resolved'
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  // Snapshot
+  senderName:  text('senderName'),
+  senderEmail: text('senderEmail'),
+});
+
 export const userProgress = pgTable(
   'user_progress',
   {
