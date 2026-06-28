@@ -149,72 +149,63 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
     <div className='min-h-screen bg-[#F5F5F7]'>
 
       {/* ── Hero ── */}
-      <div className='relative bg-[#0f0f1a] overflow-hidden'>
-        {/* Blurred thumbnail as background */}
-        {thumbnailUrl && (
-          <div className='absolute inset-0'>
-            <img src={thumbnailUrl} alt='' className='w-full h-full object-cover opacity-20 blur-sm scale-105' />
-          </div>
-        )}
-        <div className='absolute inset-0 bg-gradient-to-r from-[#0f0f1a] via-[#0f0f1a]/95 to-transparent' />
-
-        <div className='relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
+      <div className='bg-white border-b border-black/[0.06]'>
+        <div className='max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
           {/* Back link */}
           <Link href='/dashboard'
-            className='inline-flex items-center gap-1.5 text-sm font-medium text-white/50 hover:text-white transition-colors mb-8'>
+            className='inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary transition-colors mb-8'>
             <ArrowLeft size={14} /> Back to Courses
           </Link>
 
           <div className='flex gap-10 items-start'>
             {/* Left: course info */}
-            <div className='flex-1 min-w-0 max-w-2xl py-4'>
-              {/* Published badge */}
+            <div className='flex-1 min-w-0 max-w-2xl py-2'>
+              {/* Badges */}
               <div className='flex items-center gap-2 mb-4'>
-                <span className='inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/20 text-[#818cf8] text-xs font-semibold rounded-full'>
+                <span className='inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full'>
                   <BookOpen size={11} /> Course
                 </span>
                 {discountActive && !isEnrolled && (
-                  <span className='inline-flex items-center px-2.5 py-1 bg-red-500/20 text-red-400 text-xs font-bold rounded-full'>
+                  <span className='inline-flex items-center px-2.5 py-1 bg-red-50 text-red-600 text-xs font-bold rounded-full'>
                     {course.discountPercent}% OFF
                   </span>
                 )}
               </div>
 
-              <h1 className='text-3xl sm:text-4xl font-bold text-white leading-tight tracking-tight mb-4'>
+              <h1 className='text-3xl sm:text-4xl font-bold text-foreground leading-tight tracking-tight mb-4'>
                 {course.title}
               </h1>
 
               {course.description && (
-                <p className='text-white/60 text-base leading-relaxed line-clamp-2 mb-6'>
+                <p className='text-muted-foreground text-base leading-relaxed line-clamp-2 mb-6'>
                   {course.description}
                 </p>
               )}
 
               {/* Stats row */}
-              <div className='flex flex-wrap items-center gap-5 text-sm text-white/50'>
+              <div className='flex flex-wrap items-center gap-5 text-sm text-muted-foreground'>
                 {course.instructor && (
                   <div className='flex items-center gap-2'>
-                    <div className='w-6 h-6 rounded-full bg-primary/30 flex items-center justify-center'>
-                      <Users size={11} className='text-[#818cf8]' />
+                    <div className='w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center'>
+                      <Users size={11} className='text-primary' />
                     </div>
-                    <span className='text-white/80 font-medium'>{course.instructor}</span>
+                    <span className='text-foreground font-medium'>{course.instructor}</span>
                   </div>
                 )}
-                <span className='flex items-center gap-1.5'><BookOpen size={13} /> {course.modules.length} modules</span>
-                <span className='flex items-center gap-1.5'><Play size={13} /> {totalVideos} videos</span>
-                <span className='flex items-center gap-1.5'><FileText size={13} /> {totalPdfs} PDFs</span>
-                <span className='flex items-center gap-1.5'><Clock size={13} /> Self-paced</span>
+                <span className='flex items-center gap-1.5'><BookOpen size={13} className='text-primary' /> {course.modules.length} modules</span>
+                <span className='flex items-center gap-1.5'><Play size={13} className='text-primary' /> {totalVideos} videos</span>
+                <span className='flex items-center gap-1.5'><FileText size={13} className='text-primary' /> {totalPdfs} PDFs</span>
+                <span className='flex items-center gap-1.5'><Clock size={13} className='text-primary' /> Self-paced</span>
               </div>
 
-              {/* Enrolled badge (mobile visible) */}
               {isEnrolled && (
-                <div className='mt-6 inline-flex items-center gap-2 px-3.5 py-2 bg-primary/20 text-[#818cf8] text-sm font-semibold rounded-xl'>
+                <div className='mt-6 inline-flex items-center gap-2 px-3.5 py-2 bg-primary/10 text-primary text-sm font-semibold rounded-xl'>
                   <CheckCircle2 size={14} /> You&apos;re enrolled
                 </div>
               )}
             </div>
 
-            {/* Right: sticky CTA — desktop only in hero */}
+            {/* Right: CTA — desktop only in hero */}
             <div className='hidden lg:block w-80 shrink-0'>
               <CtaCard />
             </div>
