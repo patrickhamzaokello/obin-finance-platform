@@ -4,8 +4,7 @@ import { getPublishedCourses, getUserEnrolledCourses } from '@/app/actions/cours
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { getCurrentSchool, getCurrentMembership } from '@/lib/school-context';
-import { authClient } from '@/lib/auth-client';
-import { BookOpen, ChevronRight, LayoutDashboard, LogOut } from 'lucide-react';
+import { BookOpen, ChevronRight, LayoutDashboard } from 'lucide-react';
 import { SignOutButton } from '@/components/sign-out-button';
 
 export default async function Dashboard() {

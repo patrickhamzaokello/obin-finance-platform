@@ -1,10 +1,6 @@
-import { auth } from '@/lib/auth'
-import { headers } from 'next/headers'
+// Platform admin accounts are provisioned manually — no self-service sign-up on the apex domain.
 import { redirect } from 'next/navigation'
-import { AuthForm } from '@/components/auth-form'
 
-export default async function SignUpPage() {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (session?.user) redirect('/platform')
-  return <AuthForm mode="sign-up" />
+export default function PlatformSignUpPage() {
+  redirect('/sign-in')
 }
