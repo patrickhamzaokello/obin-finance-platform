@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
-import { LayoutDashboard, BookOpen, Users, LogOut } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Users, LogOut, MessageCircle } from 'lucide-react';
 
 interface AdminNavProps {
   schoolName: string;
@@ -16,9 +16,10 @@ export function AdminNav({ schoolName, userName, userEmail, role }: AdminNavProp
   const pathname = usePathname();
 
   const links = [
-    { href: '/admin',         label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/admin/courses', label: 'Courses',   icon: BookOpen },
-    { href: '/admin/users',   label: 'Members',   icon: Users },
+    { href: '/admin',          label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/admin/courses',  label: 'Courses',   icon: BookOpen },
+    { href: '/admin/users',    label: 'Members',   icon: Users },
+    { href: '/admin/messages', label: 'Feedback',  icon: MessageCircle },
   ];
 
   const isActive = (href: string) =>
