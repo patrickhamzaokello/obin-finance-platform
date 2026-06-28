@@ -14,9 +14,10 @@ export async function uploadToBlob(
   try {
     // 1. Ask the server for a presigned S3 URL
     const tokenRes = await fetch('/api/upload', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ fileType, fileName: file.name, contentType: file.type, schoolSlug }),
+      method:      'POST',
+      credentials: 'include',
+      headers:     { 'Content-Type': 'application/json' },
+      body:        JSON.stringify({ fileType, fileName: file.name, contentType: file.type, schoolSlug }),
     });
 
     if (!tokenRes.ok) {

@@ -34,7 +34,7 @@ const FOLDERS: Record<string, string> = {
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized: no session' }, { status: 401 });
   }
 
   // Allow platform owner or any school_admin
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       ))
       .limit(1);
     if (!membership.length) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized: not a school admin' }, { status: 401 });
     }
   }
 
