@@ -1,10 +1,10 @@
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
-import { school, course, courseReview } from '@/lib/db/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { school, course } from '@/lib/db/schema';
+import { eq, and } from 'drizzle-orm';
 import { convertBlobUrlToApiUrl } from '@/lib/blob-url';
 import Link from 'next/link';
-import { BookOpen, Play, ArrowRight, Link2, Globe, Heart, Check, Star } from 'lucide-react';
+import { BookOpen, Play, ArrowRight, Link2, Globe, Heart, Check } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { Sora, Manrope } from 'next/font/google';
@@ -53,10 +53,7 @@ export default async function CreatorProfilePage({
   if (!schoolRows.length) notFound();
   const s = schoolRows[0];
 
-  const [courses, reviews] = await Promise.all([
-    db.select().from(course).where(and(eq(course.schoolId, s.id), eq(course.isPublished, true))),
-    db.select().from(courseReview).where(eq(courseReview.schoolId, s.id)).orderBy(desc(courseReview.createdAt)).limit(3),
-  ]);
+  const courses = await db.select().from(course).where(and(eq(course.schoolId, s.id), eq(course.isPublished, true)));
 
   let social: Record<string, string> = {};
   try { social = JSON.parse((s as any).socialLinks ?? '{}'); } catch { /* empty */ }
@@ -273,92 +270,130 @@ export default async function CreatorProfilePage({
       </div>
 
       {/* ── 5. COURSES ───────────────────────────────────────────────── */}
-      <section id='courses' style={{ background: C.surface2, padding: '88px 24px', borderTop: `1px solid ${C.border}` }}>
+      <section id='courses' style={{ background: '#fff', padding: '96px 24px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
 
-          {/* Section header */}
-          <div style={{ textAlign: 'center', marginBottom: 52 }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', border: `1px solid ${C.border2}`, borderRadius: 999, padding: '6px 14px', marginBottom: 18 }}>
-              <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.green }} />
-              <span style={{ fontSize: 11, fontWeight: 800, color: C.greenText, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Courses</span>
+          {/* Section header — left-aligned, bold */}
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 48 }}>
+            <div>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: C.surface3, border: `1px solid ${C.border2}`, borderRadius: 999, padding: '5px 13px', marginBottom: 14 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.green }} />
+                <span style={{ fontSize: 10, fontWeight: 800, color: C.greenText, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                  {courses.length} {courses.length === 1 ? 'Course' : 'Courses'} available
+                </span>
+              </div>
+              <h2 style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 'clamp(28px,3.5vw,40px)', letterSpacing: '-0.025em', color: C.ink, margin: 0, lineHeight: 1.08 }}>
+                Everything {s.name}<br />has to teach you
+              </h2>
             </div>
-            <h2 style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 'clamp(26px,3.5vw,38px)', letterSpacing: '-0.02em', color: C.ink, margin: '0 0 12px' }}>
-              Exclusive content from {s.name}
-            </h2>
-            <p style={{ fontSize: 16, color: C.muted, maxWidth: 480, margin: '0 auto' }}>
-              Each course is crafted to give you practical knowledge you can apply immediately.
-            </p>
+            {courses.length > 0 && (
+              <a href='#courses' style={{ fontSize: 13, fontWeight: 700, color: C.green, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap', paddingBottom: 4 }}>
+                See all courses <ArrowRight size={13} />
+              </a>
+            )}
           </div>
 
           {courses.length === 0 ? (
-            <div style={{ background: '#fff', borderRadius: 20, padding: '64px 24px', textAlign: 'center', border: `1px solid ${C.border}` }}>
-              <BookOpen size={40} color={C.border} style={{ margin: '0 auto 14px' }} />
-              <p style={{ fontWeight: 700, color: C.ink, margin: '0 0 6px' }}>No courses published yet.</p>
-              <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>Come back soon for exclusive content.</p>
+            <div style={{ background: C.surface2, borderRadius: 24, padding: '72px 24px', textAlign: 'center', border: `1px solid ${C.border}` }}>
+              <BookOpen size={40} color={C.border2} style={{ margin: '0 auto 16px' }} />
+              <p style={{ fontFamily: 'var(--font-sora)', fontWeight: 700, fontSize: 16, color: C.ink, margin: '0 0 6px' }}>No courses published yet.</p>
+              <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>Come back soon for exclusive content from {s.name}.</p>
             </div>
           ) : (
-            <>
-              {/* Featured — large 2-col card */}
-              {featured && (() => {
-                const p = price(featured.price, featured.discountPercent, featured.discountActive);
-                const thumb = featured.thumbnail ? convertBlobUrlToApiUrl(featured.thumbnail) : null;
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {courses.map((c, idx) => {
+                const p = price(c.price, c.discountPercent, c.discountActive);
+                const thumb = c.thumbnail ? convertBlobUrlToApiUrl(c.thumbnail) : null;
+                const isFeatured = idx === 0;
                 return (
-                  <div style={{ background: '#fff', borderRadius: 24, border: `1px solid ${C.border}`, overflow: 'hidden', display: 'flex', flexWrap: 'wrap', marginBottom: 24, boxShadow: '0 24px 50px -28px rgba(11,20,17,.12)' }}>
-                    {/* Image */}
-                    <div style={{ flex: '1 1 340px', minWidth: 280, minHeight: 300, background: '#000', position: 'relative' }}>
-                      {thumb
-                        ? <img src={thumb} alt={featured.title} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', minHeight: 300 }} />
-                        : <div style={{ width: '100%', height: '100%', minHeight: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.surface3 }}><Play size={48} color={C.green} style={{ opacity: 0.3 }} /></div>
-                      }
-                    </div>
-                    {/* Content */}
-                    <div style={{ flex: '1 1 340px', minWidth: 280, padding: '44px 44px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                      <span style={{ display: 'inline-block', background: C.surface3, color: C.greenText, fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', borderRadius: 999, padding: '5px 12px', marginBottom: 18, border: `1px solid ${C.border2}`, width: 'fit-content' }}>Most popular</span>
-                      <h3 style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 'clamp(20px,2.5vw,28px)', letterSpacing: '-0.02em', color: C.ink, margin: '0 0 12px', lineHeight: 1.2 }}>{featured.title}</h3>
-                      {featured.description && <p style={{ fontSize: 15, lineHeight: 1.65, color: C.muted, margin: '0 0 12px' }}>{featured.description}</p>}
-                      {featured.instructor && <p style={{ fontSize: 12, fontWeight: 600, color: C.muted2, margin: '0 0 28px' }}>By {featured.instructor}</p>}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap', paddingTop: 24, borderTop: `1px solid ${C.border}` }}>
-                        <div>
-                          <p style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 26, color: C.ink, margin: 0, lineHeight: 1 }}>{p.label}</p>
-                          {p.original && <p style={{ fontSize: 12, color: C.muted2, textDecoration: 'line-through', margin: '4px 0 0' }}>{p.original}</p>}
-                          <p style={{ fontSize: 11, color: C.muted2, margin: '4px 0 0' }}>One-time payment</p>
-                        </div>
-                        <Link href={`/course/${featured.id}`} style={{ padding: '13px 26px', background: C.green, color: '#fff', borderRadius: 12, fontSize: 14, fontWeight: 700, textDecoration: 'none', boxShadow: `0 6px 20px rgba(14,159,110,.28)`, whiteSpace: 'nowrap' }}>
-                          Enroll now →
-                        </Link>
+                  <div key={c.id} style={{ borderTop: `1px solid ${C.border}`, paddingTop: 28, paddingBottom: 28 }}>
+                    <Link href={`/course/${c.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+
+                      {/* Thumbnail */}
+                      <div style={{
+                        flexShrink: 0,
+                        width: isFeatured ? 300 : 200,
+                        aspectRatio: '16/9',
+                        borderRadius: isFeatured ? 16 : 12,
+                        overflow: 'hidden',
+                        background: '#000',
+                        boxShadow: isFeatured ? '0 16px 40px -12px rgba(11,20,17,.22)' : '0 4px 16px -4px rgba(11,20,17,.14)',
+                      }}>
+                        {thumb
+                          ? <img src={thumb} alt={c.title} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+                          : <div style={{ width: '100%', height: '100%', background: C.surface3, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Play size={28} color={C.green} style={{ opacity: 0.3 }} /></div>
+                        }
                       </div>
-                    </div>
+
+                      {/* Details */}
+                      <div style={{ flex: 1, minWidth: 200, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                          {isFeatured && (
+                            <span style={{ fontSize: 10, fontWeight: 800, color: C.greenText, background: C.surface3, border: `1px solid ${C.border2}`, borderRadius: 999, padding: '3px 10px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                              Featured
+                            </span>
+                          )}
+                          {(c.price ?? 0) === 0 && (
+                            <span style={{ fontSize: 10, fontWeight: 800, color: '#fff', background: C.green, borderRadius: 999, padding: '3px 10px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                              Free
+                            </span>
+                          )}
+                        </div>
+
+                        <h3 style={{
+                          fontFamily: 'var(--font-sora)',
+                          fontWeight: 800,
+                          fontSize: isFeatured ? 'clamp(18px,2.2vw,24px)' : 17,
+                          letterSpacing: '-0.02em',
+                          color: C.ink,
+                          margin: 0,
+                          lineHeight: 1.2,
+                        }}>
+                          {c.title}
+                        </h3>
+
+                        {c.description && (
+                          <p style={{ fontSize: 14, lineHeight: 1.6, color: C.muted, margin: 0 }}>
+                            {c.description.slice(0, isFeatured ? 160 : 90)}{c.description.length > (isFeatured ? 160 : 90) ? '…' : ''}
+                          </p>
+                        )}
+
+                        {c.instructor && (
+                          <p style={{ fontSize: 12, fontWeight: 600, color: C.muted2, margin: 0 }}>By {c.instructor}</p>
+                        )}
+
+                        {/* Price row */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 6, flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                            <span style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: isFeatured ? 22 : 17, color: (c.price ?? 0) === 0 ? C.green : C.ink }}>
+                              {p.label}
+                            </span>
+                            {p.original && <span style={{ fontSize: 12, color: C.muted2, textDecoration: 'line-through' }}>{p.original}</span>}
+                          </div>
+
+                          <span style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 5,
+                            padding: isFeatured ? '10px 22px' : '8px 16px',
+                            background: isFeatured ? C.green : 'transparent',
+                            color: isFeatured ? '#fff' : C.green,
+                            border: `1.5px solid ${C.green}`,
+                            borderRadius: 10,
+                            fontSize: 13,
+                            fontWeight: 700,
+                            whiteSpace: 'nowrap',
+                          }}>
+                            {isFeatured ? 'Enroll now' : 'View course'} <ArrowRight size={12} />
+                          </span>
+                        </div>
+                      </div>
+
+                    </Link>
                   </div>
                 );
-              })()}
-
-              {/* Rest — grid */}
-              {rest.length > 0 && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
-                  {rest.map((c) => {
-                    const p = price(c.price, c.discountPercent, c.discountActive);
-                    return (
-                      <Link key={c.id} href={`/course/${c.id}`} style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', background: '#fff', borderRadius: 18, border: `1px solid ${C.border}`, overflow: 'hidden', color: 'inherit' }}>
-                        <div style={{ aspectRatio: '16/9', background: '#000', overflow: 'hidden' }}>
-                          {c.thumbnail
-                            ? <img src={convertBlobUrlToApiUrl(c.thumbnail)} alt={c.title} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
-                            : <div style={{ width: '100%', height: '100%', background: C.surface3, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Play size={32} color={C.green} style={{ opacity: 0.25 }} /></div>
-                          }
-                        </div>
-                        <div style={{ padding: '20px 22px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                          <h3 style={{ fontFamily: 'var(--font-sora)', fontWeight: 700, fontSize: 16, color: C.ink, margin: '0 0 8px', lineHeight: 1.3 }}>{c.title}</h3>
-                          {c.description && <p style={{ fontSize: 13, lineHeight: 1.55, color: C.muted, margin: '0 0 16px', flex: 1 }}>{c.description.slice(0, 110)}{c.description.length > 110 ? '…' : ''}</p>}
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 14, borderTop: `1px solid ${C.border}`, marginTop: 'auto' }}>
-                            <span style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 16, color: C.ink }}>{p.label}</span>
-                            <span style={{ fontSize: 12, fontWeight: 700, color: C.green, display: 'flex', alignItems: 'center', gap: 4 }}>View course <ArrowRight size={12} /></span>
-                          </div>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </>
+              })}
+              {/* Close border at bottom */}
+              <div style={{ borderTop: `1px solid ${C.border}` }} />
+            </div>
           )}
         </div>
       </section>
@@ -395,43 +430,6 @@ export default async function CreatorProfilePage({
         </div>
       </section>
 
-      {/* ── 7. REVIEWS (dark green, only if reviews exist) ───────────── */}
-      {reviews.length > 0 && (
-        <section id='reviews' style={{ background: C.deepBg, padding: '88px 24px' }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: 52 }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(205,251,94,.12)', border: '1px solid rgba(205,251,94,.25)', borderRadius: 999, padding: '6px 14px', marginBottom: 18 }}>
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.lime }} />
-                <span style={{ fontSize: 11, fontWeight: 800, color: C.lime, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Reviews</span>
-              </div>
-              <h2 style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 'clamp(24px,3vw,36px)', letterSpacing: '-0.02em', color: '#fff', margin: 0 }}>
-                What fans are saying
-              </h2>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
-              {reviews.map((r) => (
-                <div key={r.id} style={{ background: C.deepCard, borderRadius: 20, padding: '28px 26px', border: '1px solid rgba(255,255,255,.07)' }}>
-                  <div style={{ display: 'flex', gap: 3, marginBottom: 18 }}>
-                    {[1,2,3,4,5].map((i) => <Star key={i} size={14} fill={i <= r.rating ? C.lime : 'none'} color={i <= r.rating ? C.lime : 'rgba(255,255,255,.2)'} />)}
-                  </div>
-                  <p style={{ fontSize: 14, lineHeight: 1.7, color: 'rgba(255,255,255,.8)', margin: '0 0 22px', fontStyle: 'italic' }}>
-                    &ldquo;{r.comment ?? 'Great course, highly recommended!'}&rdquo;
-                  </p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(205,251,94,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 13, color: C.lime, flexShrink: 0 }}>
-                      {(r.learnerName ?? 'F')[0].toUpperCase()}
-                    </div>
-                    <div>
-                      <p style={{ fontSize: 13, fontWeight: 700, color: '#fff', margin: 0 }}>{r.learnerName ?? 'Fan'}</p>
-                      <p style={{ fontSize: 11, color: 'rgba(255,255,255,.4)', margin: 0 }}>{r.courseTitle ?? 'Course'}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* ── 8. ABOUT / INSTRUCTOR (only if bio exists) ───────────────── */}
       {bio && (
