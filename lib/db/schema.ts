@@ -194,6 +194,21 @@ export const supportMessage = pgTable('support_message', {
   senderEmail: text('senderEmail'),
 });
 
+export const creatorApplication = pgTable('creator_application', {
+  id:          text('id').primaryKey(),
+  name:        text('name').notNull(),
+  email:       text('email').notNull(),
+  phone:       text('phone').notNull(),
+  socialLink:  text('socialLink').notNull(),   // TikTok / YouTube URL
+  channelName: text('channelName').notNull(),   // desired creator name / channel title
+  bio:         text('bio'),                     // optional intro from applicant
+  status:      text('status').notNull().default('pending'), // 'pending' | 'approved' | 'rejected'
+  notes:       text('notes'),                   // internal reviewer notes
+  schoolId:    text('schoolId'),                // set on approval
+  createdAt:   timestamp('createdAt').notNull().defaultNow(),
+  reviewedAt:  timestamp('reviewedAt'),
+});
+
 export const userProgress = pgTable(
   'user_progress',
   {

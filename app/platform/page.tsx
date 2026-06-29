@@ -75,9 +75,9 @@ export default async function PlatformLandingPage() {
 
           {/* Right */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Link href="/sign-in" style={{ padding: '9px 16px', fontSize: 14, fontWeight: 600, color: C.muted, textDecoration: 'none' }}>Sign in</Link>
-            <Link href="/sign-in" style={{ padding: '9px 20px', background: C.green, color: '#fff', borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: 'none', boxShadow: `0 6px 20px rgba(14,159,110,.28)` }}>
-              Start creating →
+            <Link href="/sign-in" style={{ padding: '9px 16px', fontSize: 14, fontWeight: 600, color: C.muted, textDecoration: 'none' }}>Creator login</Link>
+            <Link href="/platform/apply" style={{ padding: '9px 20px', background: C.green, color: '#fff', borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: 'none', boxShadow: `0 6px 20px rgba(14,159,110,.28)` }}>
+              Apply to create →
             </Link>
           </div>
         </div>
@@ -109,9 +109,9 @@ export default async function PlatformLandingPage() {
 
           {/* CTAs */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 40 }}>
-            <Link href="/sign-in"
+            <Link href="/platform/apply"
               style={{ padding: '15px 32px', background: C.green, color: '#fff', borderRadius: 12, fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: `0 6px 20px rgba(14,159,110,.28)`, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-              Start for free →
+              Apply to become a creator →
             </Link>
             <a href="#features"
               style={{ padding: '15px 32px', background: '#fff', color: C.ink, borderRadius: 12, fontSize: 15, fontWeight: 600, textDecoration: 'none', border: `1px solid ${C.border2}` }}>
@@ -312,9 +312,9 @@ export default async function PlatformLandingPage() {
                 Join creators already building their fan communities and earning from their knowledge on Pkasemer.
               </p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, justifyContent: 'center' }}>
-                <Link href="/sign-in"
+                <Link href="/platform/apply"
                   style={{ padding: '16px 32px', background: C.lime, color: C.deepBg, borderRadius: 12, fontSize: 15, fontWeight: 800, textDecoration: 'none', fontFamily: 'var(--font-sora)' }}>
-                  Start for free →
+                  Apply now →
                 </Link>
                 <a href="#features"
                   style={{ padding: '16px 32px', background: 'rgba(255,255,255,.08)', color: '#fff', borderRadius: 12, fontSize: 15, fontWeight: 700, textDecoration: 'none', border: '1px solid rgba(255,255,255,.2)' }}>

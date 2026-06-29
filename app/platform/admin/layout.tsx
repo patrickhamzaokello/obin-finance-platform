@@ -1,11 +1,19 @@
 import { redirect } from 'next/navigation';
 import { isPlatformOwner } from '@/lib/school-context';
 import Link from 'next/link';
-import { LayoutDashboard, Building2, TrendingUp, LogOut } from 'lucide-react';
+import { LayoutDashboard, Building2, TrendingUp, LogOut, ClipboardList } from 'lucide-react';
+import { db } from '@/lib/db';
+import { creatorApplication } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
 
 export default async function PlatformLayout({ children }: { children: React.ReactNode }) {
   const isOwner = await isPlatformOwner();
   if (!isOwner) redirect('/sign-in');
+
+  // Badge count for pending applications
+  const pending = await db.select({ id: creatorApplication.id })
+    .from(creatorApplication).where(eq(creatorApplication.status, 'pending'));
+  const pendingCount = pending.length;
 
   return (
     <div className='min-h-screen bg-[#F5F5F7] flex'>
@@ -21,14 +29,21 @@ export default async function PlatformLayout({ children }: { children: React.Rea
         </div>
         <nav className='flex-1 px-3 py-4 space-y-0.5'>
           {[
-            { href: '/platform/admin',                label: 'Dashboard', icon: LayoutDashboard },
-            { href: '/platform/admin/schools',        label: 'Schools',   icon: Building2 },
-            { href: '/platform/admin/revenue',        label: 'Revenue',   icon: TrendingUp },
-          ].map(({ href, label, icon: Icon }) => (
+            { href: '/platform/admin',                     label: 'Dashboard',    icon: LayoutDashboard, badge: 0 },
+            { href: '/platform/admin/applications',        label: 'Applications', icon: ClipboardList,   badge: pendingCount },
+            { href: '/platform/admin/schools',             label: 'Creators',     icon: Building2,       badge: 0 },
+            { href: '/platform/admin/revenue',             label: 'Revenue',      icon: TrendingUp,      badge: 0 },
+          ].map(({ href, label, icon: Icon, badge }) => (
             <Link key={href} href={href}
               className='flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors'
             >
-              <Icon size={14} /> {label}
+              <Icon size={14} />
+              <span className='flex-1'>{label}</span>
+              {badge > 0 && (
+                <span className='bg-orange-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none'>
+                  {badge > 9 ? '9+' : badge}
+                </span>
+              )}
             </Link>
           ))}
         </nav>
