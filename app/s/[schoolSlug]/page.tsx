@@ -126,102 +126,137 @@ export default async function CreatorProfilePage({
         </div>
       </header>
 
-      {/* ── 2. HERO ──────────────────────────────────────────────────── */}
-      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '88px 24px 72px', display: 'flex', flexWrap: 'wrap', gap: 64, alignItems: 'center' }}>
-        {/* Left col */}
-        <div style={{ flex: '1 1 400px', minWidth: 300 }}>
-          {/* Eyebrow */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: C.surface3, border: `1px solid ${C.border2}`, borderRadius: 999, padding: '6px 14px', marginBottom: 28 }}>
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.green, flexShrink: 0 }} />
-            <span style={{ fontSize: 11, fontWeight: 800, color: C.greenText, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{category} creator</span>
+      {/* ── 2. HERO — full-bleed banner bg, logo as identity anchor ─── */}
+      <section style={{ position: 'relative', overflow: 'hidden', minHeight: 560 }}>
+
+        {/* Full-bleed banner image as background */}
+        {bannerUrl && (
+          <img
+            src={bannerUrl}
+            alt=''
+            aria-hidden
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+          />
+        )}
+
+        {/* Gradient overlay — left side stays readable, right fades to show image */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: bannerUrl
+            ? 'linear-gradient(100deg, rgba(255,255,255,0.97) 0%, rgba(255,255,255,0.92) 38%, rgba(255,255,255,0.6) 62%, rgba(255,255,255,0.08) 100%)'
+            : `linear-gradient(135deg, ${C.surface2} 0%, ${C.border} 100%)`,
+        }} />
+
+        {/* Content */}
+        <div style={{ position: 'relative', zIndex: 1, maxWidth: 1200, margin: '0 auto', padding: '80px 24px 80px', display: 'flex', flexWrap: 'wrap', gap: 56, alignItems: 'center' }}>
+
+          {/* Left col — text */}
+          <div style={{ flex: '1 1 380px', minWidth: 280 }}>
+            {/* Eyebrow */}
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.85)', border: `1px solid ${C.border2}`, borderRadius: 999, padding: '6px 14px', marginBottom: 28, backdropFilter: 'blur(8px)' }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.green, flexShrink: 0 }} />
+              <span style={{ fontSize: 11, fontWeight: 800, color: C.greenText, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{category} creator</span>
+            </div>
+
+            {/* H1 */}
+            <h1 style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 'clamp(34px,5vw,54px)', lineHeight: 1.06, letterSpacing: '-0.025em', color: C.ink, margin: '0 0 22px' }}>
+              {heroHeadline
+                ? (
+                  <>
+                    {heroHeadline.includes(s.name)
+                      ? heroHeadline.split(s.name).map((part, i, arr) =>
+                          i < arr.length - 1
+                            ? <span key={i}>{part}<span style={{ position: 'relative', display: 'inline-block' }}><span style={{ position: 'relative', zIndex: 1 }}>{s.name}</span><span style={{ position: 'absolute', bottom: 3, left: -3, right: -3, height: '34%', background: C.lime, zIndex: 0, borderRadius: 4 }} /></span></span>
+                            : <span key={i}>{part}</span>
+                        )
+                      : heroHeadline
+                    }
+                  </>
+                )
+                : (
+                  <>
+                    Learn {category}<br />from{' '}
+                    <span style={{ position: 'relative', display: 'inline-block' }}>
+                      <span style={{ position: 'relative', zIndex: 1 }}>{s.name}</span>
+                      <span style={{ position: 'absolute', bottom: 3, left: -3, right: -3, height: '34%', background: C.lime, zIndex: 0, borderRadius: 4 }} />
+                    </span>
+                  </>
+                )
+              }
+            </h1>
+
+            {/* Subhead */}
+            <p style={{ fontSize: 17, lineHeight: 1.65, color: C.muted, margin: '0 0 36px', maxWidth: 440 }}>
+              {tagline ?? bio ?? `Exclusive courses and content from ${s.name}. Learn at your own pace and earn a certificate.`}
+            </p>
+
+            {/* CTAs */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 40 }}>
+              {session?.user ? (
+                <Link href='/dashboard' style={{ padding: '14px 28px', background: C.green, color: '#fff', borderRadius: 12, fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: `0 6px 20px rgba(14,159,110,.28)` }}>
+                  Go to My Learning →
+                </Link>
+              ) : (
+                <>
+                  <Link href='/sign-up' style={{ padding: '14px 28px', background: C.green, color: '#fff', borderRadius: 12, fontSize: 15, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8, boxShadow: `0 6px 20px rgba(14,159,110,.28)` }}>
+                    <Heart size={15} fill='#fff' /> Become a fan →
+                  </Link>
+                  <a href='#courses' style={{ padding: '14px 28px', background: 'rgba(255,255,255,0.9)', color: C.ink, borderRadius: 12, fontSize: 15, fontWeight: 600, textDecoration: 'none', border: `1px solid ${C.border2}`, backdropFilter: 'blur(8px)' }}>
+                    Browse courses
+                  </a>
+                </>
+              )}
+            </div>
+
+            {/* Trust checkmarks */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {['Expert-led courses you can learn at your own pace', 'Earn a verified certificate on completion', 'Exclusive content straight from the creator'].map((t) => (
+                <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(255,255,255,0.9)', border: `1px solid ${C.border2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Check size={11} color={C.green} strokeWidth={3} />
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: C.ink2 }}>{t}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* H1 with accent highlight on the creator name */}
-          <h1 style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 'clamp(36px,5vw,56px)', lineHeight: 1.04, letterSpacing: '-0.025em', color: C.ink, margin: '0 0 22px' }}>
-            {heroHeadline
-              ? (
-                <>
-                  {heroHeadline.includes(s.name)
-                    ? heroHeadline.split(s.name).map((part, i, arr) =>
-                        i < arr.length - 1
-                          ? <span key={i}>{part}<span style={{ position: 'relative', display: 'inline-block' }}><span style={{ position: 'relative', zIndex: 1 }}>{s.name}</span><span style={{ position: 'absolute', bottom: 3, left: -3, right: -3, height: '34%', background: C.lime, zIndex: 0, borderRadius: 4 }} /></span></span>
-                          : <span key={i}>{part}</span>
-                      )
-                    : heroHeadline
-                  }
-                </>
-              )
-              : (
-                <>
-                  Learn {category}<br />from{' '}
-                  <span style={{ position: 'relative', display: 'inline-block' }}>
-                    <span style={{ position: 'relative', zIndex: 1 }}>{s.name}</span>
-                    <span style={{ position: 'absolute', bottom: 3, left: -3, right: -3, height: '34%', background: C.lime, zIndex: 0, borderRadius: 4 }} />
-                  </span>
-                </>
-              )
-            }
-          </h1>
+          {/* Right col — large logo square as identity anchor */}
+          <div style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+            {/* Logo square */}
+            <div style={{
+              width: 200, height: 200,
+              borderRadius: 28,
+              overflow: 'hidden',
+              background: logoUrl ? '#000' : C.green,
+              border: '4px solid rgba(255,255,255,0.9)',
+              boxShadow: '0 32px 64px -20px rgba(11,20,17,0.45), 0 0 0 1px rgba(0,0,0,0.06)',
+              flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              {logoUrl
+                ? <img src={logoUrl} alt={s.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <span style={{ fontFamily: 'var(--font-sora)', fontSize: 72, fontWeight: 800, color: '#fff' }}>{s.name[0]}</span>
+              }
+            </div>
 
-          {/* Subhead — tagline takes priority over bio */}
-          <p style={{ fontSize: 17, lineHeight: 1.65, color: C.muted, margin: '0 0 36px', maxWidth: 460 }}>
-            {tagline ?? bio ?? `Exclusive courses and content from ${s.name}. Learn at your own pace and earn a certificate.`}
-          </p>
+            {/* Name + category below logo */}
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 18, color: C.ink, margin: '0 0 6px' }}>{s.name}</p>
+              {category && (
+                <span style={{ fontSize: 11, fontWeight: 800, color: C.greenText, background: 'rgba(255,255,255,0.9)', border: `1px solid ${C.border2}`, borderRadius: 999, padding: '4px 12px', letterSpacing: '0.06em', display: 'inline-block' }}>{category}</span>
+              )}
+            </div>
 
-          {/* CTAs */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 40 }}>
-            {session?.user ? (
-              <Link href='/dashboard' style={{ padding: '14px 28px', background: C.green, color: '#fff', borderRadius: 12, fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: `0 6px 20px rgba(14,159,110,.28)` }}>
-                Go to My Learning →
-              </Link>
-            ) : (
-              <>
-                <Link href='/sign-up' style={{ padding: '14px 28px', background: C.green, color: '#fff', borderRadius: 12, fontSize: 15, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8, boxShadow: `0 6px 20px rgba(14,159,110,.28)` }}>
-                  <Heart size={15} fill='#fff' /> Become a fan →
-                </Link>
-                <a href='#courses' style={{ padding: '14px 28px', background: '#fff', color: C.ink, borderRadius: 12, fontSize: 15, fontWeight: 600, textDecoration: 'none', border: `1px solid ${C.border2}` }}>
-                  Browse courses
-                </a>
-              </>
+            {/* Floating featured badge below */}
+            {featured && (
+              <div style={{ background: 'rgba(255,255,255,0.95)', borderRadius: 16, padding: '12px 18px', boxShadow: '0 16px 40px -16px rgba(11,20,17,0.25)', border: `1px solid ${C.border}`, maxWidth: 200, textAlign: 'center', backdropFilter: 'blur(8px)' }}>
+                <p style={{ fontSize: 10, fontWeight: 800, color: C.green, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 3px' }}>Featured course</p>
+                <p style={{ fontSize: 13, fontWeight: 700, color: C.ink, margin: 0, lineHeight: 1.3 }}>{featured.title}</p>
+              </div>
             )}
           </div>
 
-          {/* Trust checkmarks */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {['Expert-led courses you can learn at your own pace', 'Earn a verified certificate on completion', 'Exclusive content straight from the creator'].map((t) => (
-              <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 20, height: 20, borderRadius: '50%', background: C.surface3, border: `1px solid ${C.border2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Check size={11} color={C.green} strokeWidth={3} />
-                </div>
-                <span style={{ fontSize: 13, fontWeight: 600, color: C.ink2 }}>{t}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Right col — banner / cover art + floating badge */}
-        <div style={{ flex: '1 1 380px', minWidth: 300, position: 'relative' }}>
-          <div style={{ borderRadius: 24, overflow: 'hidden', background: C.surface2, aspectRatio: '16/13', boxShadow: '0 30px 60px -20px rgba(11,20,17,.35)' }}>
-            {bannerUrl
-              ? <img src={bannerUrl} alt={s.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              : (
-                <div style={{ width: '100%', height: '100%', background: `linear-gradient(135deg, ${C.surface3} 0%, ${C.border} 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {logoUrl
-                    ? <img src={logoUrl} alt={s.name} style={{ width: 96, height: 96, borderRadius: 20, objectFit: 'cover', opacity: 0.6 }} />
-                    : <span style={{ fontFamily: 'var(--font-sora)', fontSize: 80, fontWeight: 800, color: C.green, opacity: 0.15 }}>{s.name[0]}</span>
-                  }
-                </div>
-              )
-            }
-          </div>
-
-          {/* Floating featured badge */}
-          {featured && (
-            <div style={{ position: 'absolute', bottom: -18, left: -18, background: '#fff', borderRadius: 16, padding: '14px 18px', boxShadow: '0 24px 50px -28px rgba(11,20,17,.35)', border: `1px solid ${C.border}`, maxWidth: 230 }}>
-              <p style={{ fontSize: 10, fontWeight: 800, color: C.green, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>Featured course</p>
-              <p style={{ fontSize: 14, fontWeight: 700, color: C.ink, margin: 0, lineHeight: 1.3 }}>{featured.title}</p>
-            </div>
-          )}
         </div>
       </section>
 
