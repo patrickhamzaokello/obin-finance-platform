@@ -18,8 +18,17 @@ export default async function PlatformDashboard() {
     getEarningsReport(),
   ]);
 
-  const earningsRows = earningsResult.success && earningsResult.data ? earningsResult.data : [];
-  const totalEarnings = earningsRows.reduce((s, r) => s + (r.platformFee ?? 0), 0);
+  const earningsRows    = earningsResult.success && earningsResult.data ? earningsResult.data : [];
+  const enrollmentFunnel = earningsResult.success && (earningsResult as any).enrollmentFunnel ? (earningsResult as any).enrollmentFunnel : [];
+
+  // Earnings are computed from activated codes (effectivePrice * commissionPercent / 100)
+  const totalEarnings = earningsRows.reduce((s, r) => {
+    const base = r.coursePrice ?? 0;
+    const eff  = (r.discountActive && (r.discountPercent ?? 0) > 0)
+      ? Math.round(base * (1 - (r.discountPercent ?? 0) / 100))
+      : base;
+    return s + Math.round(eff * (r.commissionPercent ?? 0) / 100);
+  }, 0);
 
   const stats = [
     { label: 'Creators',    value: schools.length,                          icon: User,      color: 'bg-blue-50 text-blue-600' },
@@ -50,7 +59,7 @@ export default async function PlatformDashboard() {
       </div>
 
       {/* Earnings dashboard (client — monthly chart + per-school table) */}
-      <EarningsDashboard rows={earningsRows} />
+      <EarningsDashboard rows={earningsRows} enrollmentFunnel={enrollmentFunnel} />
 
       {/* Schools list */}
       <div className='bg-white rounded-2xl shadow-sm overflow-hidden'>
@@ -79,7 +88,15 @@ export default async function PlatformDashboard() {
             </thead>
             <tbody className='divide-y divide-border'>
               {schools.map((s) => {
-                const schoolEarnings = earningsRows.filter((r) => r.schoolId === s.id).reduce((sum, r) => sum + (r.platformFee ?? 0), 0);
+                const schoolEarnings = earningsRows
+                  .filter((r) => r.schoolId === s.id)
+                  .reduce((sum, r) => {
+                    const base = r.coursePrice ?? 0;
+                    const eff  = (r.discountActive && (r.discountPercent ?? 0) > 0)
+                      ? Math.round(base * (1 - (r.discountPercent ?? 0) / 100))
+                      : base;
+                    return sum + Math.round(eff * (r.commissionPercent ?? 0) / 100);
+                  }, 0);
                 return (
                   <tr key={s.id} className='hover:bg-secondary/40 transition-colors'>
                     <td className='px-6 py-4 font-medium text-foreground'>{s.name}</td>

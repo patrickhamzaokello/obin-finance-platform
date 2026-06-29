@@ -2,7 +2,7 @@
 
 import { db } from '@/lib/db';
 import { course, module, video, pdf, user, school, schoolMember, courseAccessCode, courseEnrollment } from '@/lib/db/schema';
-import { eq, desc, and, isNotNull } from 'drizzle-orm';
+import { eq, desc, and, isNotNull, sql } from 'drizzle-orm';
 import { isYouTubeUrl, extractYouTubeId } from '@/lib/video-url';
 import { revalidatePath } from 'next/cache';
 import { getCurrentSchool, isPlatformOwner, requirePlatformOwner } from '@/lib/school-context';
@@ -448,19 +448,26 @@ export async function getRevenueReport() {
   }
 }
 
-/** Platform-owner only: earnings from enrollment commissions. */
+/**
+ * Platform-owner only: earnings based on access code activations (confirmed payments).
+ * Also returns per-course enrollment counts for the funnel metric
+ * (enrolled but no code = dropped off before paying).
+ */
 export async function getEarningsReport() {
   try {
     await requirePlatformOwner();
 
-    const rows = await db
+    // Source of truth: activated access codes = confirmed payment
+    const activations = await db
       .select({
-        enrollmentId:      courseEnrollment.id,
-        enrolledAt:        courseEnrollment.enrolledAt,
-        priceAtEnrollment: courseEnrollment.priceAtEnrollment,
-        platformFee:       courseEnrollment.platformFee,
+        activationId:      courseAccessCode.id,
+        activatedAt:       courseAccessCode.usedAt,
+        accessExpiresAt:   courseAccessCode.accessExpiresAt,
         courseId:          course.id,
         courseTitle:       course.title,
+        coursePrice:       course.price,
+        discountPercent:   course.discountPercent,
+        discountActive:    course.discountActive,
         schoolId:          school.id,
         schoolName:        school.name,
         schoolSlug:        school.slug,
@@ -469,14 +476,29 @@ export async function getEarningsReport() {
         learnerName:       user.name,
         learnerEmail:      user.email,
       })
-      .from(courseEnrollment)
-      .innerJoin(course, eq(courseEnrollment.courseId, course.id))
-      .innerJoin(school, eq(course.schoolId, school.id))
-      .innerJoin(user, eq(courseEnrollment.userId, user.id))
-      .where(isNotNull(course.schoolId))
-      .orderBy(desc(courseEnrollment.enrolledAt));
+      .from(courseAccessCode)
+      .innerJoin(course,  eq(courseAccessCode.courseId, course.id))
+      .innerJoin(school,  eq(course.schoolId, school.id))
+      .innerJoin(user,    eq(courseAccessCode.usedBy, user.id))
+      .where(isNotNull(courseAccessCode.usedBy))
+      .orderBy(desc(courseAccessCode.usedAt));
 
-    return { success: true, data: rows };
+    // Funnel: enrollments per course (intent) vs activations (payment)
+    const enrollmentFunnel = await db
+      .select({
+        courseId:    course.id,
+        courseTitle: course.title,
+        schoolId:    school.id,
+        schoolName:  school.name,
+        enrollments: sql<number>`cast(count(${courseEnrollment.id}) as int)`,
+      })
+      .from(courseEnrollment)
+      .innerJoin(course,  eq(courseEnrollment.courseId, course.id))
+      .innerJoin(school,  eq(course.schoolId, school.id))
+      .where(isNotNull(course.schoolId))
+      .groupBy(course.id, course.title, school.id, school.name);
+
+    return { success: true, data: activations, enrollmentFunnel };
   } catch (error) {
     console.error('Error fetching earnings report:', error);
     return { success: false, error: String(error) };

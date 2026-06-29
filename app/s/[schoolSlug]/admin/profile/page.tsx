@@ -302,7 +302,8 @@ export default function CreatorProfilePage() {
           <Palette size={14} className="text-primary" />
           <h2 className="text-sm font-bold text-foreground">Page Theme</h2>
         </div>
-        <p className="text-xs text-muted-foreground -mt-4">These colors appear on your public creator page — buttons, badges, highlights, and the CTA panel.</p>
+        
+        <p className="text-xs text-muted-foreground mt-4">These colors appear on your public creator page — buttons, badges, highlights, and the CTA panel.</p>
 
         {/* Live preview strip */}
         <div className="rounded-xl overflow-hidden border border-black/[0.06]">
@@ -371,7 +372,7 @@ export default function CreatorProfilePage() {
           <Type size={14} className="text-primary" />
           <h2 className="text-sm font-bold text-foreground">Hero Messaging</h2>
         </div>
-        <p className="text-xs text-muted-foreground -mt-4">Control the big text on your public landing page hero section.</p>
+        <p className="text-xs text-muted-foreground mt-4">Control the big text on your public landing page hero section.</p>
 
         <div>
           <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">Hero Headline</label>
