@@ -1,130 +1,351 @@
 import type { Metadata } from 'next';
-export const metadata: Metadata = { title: 'Pkasemer Platform' };
+export const metadata: Metadata = { title: 'Pkasemer — The Creator Course Platform' };
 
 import { isPlatformOwner } from '@/lib/school-context';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import {
-  Building2, GraduationCap, BarChart2, Shield,
-  ArrowRight, CheckCircle2, Globe,
-} from 'lucide-react';
+import { Sora, Manrope } from 'next/font/google';
+import { Check, ArrowRight, Star, Play, Award, TrendingUp, Users, Zap, Globe, Shield } from 'lucide-react';
+
+const sora    = Sora({ subsets: ['latin'], weight: ['500','600','700','800'], variable: '--font-sora',    display: 'swap' });
+const manrope = Manrope({ subsets: ['latin'], weight: ['400','500','600','700','800'], variable: '--font-manrope', display: 'swap' });
+
+const C = {
+  ink:       '#0B1411',
+  ink2:      '#1A2620',
+  muted:     '#57655D',
+  muted2:    '#8A968F',
+  green:     '#0E9F6E',
+  deepBg:    '#0A3D2E',
+  deepCard:  '#0C4836',
+  greenText: '#0A6B4A',
+  lime:      '#CDFB5E',
+  surface2:  '#F4F7F5',
+  surface3:  '#F0F7F3',
+  border:    '#E6ECE8',
+  border2:   '#D9EAE1',
+};
 
 export default async function PlatformLandingPage() {
-  // Owners go straight to the dashboard
-  if (await isPlatformOwner()) redirect('/platform/admin');
+  if (await isPlatformOwner()) redirect('/admin');
+
+  const fonts = `${sora.variable} ${manrope.variable}`;
+
+  const features = [
+    { icon: Globe,      title: 'Your own creator channel',    desc: 'Get a branded subdomain (you.pkasemer.app) with your logo, bio, and course catalogue — all in one link.' },
+    { icon: Play,       title: 'Video & PDF courses',         desc: 'Upload videos or embed YouTube. Attach PDFs. Organise everything into modules your fans can follow step by step.' },
+    { icon: Award,      title: 'Auto certificates',           desc: 'Fans who complete your course automatically receive a branded certificate — zero admin on your end.' },
+    { icon: TrendingUp, title: 'Built-in monetisation',       desc: 'Set prices in your local currency, apply discounts, and get paid — the platform handles the rest.' },
+    { icon: Users,      title: 'Fan management',              desc: 'See who your fans are, track their progress, and manage access codes for gifted or promotional enrolments.' },
+    { icon: Zap,        title: 'Instant creator studio',      desc: 'A clean Creator Studio dashboard gives you live stats, course drafts, and fan feedback — no setup required.' },
+  ];
+
+  const steps = [
+    { n: '01', title: 'Create your channel', body: 'Sign up, choose your slug, upload your logo and banner. Your public profile is live in minutes.' },
+    { n: '02', title: 'Build your course',   body: 'Add modules, upload videos, attach PDFs. Set a price or make it free. Publish when ready.' },
+    { n: '03', title: 'Grow your fan base',  body: 'Share your channel link. Fans sign up, enrol, learn, and earn certificates — you earn revenue.' },
+  ];
+
+  const testimonials = [
+    { quote: 'I launched my first paid course in one afternoon. The Creator Studio is genuinely the simplest tool I have ever used.', name: 'Alex M.', role: 'Finance creator' },
+    { quote: 'My fans love getting a certificate at the end. Completion rates went up the moment I turned that feature on.', name: 'Priya K.', role: 'Tech educator' },
+    { quote: 'Having my own subdomain makes the whole thing feel professional — fans trust it more than a generic link.', name: 'David O.', role: 'Business coach' },
+  ];
 
   return (
-    <div className='min-h-screen bg-white'>
+    <div className={fonts} style={{ fontFamily: 'var(--font-manrope), system-ui, sans-serif', color: C.ink, background: '#fff' }}>
 
-      {/* Nav */}
-      <header className='border-b border-border bg-white sticky top-0 z-10'>
-        <div className='max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between'>
-          <div className='flex items-center gap-2.5'>
-            <div className='w-7 h-7 rounded bg-primary flex items-center justify-center'>
-              <GraduationCap size={15} className='text-primary-foreground' />
+      {/* ── NAV ─────────────────────────────────────────────────────────── */}
+      <header style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(16px)', borderBottom: `1px solid ${C.border}` }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24 }}>
+          {/* Logo */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: C.green, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Play size={16} fill="#fff" color="#fff" />
             </div>
-            <span className='text-base font-bold text-foreground'>EduPlatform</span>
+            <span style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 17, color: C.ink, letterSpacing: '-0.02em' }}>Pkasemer</span>
           </div>
-          <Link
-            href='/sign-in'
-            className='inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded hover:bg-primary/90 transition-colors'
-          >
-            Admin sign in
-          </Link>
-        </div>
-      </header>
 
-      {/* Hero */}
-      <section className='bg-[#F5F5F7] border-b border-black/[0.06]'>
-        <div className='max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center'>
-          <div className='inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary text-xs font-semibold rounded-full mb-6'>
-            <Globe size={12} /> Multi-school learning platform
-          </div>
-          <h1 className='text-4xl sm:text-5xl font-bold text-foreground tracking-tight leading-tight'>
-            Launch your school's<br />
-            <span className='text-primary'>online learning experience</span>
-          </h1>
-          <p className='text-lg text-muted-foreground mt-5 max-w-2xl mx-auto leading-relaxed'>
-            Give every school their own branded platform — courses, learners, and progress tracking,
-            all under one roof. You manage the platform; schools manage their content.
-          </p>
-          <div className='flex items-center justify-center gap-3 mt-8'>
-            <Link
-              href='/sign-in'
-              className='inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-semibold rounded hover:bg-primary/90 transition-colors'
-            >
-              Get started <ArrowRight size={15} />
+          {/* Center links */}
+          <nav style={{ display: 'flex', gap: 4 }} className="hidden sm:flex">
+            {[['#features','Features'],['#how-it-works','How it works'],['#testimonials','Stories']].map(([href, label]) => (
+              <a key={href} href={href} style={{ padding: '6px 14px', fontSize: 14, fontWeight: 600, color: C.muted, borderRadius: 8, textDecoration: 'none' }}>{label}</a>
+            ))}
+          </nav>
+
+          {/* Right */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Link href="/sign-in" style={{ padding: '9px 16px', fontSize: 14, fontWeight: 600, color: C.muted, textDecoration: 'none' }}>Sign in</Link>
+            <Link href="/sign-in" style={{ padding: '9px 20px', background: C.green, color: '#fff', borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: 'none', boxShadow: `0 6px 20px rgba(14,159,110,.28)` }}>
+              Start creating →
             </Link>
           </div>
         </div>
+      </header>
+
+      {/* ── HERO ────────────────────────────────────────────────────────── */}
+      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '100px 24px 80px', display: 'flex', flexWrap: 'wrap', gap: 64, alignItems: 'center' }}>
+        {/* Left */}
+        <div style={{ flex: '1 1 420px', minWidth: 300 }}>
+          {/* Eyebrow */}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: C.surface3, border: `1px solid ${C.border2}`, borderRadius: 999, padding: '6px 14px', marginBottom: 28 }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.green, flexShrink: 0 }} />
+            <span style={{ fontSize: 12, fontWeight: 800, color: C.greenText, letterSpacing: '0.08em', textTransform: 'uppercase' }}>The creator course platform</span>
+          </div>
+
+          {/* H1 */}
+          <h1 style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 'clamp(38px,5.5vw,60px)', lineHeight: 1.03, letterSpacing: '-0.03em', color: C.ink, margin: '0 0 24px' }}>
+            Teach your fans.<br />
+            <span style={{ position: 'relative', display: 'inline-block' }}>
+              <span style={{ position: 'relative', zIndex: 1 }}>Earn from what you know.</span>
+              <span style={{ position: 'absolute', bottom: 4, left: -2, right: -2, height: '32%', background: C.lime, zIndex: 0, borderRadius: 4 }} />
+            </span>
+          </h1>
+
+          {/* Sub */}
+          <p style={{ fontSize: 18, lineHeight: 1.65, color: C.muted, margin: '0 0 36px', maxWidth: 500 }}>
+            Pkasemer gives creators their own branded channel, course builder, and fan community — with payments and certificates built in.
+          </p>
+
+          {/* CTAs */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 40 }}>
+            <Link href="/sign-in"
+              style={{ padding: '15px 32px', background: C.green, color: '#fff', borderRadius: 12, fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: `0 6px 20px rgba(14,159,110,.28)`, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              Start for free →
+            </Link>
+            <a href="#features"
+              style={{ padding: '15px 32px', background: '#fff', color: C.ink, borderRadius: 12, fontSize: 15, fontWeight: 600, textDecoration: 'none', border: `1px solid ${C.border2}` }}>
+              See how it works
+            </a>
+          </div>
+
+          {/* Trust */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {['Free to start — no credit card required','Your own subdomain in minutes','Fans get certificates, you get revenue'].map((t) => (
+              <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 20, height: 20, borderRadius: '50%', background: C.surface3, border: `1px solid ${C.border2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Check size={11} color={C.green} strokeWidth={3} />
+                </div>
+                <span style={{ fontSize: 14, fontWeight: 600, color: C.ink2 }}>{t}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Right: mock creator profile card */}
+        <div style={{ flex: '1 1 380px', minWidth: 300 }}>
+          <div style={{ borderRadius: 24, overflow: 'hidden', border: `1px solid ${C.border}`, boxShadow: '0 30px 60px -20px rgba(11,20,17,.2)', background: '#fff' }}>
+            {/* Mock banner */}
+            <div style={{ height: 140, background: `linear-gradient(135deg, ${C.deepBg} 0%, #0E9F6E 100%)`, position: 'relative', display: 'flex', alignItems: 'flex-end', padding: '0 24px 0' }}>
+              <div style={{ width: 64, height: 64, borderRadius: 16, background: C.lime, border: '3px solid #fff', marginBottom: -32, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 24, color: C.deepBg }}>A</div>
+            </div>
+            <div style={{ padding: '40px 24px 24px' }}>
+              <p style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 18, color: C.ink, margin: '0 0 4px' }}>Alex Finance</p>
+              <span style={{ display: 'inline-block', background: C.surface3, color: C.greenText, fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', borderRadius: 999, padding: '4px 10px', border: `1px solid ${C.border2}` }}>Finance</span>
+              <p style={{ fontSize: 14, color: C.muted, margin: '12px 0 20px', lineHeight: 1.6 }}>Practical money skills for everyday people. Join 2,400+ fans learning to build wealth.</p>
+              {/* Mini course card */}
+              <div style={{ background: C.surface2, borderRadius: 14, padding: '14px 16px', display: 'flex', gap: 12, alignItems: 'center', marginBottom: 14, border: `1px solid ${C.border}` }}>
+                <div style={{ width: 44, height: 44, borderRadius: 10, background: C.green, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Play size={18} fill="#fff" color="#fff" />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: C.ink, margin: '0 0 2px' }}>TikTok to Money</p>
+                  <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>UGX 20,000 · 6 modules</p>
+                </div>
+                <span style={{ fontSize: 12, fontWeight: 800, color: C.green }}>Enroll →</span>
+              </div>
+              <div style={{ background: C.lime, borderRadius: 10, padding: '10px 16px', textAlign: 'center', fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 13, color: C.deepBg }}>
+                Become a fan — it&apos;s free →
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
-      {/* Features */}
-      <section className='max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20'>
-        <h2 className='text-2xl font-bold text-foreground text-center mb-12'>
-          Everything you need to run multiple schools
-        </h2>
-        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
-          {[
-            {
-              icon: Building2,
-              title: 'School management',
-              desc: 'Create and manage unlimited schools, each with its own subdomain, branding, and admin team.',
-            },
-            {
-              icon: GraduationCap,
-              title: 'Course builder',
-              desc: 'Build rich courses with video lessons (YouTube or uploaded), PDF resources, and progress tracking.',
-            },
-            {
-              icon: BarChart2,
-              title: 'Progress analytics',
-              desc: 'Track learner progress, module completion, and enrollment across every school in real time.',
-            },
-            {
-              icon: Shield,
-              title: 'Role-based access',
-              desc: 'Platform owner, school admins, and learners — each sees only what they need.',
-            },
-            {
-              icon: Globe,
-              title: 'Custom subdomains',
-              desc: 'Every school gets its own subdomain (school.yourplatform.com) for a professional experience.',
-            },
-            {
-              icon: CheckCircle2,
-              title: 'Completion tracking',
-              desc: 'Learners mark modules complete and track their journey through every course they enroll in.',
-            },
-          ].map(({ icon: Icon, title, desc }) => (
-            <div key={title} className='bg-white rounded-2xl shadow-sm p-6 hover:shadow-md transition-shadow'>
-              <div className='w-9 h-9 rounded bg-primary/10 flex items-center justify-center mb-4'>
-                <Icon size={17} className='text-primary' />
-              </div>
-              <h3 className='text-sm font-semibold text-foreground mb-1.5'>{title}</h3>
-              <p className='text-sm text-muted-foreground leading-relaxed'>{desc}</p>
-            </div>
+      {/* ── VALUE STRIP ─────────────────────────────────────────────────── */}
+      <div style={{ background: C.surface2, borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}`, padding: '18px 24px' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: '8px 0' }}>
+          {['Creator-first','Built-in payments','Custom subdomain','Auto certificates','Fan management','Video & PDF courses'].map((pill, i, arr) => (
+            <span key={pill} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: C.muted }}>{pill}</span>
+              {i < arr.length - 1 && <span style={{ width: 4, height: 4, borderRadius: '50%', background: C.green, margin: '0 8px' }} />}
+            </span>
           ))}
         </div>
-      </section>
+      </div>
 
-      {/* CTA */}
-      <section className='bg-primary'>
-        <div className='max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center'>
-          <h2 className='text-2xl font-bold text-primary-foreground mb-3'>Ready to get started?</h2>
-          <p className='text-primary-foreground/80 mb-8'>Sign in to the platform admin to manage your schools.</p>
-          <Link
-            href='/sign-in'
-            className='inline-flex items-center gap-2 px-6 py-3 bg-white text-primary font-semibold rounded hover:bg-white/90 transition-colors'
-          >
-            Sign in <ArrowRight size={15} />
-          </Link>
+      {/* ── HOW IT WORKS ────────────────────────────────────────────────── */}
+      <section id="how-it-works" style={{ padding: '96px 24px' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 64 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: C.surface3, border: `1px solid ${C.border2}`, borderRadius: 999, padding: '6px 14px', marginBottom: 20 }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.green }} />
+              <span style={{ fontSize: 12, fontWeight: 800, color: C.greenText, letterSpacing: '0.08em', textTransform: 'uppercase' }}>How it works</span>
+            </div>
+            <h2 style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 'clamp(28px,4vw,40px)', letterSpacing: '-0.02em', color: C.ink, margin: 0 }}>
+              From creator to earning in three steps
+            </h2>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 24 }}>
+            {steps.map(({ n, title, body }) => (
+              <div key={n} style={{ background: C.surface2, borderRadius: 20, padding: '36px 32px', border: `1px solid ${C.border}`, position: 'relative', overflow: 'hidden' }}>
+                <div style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 64, color: C.green, opacity: .08, lineHeight: 1, position: 'absolute', top: 16, right: 24 }}>{n}</div>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: C.surface3, border: `1px solid ${C.border2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+                  <span style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 14, color: C.greenText }}>{n}</span>
+                </div>
+                <h3 style={{ fontFamily: 'var(--font-sora)', fontWeight: 700, fontSize: 20, color: C.ink, margin: '0 0 12px' }}>{title}</h3>
+                <p style={{ fontSize: 15, lineHeight: 1.65, color: C.muted, margin: 0 }}>{body}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className='border-t border-border py-6 text-center text-xs text-muted-foreground'>
-        © {new Date().getFullYear()} EduPlatform. All rights reserved.
+      {/* ── FEATURES ────────────────────────────────────────────────────── */}
+      <section id="features" style={{ background: C.surface2, padding: '96px 24px', borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 56 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', border: `1px solid ${C.border2}`, borderRadius: 999, padding: '6px 14px', marginBottom: 20 }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.green }} />
+              <span style={{ fontSize: 12, fontWeight: 800, color: C.greenText, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Features</span>
+            </div>
+            <h2 style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 'clamp(28px,4vw,40px)', letterSpacing: '-0.02em', color: C.ink, margin: '0 0 16px' }}>
+              Everything a creator needs
+            </h2>
+            <p style={{ fontSize: 17, color: C.muted, maxWidth: 500, margin: '0 auto' }}>
+              One platform, zero plugins. Everything to build, sell, and grow your course business.
+            </p>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 20 }}>
+            {features.map(({ icon: Icon, title, desc }) => (
+              <div key={title} style={{ background: '#fff', borderRadius: 20, padding: '28px 28px', border: `1px solid ${C.border}` }}>
+                <div style={{ width: 42, height: 42, borderRadius: 12, background: C.surface3, border: `1px solid ${C.border2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
+                  <Icon size={19} color={C.green} />
+                </div>
+                <h3 style={{ fontFamily: 'var(--font-sora)', fontWeight: 700, fontSize: 17, color: C.ink, margin: '0 0 10px' }}>{title}</h3>
+                <p style={{ fontSize: 14, lineHeight: 1.65, color: C.muted, margin: 0 }}>{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── IS THIS FOR YOU ─────────────────────────────────────────────── */}
+      <section style={{ padding: '96px 24px' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: 64, alignItems: 'flex-start' }}>
+          <div style={{ flex: '1 1 380px', minWidth: 280 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: C.surface3, border: `1px solid ${C.border2}`, borderRadius: 999, padding: '6px 14px', marginBottom: 20 }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.green }} />
+              <span style={{ fontSize: 12, fontWeight: 800, color: C.greenText, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Who is this for?</span>
+            </div>
+            <h2 style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 'clamp(26px,3.5vw,38px)', letterSpacing: '-0.02em', color: C.ink, margin: '0 0 18px', lineHeight: 1.1 }}>
+              Built for people who have something to teach
+            </h2>
+            <p style={{ fontSize: 17, lineHeight: 1.65, color: C.muted }}>
+              Whether you&apos;re a coach, educator, influencer, or subject-matter expert — if you have knowledge worth sharing, Pkasemer gives you the infrastructure to turn it into income.
+            </p>
+          </div>
+          <div style={{ flex: '1 1 380px', minWidth: 280 }}>
+            {[
+              'You create content but have no structured way to monetise your knowledge',
+              'You want a professional course platform without months of setup or a developer',
+              'You want your fans to walk away with a tangible certificate — not just a video watched',
+            ].map((item, i, arr) => (
+              <div key={item} style={{ display: 'flex', gap: 18, padding: '22px 0', borderBottom: i < arr.length - 1 ? `1px solid ${C.border}` : 'none' }}>
+                <div style={{ width: 34, height: 34, borderRadius: 10, background: C.surface3, border: `1px solid ${C.border2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+                  <ArrowRight size={15} color={C.green} />
+                </div>
+                <p style={{ fontSize: 15, fontWeight: 600, color: C.ink2, lineHeight: 1.55, margin: 0 }}>{item}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── TESTIMONIALS ────────────────────────────────────────────────── */}
+      <section id="testimonials" style={{ background: C.deepBg, padding: '96px 24px' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 56 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(205,251,94,.12)', border: `1px solid rgba(205,251,94,.25)`, borderRadius: 999, padding: '6px 14px', marginBottom: 20 }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.lime }} />
+              <span style={{ fontSize: 12, fontWeight: 800, color: C.lime, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Creator stories</span>
+            </div>
+            <h2 style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 'clamp(26px,3.5vw,38px)', letterSpacing: '-0.02em', color: '#fff', margin: 0 }}>
+              Creators who made the switch
+            </h2>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 20 }}>
+            {testimonials.map(({ quote, name, role }) => (
+              <div key={name} style={{ background: C.deepCard, borderRadius: 20, padding: '32px 28px', border: '1px solid rgba(255,255,255,.07)' }}>
+                <div style={{ display: 'flex', gap: 3, marginBottom: 20 }}>
+                  {[1,2,3,4,5].map((i) => <Star key={i} size={14} fill={C.lime} color={C.lime} />)}
+                </div>
+                <p style={{ fontSize: 15, lineHeight: 1.7, color: 'rgba(255,255,255,.8)', margin: '0 0 24px', fontStyle: 'italic' }}>
+                  &ldquo;{quote}&rdquo;
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(205,251,94,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 14, color: C.lime, flexShrink: 0 }}>
+                    {name[0]}
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 14, fontWeight: 700, color: '#fff', margin: 0 }}>{name}</p>
+                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,.4)', margin: 0 }}>{role}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FINAL CTA ───────────────────────────────────────────────────── */}
+      <section style={{ padding: '80px 24px' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <div style={{ background: C.deepBg, borderRadius: 28, padding: 'clamp(48px,6vw,80px)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: -80, right: -80, width: 320, height: 320, borderRadius: '50%', background: C.lime, opacity: .06, pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', bottom: -60, left: -60, width: 200, height: 200, borderRadius: '50%', background: C.lime, opacity: .04, pointerEvents: 'none' }} />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <h2 style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 'clamp(28px,4vw,46px)', letterSpacing: '-0.02em', color: '#fff', margin: '0 0 18px', lineHeight: 1.08 }}>
+                Ready to launch your creator channel?
+              </h2>
+              <p style={{ fontSize: 18, lineHeight: 1.65, color: 'rgba(255,255,255,.7)', margin: '0 auto 40px', maxWidth: 520 }}>
+                Join creators already building their fan communities and earning from their knowledge on Pkasemer.
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, justifyContent: 'center' }}>
+                <Link href="/sign-in"
+                  style={{ padding: '16px 32px', background: C.lime, color: C.deepBg, borderRadius: 12, fontSize: 15, fontWeight: 800, textDecoration: 'none', fontFamily: 'var(--font-sora)' }}>
+                  Start for free →
+                </Link>
+                <a href="#features"
+                  style={{ padding: '16px 32px', background: 'rgba(255,255,255,.08)', color: '#fff', borderRadius: 12, fontSize: 15, fontWeight: 700, textDecoration: 'none', border: '1px solid rgba(255,255,255,.2)' }}>
+                  See all features
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FOOTER ──────────────────────────────────────────────────────── */}
+      <footer style={{ borderTop: `1px solid ${C.border}`, padding: '32px 24px' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 28, height: 28, borderRadius: 8, background: C.green, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Play size={12} fill="#fff" color="#fff" />
+            </div>
+            <span style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 15, color: C.ink }}>Pkasemer</span>
+          </div>
+          <div style={{ display: 'flex', gap: 24 }}>
+            {[['#features','Features'],['#how-it-works','How it works'],['#testimonials','Stories'],'/sign-in'].map((item) => {
+              if (Array.isArray(item)) {
+                const [href, label] = item;
+                return <a key={href} href={href} style={{ fontSize: 13, fontWeight: 600, color: C.muted2, textDecoration: 'none' }}>{label}</a>;
+              }
+              return <Link key={item} href={item} style={{ fontSize: 13, fontWeight: 600, color: C.muted2, textDecoration: 'none' }}>Creator login</Link>;
+            })}
+          </div>
+          <p style={{ fontSize: 12, color: C.muted2, margin: 0 }}>© {new Date().getFullYear()} Pkasemer. All rights reserved.</p>
+        </div>
       </footer>
 
     </div>
