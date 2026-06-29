@@ -1,12 +1,39 @@
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
-import { school, course } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { school, course, courseReview } from '@/lib/db/schema';
+import { eq, and, desc } from 'drizzle-orm';
 import { convertBlobUrlToApiUrl } from '@/lib/blob-url';
 import Link from 'next/link';
 import { BookOpen, Play, ArrowRight, Link2, Globe, Heart, Check, Star } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
+import { Sora, Manrope } from 'next/font/google';
+
+const sora    = Sora({ subsets: ['latin'], weight: ['500','600','700','800'], variable: '--font-sora',    display: 'swap' });
+const manrope = Manrope({ subsets: ['latin'], weight: ['400','500','600','700','800'], variable: '--font-manrope', display: 'swap' });
+
+const C = {
+  ink:       '#0B1411',
+  ink2:      '#1A2620',
+  muted:     '#57655D',
+  muted2:    '#8A968F',
+  green:     '#0E9F6E',
+  deepBg:    '#0A3D2E',
+  deepCard:  '#0C4836',
+  greenText: '#0A6B4A',
+  lime:      '#CDFB5E',
+  surface2:  '#F4F7F5',
+  surface3:  '#F0F7F3',
+  border:    '#E6ECE8',
+  border2:   '#D9EAE1',
+};
+
+function price(p: number | null, dp: number | null, da: boolean | null) {
+  const base = p ?? 0;
+  if (base === 0) return { label: 'Free', original: null };
+  const discounted = da && dp ? Math.round(base * (1 - dp / 100)) : base;
+  return { label: `UGX ${discounted.toLocaleString()}`, original: (da && dp) ? `UGX ${base.toLocaleString()}` : null };
+}
 
 export default async function CreatorProfilePage({
   params,
@@ -23,18 +50,18 @@ export default async function CreatorProfilePage({
   if (!schoolRows.length) notFound();
   const s = schoolRows[0];
 
-  const courses = await db
-    .select()
-    .from(course)
-    .where(and(eq(course.schoolId, s.id), eq(course.isPublished, true)));
+  const [courses, reviews] = await Promise.all([
+    db.select().from(course).where(and(eq(course.schoolId, s.id), eq(course.isPublished, true))),
+    db.select().from(courseReview).where(eq(courseReview.schoolId, s.id)).orderBy(desc(courseReview.createdAt)).limit(3),
+  ]);
 
   let social: Record<string, string> = {};
   try { social = JSON.parse((s as any).socialLinks ?? '{}'); } catch { /* empty */ }
 
   const logoUrl   = (s as any).logoUrl   ? convertBlobUrlToApiUrl((s as any).logoUrl)   : null;
   const bannerUrl = (s as any).bannerUrl ? convertBlobUrlToApiUrl((s as any).bannerUrl) : null;
-  const category  = (s as any).category  as string | null;
-  const bio       = (s as any).bio       as string | null;
+  const category  = ((s as any).category as string | null) ?? 'Creator';
+  const bio       = (s as any).bio as string | null;
 
   const socialItems = [
     { icon: Globe, href: social.website,   label: 'Website' },
@@ -45,48 +72,44 @@ export default async function CreatorProfilePage({
 
   const featured = courses[0] ?? null;
   const rest     = courses.slice(1);
+  const fonts    = `${sora.variable} ${manrope.variable}`;
 
   return (
-    <div className='min-h-screen bg-white'>
+    <div className={fonts} style={{ fontFamily: 'var(--font-manrope), system-ui, sans-serif', color: C.ink, background: '#fff' }}>
 
-      {/* ── NAV ─────────────────────────────────────────────────────── */}
-      <header className='sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-black/[0.06]'>
-        <div className='max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4'>
-          {/* Brand */}
-          <div className='flex items-center gap-2.5 min-w-0'>
+      {/* ── 1. NAV ───────────────────────────────────────────────────── */}
+      <header style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(16px)', borderBottom: `1px solid ${C.border}` }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+          {/* Logo + name */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flexShrink: 0 }}>
             {logoUrl
-              ? <img src={logoUrl} alt={s.name} className='h-8 w-8 rounded-full object-cover shrink-0' />
-              : <div className='w-8 h-8 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground shrink-0'>{s.name[0]}</div>
+              ? <img src={logoUrl} alt={s.name} style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+              : <div style={{ width: 34, height: 34, borderRadius: '50%', background: C.green, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 14, flexShrink: 0 }}>{s.name[0]}</div>
             }
-            <span className='text-sm font-bold text-foreground truncate'>{s.name}</span>
+            <span style={{ fontFamily: 'var(--font-sora)', fontWeight: 700, fontSize: 15, color: C.ink }}>{s.name}</span>
             {category && (
-              <span className='hidden sm:inline-flex text-[10px] font-semibold px-2 py-0.5 bg-primary/10 text-primary rounded-full shrink-0'>{category}</span>
+              <span style={{ fontSize: 11, fontWeight: 800, color: C.greenText, background: C.surface3, border: `1px solid ${C.border2}`, borderRadius: 999, padding: '3px 9px', letterSpacing: '0.06em' }}>{category}</span>
             )}
           </div>
 
-          {/* Center links */}
-          <nav className='hidden md:flex items-center gap-1'>
-            {[['#courses','Courses'],['#about','About']].map(([href, label]) => (
-              <a key={href} href={href} className='px-3.5 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-black/[0.04] rounded-lg transition-colors'>{label}</a>
+          {/* Center anchors */}
+          <nav style={{ display: 'flex', gap: 4 }}>
+            {[['#courses','Courses'],['#about','About'],['#reviews','Reviews']].map(([href, label]) => (
+              <a key={href} href={href} style={{ padding: '6px 13px', fontSize: 13, fontWeight: 600, color: C.muted, borderRadius: 8, textDecoration: 'none' }}>{label}</a>
             ))}
           </nav>
 
-          {/* Right */}
-          <div className='flex items-center gap-2 shrink-0'>
+          {/* Right CTAs */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             {session?.user ? (
-              <Link href='/dashboard'
-                className='inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors'>
+              <Link href='/dashboard' style={{ padding: '10px 20px', background: C.green, color: '#fff', borderRadius: 10, fontSize: 13, fontWeight: 700, textDecoration: 'none', boxShadow: `0 4px 14px rgba(14,159,110,.3)` }}>
                 My Learning →
               </Link>
             ) : (
               <>
-                <Link href='/sign-in'
-                  className='hidden sm:block px-3.5 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors'>
-                  Sign in
-                </Link>
-                <Link href='/sign-up'
-                  className='inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors'>
-                  <Heart size={13} /> Become a fan
+                <Link href='/sign-in' style={{ padding: '10px 14px', fontSize: 13, fontWeight: 600, color: C.muted, textDecoration: 'none' }}>Sign in</Link>
+                <Link href='/sign-up' style={{ padding: '10px 20px', background: C.green, color: '#fff', borderRadius: 10, fontSize: 13, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, boxShadow: `0 4px 14px rgba(14,159,110,.3)` }}>
+                  <Heart size={13} fill='#fff' /> Become a fan
                 </Link>
               </>
             )}
@@ -94,220 +117,338 @@ export default async function CreatorProfilePage({
         </div>
       </header>
 
-      {/* ── HERO ─────────────────────────────────────────────────────── */}
-      <section className='relative'>
-        {/* Banner */}
-        <div className='w-full h-52 sm:h-72 overflow-hidden bg-gradient-to-br from-primary/20 via-primary/10 to-secondary'>
-          {bannerUrl && <img src={bannerUrl} alt='Banner' className='w-full h-full object-cover' />}
+      {/* ── 2. HERO ──────────────────────────────────────────────────── */}
+      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '88px 24px 72px', display: 'flex', flexWrap: 'wrap', gap: 64, alignItems: 'center' }}>
+        {/* Left col */}
+        <div style={{ flex: '1 1 400px', minWidth: 300 }}>
+          {/* Eyebrow */}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: C.surface3, border: `1px solid ${C.border2}`, borderRadius: 999, padding: '6px 14px', marginBottom: 28 }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.green, flexShrink: 0 }} />
+            <span style={{ fontSize: 11, fontWeight: 800, color: C.greenText, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{category} creator</span>
+          </div>
+
+          {/* H1 with lime highlight */}
+          <h1 style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 'clamp(36px,5vw,56px)', lineHeight: 1.04, letterSpacing: '-0.025em', color: C.ink, margin: '0 0 22px' }}>
+            Learn {category}<br />from{' '}
+            <span style={{ position: 'relative', display: 'inline-block' }}>
+              <span style={{ position: 'relative', zIndex: 1 }}>{s.name}</span>
+              <span style={{ position: 'absolute', bottom: 3, left: -3, right: -3, height: '34%', background: C.lime, zIndex: 0, borderRadius: 4 }} />
+            </span>
+          </h1>
+
+          {/* Subhead */}
+          <p style={{ fontSize: 17, lineHeight: 1.65, color: C.muted, margin: '0 0 36px', maxWidth: 460 }}>
+            {bio ?? `Exclusive courses and content from ${s.name}. Learn at your own pace and earn a certificate.`}
+          </p>
+
+          {/* CTAs */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 40 }}>
+            {session?.user ? (
+              <Link href='/dashboard' style={{ padding: '14px 28px', background: C.green, color: '#fff', borderRadius: 12, fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: `0 6px 20px rgba(14,159,110,.28)` }}>
+                Go to My Learning →
+              </Link>
+            ) : (
+              <>
+                <Link href='/sign-up' style={{ padding: '14px 28px', background: C.green, color: '#fff', borderRadius: 12, fontSize: 15, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8, boxShadow: `0 6px 20px rgba(14,159,110,.28)` }}>
+                  <Heart size={15} fill='#fff' /> Become a fan →
+                </Link>
+                <a href='#courses' style={{ padding: '14px 28px', background: '#fff', color: C.ink, borderRadius: 12, fontSize: 15, fontWeight: 600, textDecoration: 'none', border: `1px solid ${C.border2}` }}>
+                  Browse courses
+                </a>
+              </>
+            )}
+          </div>
+
+          {/* Trust checkmarks */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {['Expert-led courses you can learn at your own pace', 'Earn a verified certificate on completion', 'Exclusive content straight from the creator'].map((t) => (
+              <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 20, height: 20, borderRadius: '50%', background: C.surface3, border: `1px solid ${C.border2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Check size={11} color={C.green} strokeWidth={3} />
+                </div>
+                <span style={{ fontSize: 13, fontWeight: 600, color: C.ink2 }}>{t}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className='max-w-6xl mx-auto px-4 sm:px-6 lg:px-8'>
-          {/* Avatar row */}
-          <div className='flex items-end gap-5 -mt-14 mb-6'>
-            {logoUrl
-              ? <img src={logoUrl} alt={s.name} className='w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border-4 border-white shadow-lg shrink-0' />
-              : <div className='w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-primary flex items-center justify-center text-4xl font-bold text-primary-foreground border-4 border-white shadow-lg shrink-0'>{s.name[0]}</div>
+        {/* Right col — banner / cover art + floating badge */}
+        <div style={{ flex: '1 1 380px', minWidth: 300, position: 'relative' }}>
+          <div style={{ borderRadius: 24, overflow: 'hidden', background: C.surface2, aspectRatio: '16/13', boxShadow: '0 30px 60px -20px rgba(11,20,17,.35)' }}>
+            {bannerUrl
+              ? <img src={bannerUrl} alt={s.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : (
+                <div style={{ width: '100%', height: '100%', background: `linear-gradient(135deg, ${C.surface3} 0%, ${C.border} 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {logoUrl
+                    ? <img src={logoUrl} alt={s.name} style={{ width: 96, height: 96, borderRadius: 20, objectFit: 'cover', opacity: 0.6 }} />
+                    : <span style={{ fontFamily: 'var(--font-sora)', fontSize: 80, fontWeight: 800, color: C.green, opacity: 0.15 }}>{s.name[0]}</span>
+                  }
+                </div>
+              )
             }
-            {/* Join CTA inline on desktop */}
-            {!session?.user && (
-              <div className='hidden sm:flex items-center gap-3 mb-1 ml-auto'>
-                <Link href='/sign-up'
-                  className='inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground text-sm font-bold rounded-xl hover:bg-primary/90 transition-colors shadow-sm'>
-                  <Heart size={14} /> Become a fan
-                </Link>
-              </div>
-            )}
           </div>
 
-          {/* Name + meta */}
-          <div className='flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8'>
-            <div>
-              <h1 className='text-2xl sm:text-3xl font-bold text-foreground tracking-tight'>{s.name}</h1>
-              <div className='flex flex-wrap items-center gap-2 mt-2'>
-                {category && (
-                  <span className='text-xs font-semibold px-2.5 py-1 bg-primary/10 text-primary rounded-full'>{category}</span>
-                )}
-                <span className='text-xs text-muted-foreground'>{courses.length} course{courses.length !== 1 ? 's' : ''}</span>
-                {courses.filter(c => (c.price ?? 0) === 0).length > 0 && (
-                  <span className='text-xs text-muted-foreground'>· {courses.filter(c => (c.price ?? 0) === 0).length} free</span>
-                )}
-              </div>
-            </div>
-            {/* Social links */}
-            {socialItems.length > 0 && (
-              <div className='flex items-center gap-2'>
-                {socialItems.map(({ icon: Icon, href, label }) => (
-                  <a key={label} href={href} target='_blank' rel='noreferrer' title={label}
-                    className='w-9 h-9 flex items-center justify-center rounded-xl border border-black/[0.08] text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors'>
-                    <Icon size={15} />
-                  </a>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Bio */}
-          {bio && (
-            <div id='about' className='max-w-2xl mb-10'>
-              <p className='text-base text-muted-foreground leading-relaxed'>{bio}</p>
+          {/* Floating featured badge */}
+          {featured && (
+            <div style={{ position: 'absolute', bottom: -18, left: -18, background: '#fff', borderRadius: 16, padding: '14px 18px', boxShadow: '0 24px 50px -28px rgba(11,20,17,.35)', border: `1px solid ${C.border}`, maxWidth: 230 }}>
+              <p style={{ fontSize: 10, fontWeight: 800, color: C.green, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>Featured course</p>
+              <p style={{ fontSize: 14, fontWeight: 700, color: C.ink, margin: 0, lineHeight: 1.3 }}>{featured.title}</p>
             </div>
           )}
         </div>
       </section>
 
-      {/* ── TRUST STRIP ──────────────────────────────────────────────── */}
-      <div className='border-y border-black/[0.06] bg-[#F5F5F7]'>
-        <div className='max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-center gap-x-8 gap-y-2'>
-          {['Expert-led courses', 'Learn at your own pace', 'Certificate on completion', 'Exclusive fan content'].map((item) => (
-            <span key={item} className='flex items-center gap-2 text-xs font-medium text-muted-foreground'>
-              <Check size={11} className='text-primary' strokeWidth={3} /> {item}
+      {/* ── 3. VALUE STRIP ───────────────────────────────────────────── */}
+      <div style={{ background: C.surface2, borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}`, padding: '18px 24px' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: '8px 0' }}>
+          {[category, 'Expert-led', 'Self-paced', 'Certificates', 'Exclusive Content', `${courses.length} Course${courses.length !== 1 ? 's' : ''}`].map((pill, i, arr) => (
+            <span key={pill} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: C.muted }}>{pill}</span>
+              {i < arr.length - 1 && <span style={{ width: 4, height: 4, borderRadius: '50%', background: C.green, margin: '0 8px', flexShrink: 0 }} />}
             </span>
           ))}
         </div>
       </div>
 
-      {/* ── COURSES ──────────────────────────────────────────────────── */}
-      <section id='courses' className='max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14'>
-        <h2 className='text-xl font-bold text-foreground mb-8'>Courses</h2>
+      {/* ── 5. COURSES ───────────────────────────────────────────────── */}
+      <section id='courses' style={{ background: C.surface2, padding: '88px 24px', borderTop: `1px solid ${C.border}` }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
 
-        {courses.length === 0 ? (
-          <div className='bg-[#F5F5F7] rounded-2xl py-20 text-center'>
-            <BookOpen className='w-10 h-10 mx-auto mb-3 text-muted-foreground/30' />
-            <p className='font-semibold text-sm text-foreground'>No courses published yet.</p>
-            <p className='text-xs text-muted-foreground mt-1'>Come back soon for exclusive content.</p>
+          {/* Section header */}
+          <div style={{ textAlign: 'center', marginBottom: 52 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', border: `1px solid ${C.border2}`, borderRadius: 999, padding: '6px 14px', marginBottom: 18 }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.green }} />
+              <span style={{ fontSize: 11, fontWeight: 800, color: C.greenText, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Courses</span>
+            </div>
+            <h2 style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 'clamp(26px,3.5vw,38px)', letterSpacing: '-0.02em', color: C.ink, margin: '0 0 12px' }}>
+              Exclusive content from {s.name}
+            </h2>
+            <p style={{ fontSize: 16, color: C.muted, maxWidth: 480, margin: '0 auto' }}>
+              Each course is crafted to give you practical knowledge you can apply immediately.
+            </p>
           </div>
-        ) : (
-          <>
-            {/* Featured course — full-width card */}
-            {featured && (() => {
-              const isFree     = (featured.price ?? 0) === 0;
-              const hasDiscount = featured.discountActive && (featured.discountPercent ?? 0) > 0;
-              const finalPrice  = hasDiscount
-                ? Math.round((featured.price ?? 0) * (1 - (featured.discountPercent ?? 0) / 100))
-                : (featured.price ?? 0);
-              const thumb = featured.thumbnail ? convertBlobUrlToApiUrl(featured.thumbnail) : null;
-              return (
-                <div className='bg-[#F5F5F7] rounded-2xl overflow-hidden flex flex-col sm:flex-row mb-6 border border-black/[0.06]'>
-                  {/* Thumbnail */}
-                  <div className='sm:w-80 shrink-0 aspect-video sm:aspect-auto bg-black overflow-hidden'>
-                    {thumb
-                      ? <img src={thumb} alt={featured.title} className='w-full h-full object-contain' />
-                      : <div className='w-full h-full min-h-[200px] flex items-center justify-center bg-primary/10'><Play className='w-12 h-12 text-primary/30' /></div>
-                    }
-                  </div>
-                  {/* Content */}
-                  <div className='flex-1 p-6 sm:p-8 flex flex-col justify-between'>
-                    <div>
-                      <span className='inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 bg-primary/10 text-primary rounded-full mb-3'>Most popular</span>
-                      <h3 className='text-xl font-bold text-foreground leading-snug mb-2'>{featured.title}</h3>
-                      {featured.description && (
-                        <p className='text-sm text-muted-foreground leading-relaxed line-clamp-3'>{featured.description}</p>
-                      )}
-                      {featured.instructor && (
-                        <p className='text-xs text-muted-foreground mt-3'>By <span className='font-semibold text-foreground'>{featured.instructor}</span></p>
-                      )}
+
+          {courses.length === 0 ? (
+            <div style={{ background: '#fff', borderRadius: 20, padding: '64px 24px', textAlign: 'center', border: `1px solid ${C.border}` }}>
+              <BookOpen size={40} color={C.border} style={{ margin: '0 auto 14px' }} />
+              <p style={{ fontWeight: 700, color: C.ink, margin: '0 0 6px' }}>No courses published yet.</p>
+              <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>Come back soon for exclusive content.</p>
+            </div>
+          ) : (
+            <>
+              {/* Featured — large 2-col card */}
+              {featured && (() => {
+                const p = price(featured.price, featured.discountPercent, featured.discountActive);
+                const thumb = featured.thumbnail ? convertBlobUrlToApiUrl(featured.thumbnail) : null;
+                return (
+                  <div style={{ background: '#fff', borderRadius: 24, border: `1px solid ${C.border}`, overflow: 'hidden', display: 'flex', flexWrap: 'wrap', marginBottom: 24, boxShadow: '0 24px 50px -28px rgba(11,20,17,.12)' }}>
+                    {/* Image */}
+                    <div style={{ flex: '1 1 340px', minWidth: 280, minHeight: 300, background: '#000', position: 'relative' }}>
+                      {thumb
+                        ? <img src={thumb} alt={featured.title} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', minHeight: 300 }} />
+                        : <div style={{ width: '100%', height: '100%', minHeight: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.surface3 }}><Play size={48} color={C.green} style={{ opacity: 0.3 }} /></div>
+                      }
                     </div>
-                    <div className='flex items-center justify-between mt-6 pt-5 border-t border-black/[0.06]'>
-                      <div>
-                        {isFree
-                          ? <span className='text-lg font-bold text-primary'>Free</span>
-                          : (
-                            <div className='flex items-baseline gap-2'>
-                              <span className='text-lg font-bold text-foreground'>UGX {finalPrice.toLocaleString()}</span>
-                              {hasDiscount && <span className='text-xs text-muted-foreground line-through'>UGX {(featured.price ?? 0).toLocaleString()}</span>}
-                            </div>
-                          )
-                        }
-                        <p className='text-[10px] text-muted-foreground mt-0.5'>One-time</p>
+                    {/* Content */}
+                    <div style={{ flex: '1 1 340px', minWidth: 280, padding: '44px 44px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                      <span style={{ display: 'inline-block', background: C.surface3, color: C.greenText, fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', borderRadius: 999, padding: '5px 12px', marginBottom: 18, border: `1px solid ${C.border2}`, width: 'fit-content' }}>Most popular</span>
+                      <h3 style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 'clamp(20px,2.5vw,28px)', letterSpacing: '-0.02em', color: C.ink, margin: '0 0 12px', lineHeight: 1.2 }}>{featured.title}</h3>
+                      {featured.description && <p style={{ fontSize: 15, lineHeight: 1.65, color: C.muted, margin: '0 0 12px' }}>{featured.description}</p>}
+                      {featured.instructor && <p style={{ fontSize: 12, fontWeight: 600, color: C.muted2, margin: '0 0 28px' }}>By {featured.instructor}</p>}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap', paddingTop: 24, borderTop: `1px solid ${C.border}` }}>
+                        <div>
+                          <p style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 26, color: C.ink, margin: 0, lineHeight: 1 }}>{p.label}</p>
+                          {p.original && <p style={{ fontSize: 12, color: C.muted2, textDecoration: 'line-through', margin: '4px 0 0' }}>{p.original}</p>}
+                          <p style={{ fontSize: 11, color: C.muted2, margin: '4px 0 0' }}>One-time payment</p>
+                        </div>
+                        <Link href={`/course/${featured.id}`} style={{ padding: '13px 26px', background: C.green, color: '#fff', borderRadius: 12, fontSize: 14, fontWeight: 700, textDecoration: 'none', boxShadow: `0 6px 20px rgba(14,159,110,.28)`, whiteSpace: 'nowrap' }}>
+                          Enroll now →
+                        </Link>
                       </div>
-                      <Link href={`/course/${featured.id}`}
-                        className='inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground text-sm font-bold rounded-xl hover:bg-primary/90 transition-colors'>
-                        Enroll now →
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Rest — grid */}
+              {rest.length > 0 && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
+                  {rest.map((c) => {
+                    const p = price(c.price, c.discountPercent, c.discountActive);
+                    return (
+                      <Link key={c.id} href={`/course/${c.id}`} style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', background: '#fff', borderRadius: 18, border: `1px solid ${C.border}`, overflow: 'hidden', color: 'inherit' }}>
+                        <div style={{ aspectRatio: '16/9', background: '#000', overflow: 'hidden' }}>
+                          {c.thumbnail
+                            ? <img src={convertBlobUrlToApiUrl(c.thumbnail)} alt={c.title} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+                            : <div style={{ width: '100%', height: '100%', background: C.surface3, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Play size={32} color={C.green} style={{ opacity: 0.25 }} /></div>
+                          }
+                        </div>
+                        <div style={{ padding: '20px 22px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                          <h3 style={{ fontFamily: 'var(--font-sora)', fontWeight: 700, fontSize: 16, color: C.ink, margin: '0 0 8px', lineHeight: 1.3 }}>{c.title}</h3>
+                          {c.description && <p style={{ fontSize: 13, lineHeight: 1.55, color: C.muted, margin: '0 0 16px', flex: 1 }}>{c.description.slice(0, 110)}{c.description.length > 110 ? '…' : ''}</p>}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 14, borderTop: `1px solid ${C.border}`, marginTop: 'auto' }}>
+                            <span style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 16, color: C.ink }}>{p.label}</span>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: C.green, display: 'flex', alignItems: 'center', gap: 4 }}>View course <ArrowRight size={12} /></span>
+                          </div>
+                        </div>
                       </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* ── 6. IS THIS FOR YOU ───────────────────────────────────────── */}
+      <section style={{ padding: '88px 24px' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: 64, alignItems: 'flex-start' }}>
+          <div style={{ flex: '1 1 380px', minWidth: 280 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: C.surface3, border: `1px solid ${C.border2}`, borderRadius: 999, padding: '6px 14px', marginBottom: 20 }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.green }} />
+              <span style={{ fontSize: 11, fontWeight: 800, color: C.greenText, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Who is this for?</span>
+            </div>
+            <h2 style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 'clamp(24px,3vw,36px)', letterSpacing: '-0.02em', color: C.ink, margin: '0 0 16px', lineHeight: 1.12 }}>
+              This is for you if…
+            </h2>
+            <p style={{ fontSize: 16, lineHeight: 1.65, color: C.muted, margin: 0 }}>
+              {s.name}&apos;s courses are for people who want more than theory — real, actionable knowledge from someone who has done it.
+            </p>
+          </div>
+          <div style={{ flex: '1 1 380px', minWidth: 280 }}>
+            {[
+              `You want practical ${category.toLowerCase()} skills — not just theory`,
+              'You learn better from creators who walk the talk',
+              "You're ready to invest in knowledge that pays for itself",
+            ].map((item, i, arr) => (
+              <div key={item} style={{ display: 'flex', alignItems: 'flex-start', gap: 16, padding: '22px 0', borderBottom: i < arr.length - 1 ? `1px solid ${C.border}` : 'none' }}>
+                <div style={{ width: 34, height: 34, borderRadius: 10, background: C.surface3, border: `1px solid ${C.border2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <ArrowRight size={15} color={C.green} />
+                </div>
+                <p style={{ fontSize: 15, fontWeight: 600, color: C.ink2, lineHeight: 1.55, margin: 0 }}>{item}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 7. REVIEWS (dark green, only if reviews exist) ───────────── */}
+      {reviews.length > 0 && (
+        <section id='reviews' style={{ background: C.deepBg, padding: '88px 24px' }}>
+          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+            <div style={{ textAlign: 'center', marginBottom: 52 }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(205,251,94,.12)', border: '1px solid rgba(205,251,94,.25)', borderRadius: 999, padding: '6px 14px', marginBottom: 18 }}>
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.lime }} />
+                <span style={{ fontSize: 11, fontWeight: 800, color: C.lime, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Reviews</span>
+              </div>
+              <h2 style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 'clamp(24px,3vw,36px)', letterSpacing: '-0.02em', color: '#fff', margin: 0 }}>
+                What fans are saying
+              </h2>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
+              {reviews.map((r) => (
+                <div key={r.id} style={{ background: C.deepCard, borderRadius: 20, padding: '28px 26px', border: '1px solid rgba(255,255,255,.07)' }}>
+                  <div style={{ display: 'flex', gap: 3, marginBottom: 18 }}>
+                    {[1,2,3,4,5].map((i) => <Star key={i} size={14} fill={i <= r.rating ? C.lime : 'none'} color={i <= r.rating ? C.lime : 'rgba(255,255,255,.2)'} />)}
+                  </div>
+                  <p style={{ fontSize: 14, lineHeight: 1.7, color: 'rgba(255,255,255,.8)', margin: '0 0 22px', fontStyle: 'italic' }}>
+                    &ldquo;{r.comment ?? 'Great course, highly recommended!'}&rdquo;
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(205,251,94,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 13, color: C.lime, flexShrink: 0 }}>
+                      {(r.learnerName ?? 'F')[0].toUpperCase()}
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: '#fff', margin: 0 }}>{r.learnerName ?? 'Fan'}</p>
+                      <p style={{ fontSize: 11, color: 'rgba(255,255,255,.4)', margin: 0 }}>{r.courseTitle ?? 'Course'}</p>
                     </div>
                   </div>
                 </div>
-              );
-            })()}
-
-            {/* Rest of courses — grid */}
-            {rest.length > 0 && (
-              <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5'>
-                {rest.map((c) => {
-                  const isFree     = (c.price ?? 0) === 0;
-                  const hasDiscount = c.discountActive && (c.discountPercent ?? 0) > 0;
-                  const finalPrice  = hasDiscount
-                    ? Math.round((c.price ?? 0) * (1 - (c.discountPercent ?? 0) / 100))
-                    : (c.price ?? 0);
-                  return (
-                    <Link key={c.id} href={`/course/${c.id}`}
-                      className='group bg-white rounded-2xl border border-black/[0.06] overflow-hidden hover:shadow-md transition-all duration-200 flex flex-col'>
-                      <div className='aspect-video bg-black overflow-hidden'>
-                        {c.thumbnail
-                          ? <img src={convertBlobUrlToApiUrl(c.thumbnail)} alt={c.title} className='w-full h-full object-contain group-hover:scale-[1.02] transition-transform duration-300' />
-                          : <div className='w-full h-full bg-primary/8 flex items-center justify-center'><Play className='w-8 h-8 text-primary/30' /></div>
-                        }
-                      </div>
-                      <div className='p-5 flex-1 flex flex-col'>
-                        <h3 className='font-semibold text-sm text-foreground leading-snug mb-1 group-hover:text-primary transition-colors'>{c.title}</h3>
-                        {c.description && <p className='text-xs text-muted-foreground line-clamp-2 flex-1'>{c.description}</p>}
-                        <div className='mt-4 flex items-center justify-between pt-3 border-t border-black/[0.04]'>
-                          {isFree
-                            ? <span className='text-sm font-bold text-primary'>Free</span>
-                            : (
-                              <div className='flex items-center gap-1.5'>
-                                <span className='text-sm font-bold text-foreground'>UGX {finalPrice.toLocaleString()}</span>
-                                {hasDiscount && <span className='text-xs text-muted-foreground line-through'>UGX {(c.price ?? 0).toLocaleString()}</span>}
-                              </div>
-                            )
-                          }
-                          <span className='text-xs font-semibold text-primary flex items-center gap-1 group-hover:gap-2 transition-all'>View <ArrowRight size={11} /></span>
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </>
-        )}
-      </section>
-
-      {/* ── CTA BANNER ───────────────────────────────────────────────── */}
-      {!session?.user && (
-        <section className='max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-16'>
-          <div className='bg-primary rounded-2xl px-8 py-10 flex flex-col sm:flex-row items-center justify-between gap-6 text-primary-foreground'>
-            <div>
-              <h2 className='text-lg font-bold'>Join {s.name}&apos;s community</h2>
-              <p className='text-sm text-primary-foreground/75 mt-1'>Get access to exclusive courses and earn certificates</p>
+              ))}
             </div>
-            <Link href='/sign-up'
-              className='shrink-0 inline-flex items-center gap-2 px-6 py-3 bg-white text-primary text-sm font-bold rounded-xl hover:bg-white/90 transition-colors'>
-              <Heart size={14} /> Become a fan — it&apos;s free
-            </Link>
           </div>
         </section>
       )}
 
-      {/* ── FOOTER ───────────────────────────────────────────────────── */}
-      <footer className='border-t border-black/[0.06] py-8'>
-        <div className='max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between gap-4'>
-          <div className='flex items-center gap-2.5'>
+      {/* ── 8. ABOUT / INSTRUCTOR (only if bio exists) ───────────────── */}
+      {bio && (
+        <section id='about' style={{ padding: '88px 24px' }}>
+          <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: 56, alignItems: 'center' }}>
             {logoUrl
-              ? <img src={logoUrl} alt={s.name} className='w-6 h-6 rounded-full object-cover' />
-              : <div className='w-6 h-6 rounded-full bg-primary flex items-center justify-center text-[10px] font-bold text-primary-foreground'>{s.name[0]}</div>
+              ? <img src={logoUrl} alt={s.name} style={{ width: 180, height: 180, borderRadius: 22, objectFit: 'cover', border: `1px solid ${C.border}`, boxShadow: '0 24px 50px -28px rgba(11,20,17,.2)', flexShrink: 0 }} />
+              : <div style={{ width: 180, height: 180, borderRadius: 22, background: C.surface3, border: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <span style={{ fontFamily: 'var(--font-sora)', fontSize: 64, fontWeight: 800, color: C.green, opacity: 0.25 }}>{s.name[0]}</span>
+                </div>
             }
-            <span className='text-sm font-semibold text-foreground'>{s.name}</span>
+            <div style={{ flex: '1 1 320px', minWidth: 260 }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: C.surface3, border: `1px solid ${C.border2}`, borderRadius: 999, padding: '6px 14px', marginBottom: 18 }}>
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.green }} />
+                <span style={{ fontSize: 11, fontWeight: 800, color: C.greenText, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Your creator</span>
+              </div>
+              <h2 style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 'clamp(22px,2.5vw,32px)', letterSpacing: '-0.02em', color: C.ink, margin: '0 0 14px', lineHeight: 1.15 }}>{s.name}</h2>
+              <p style={{ fontSize: 16, lineHeight: 1.7, color: C.muted, margin: '0 0 24px' }}>{bio}</p>
+              {socialItems.length > 0 && (
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  {socialItems.map(({ href, label }) => (
+                    <a key={label} href={href} target='_blank' rel='noreferrer'
+                      style={{ padding: '8px 16px', background: '#fff', border: `1px solid ${C.border}`, borderRadius: 10, fontSize: 12, fontWeight: 700, color: C.ink, textDecoration: 'none' }}>
+                      {label} →
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── 10. FINAL CTA (dark green panel) ─────────────────────────── */}
+      {!session?.user && (
+        <section style={{ padding: '40px 24px 88px' }}>
+          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+            <div style={{ background: C.deepBg, borderRadius: 28, padding: 'clamp(48px,6vw,72px)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: -80, right: -80, width: 300, height: 300, borderRadius: '50%', background: C.lime, opacity: 0.06, pointerEvents: 'none' }} />
+              <div style={{ position: 'absolute', bottom: -60, left: -60, width: 200, height: 200, borderRadius: '50%', background: C.lime, opacity: 0.04, pointerEvents: 'none' }} />
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <h2 style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 'clamp(26px,3.5vw,42px)', letterSpacing: '-0.02em', color: '#fff', margin: '0 0 14px', lineHeight: 1.1 }}>
+                  Ready to learn from {s.name}?
+                </h2>
+                <p style={{ fontSize: 17, lineHeight: 1.65, color: 'rgba(255,255,255,.7)', margin: '0 auto 36px', maxWidth: 480 }}>
+                  Join fans learning {category.toLowerCase()} skills at their own pace — with a certificate to show for it.
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
+                  <Link href='/sign-up' style={{ padding: '15px 30px', background: C.lime, color: C.deepBg, borderRadius: 12, fontSize: 14, fontWeight: 800, textDecoration: 'none', fontFamily: 'var(--font-sora)' }}>
+                    Become a fan — it&apos;s free →
+                  </Link>
+                  <a href='#courses' style={{ padding: '15px 30px', background: 'rgba(255,255,255,.08)', color: '#fff', borderRadius: 12, fontSize: 14, fontWeight: 700, textDecoration: 'none', border: '1px solid rgba(255,255,255,.2)' }}>
+                    Browse courses
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── 11. FOOTER ───────────────────────────────────────────────── */}
+      <footer style={{ borderTop: `1px solid ${C.border}`, padding: '28px 24px' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {logoUrl
+              ? <img src={logoUrl} alt={s.name} style={{ width: 26, height: 26, borderRadius: '50%', objectFit: 'cover' }} />
+              : <div style={{ width: 26, height: 26, borderRadius: '50%', background: C.green, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 11 }}>{s.name[0]}</div>
+            }
+            <span style={{ fontFamily: 'var(--font-sora)', fontWeight: 700, fontSize: 14, color: C.ink }}>{s.name}</span>
           </div>
           {socialItems.length > 0 && (
-            <div className='flex items-center gap-4'>
+            <div style={{ display: 'flex', gap: 20 }}>
               {socialItems.map(({ href, label }) => (
-                <a key={label} href={href} target='_blank' rel='noreferrer'
-                  className='text-xs font-medium text-muted-foreground hover:text-foreground transition-colors'>{label}</a>
+                <a key={label} href={href} target='_blank' rel='noreferrer' style={{ fontSize: 12, fontWeight: 600, color: C.muted2, textDecoration: 'none' }}>{label}</a>
               ))}
             </div>
           )}
-          <p className='text-xs text-muted-foreground'>© {new Date().getFullYear()} {s.name}</p>
+          <p style={{ fontSize: 11, color: C.muted2, margin: 0 }}>© {new Date().getFullYear()} {s.name}. All rights reserved.</p>
         </div>
       </footer>
 
