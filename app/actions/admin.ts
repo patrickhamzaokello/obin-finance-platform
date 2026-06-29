@@ -501,6 +501,10 @@ export async function updateCreatorProfile(data: {
   logoUrl?: string;
   bannerUrl?: string;
   socialLinks?: string; // JSON string
+  primaryColor?: string;
+  accentColor?: string;
+  tagline?: string;
+  heroHeadline?: string;
 }) {
   try {
     await isSchoolAdmin();

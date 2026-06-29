@@ -12,21 +12,24 @@ import { Sora, Manrope } from 'next/font/google';
 const sora    = Sora({ subsets: ['latin'], weight: ['500','600','700','800'], variable: '--font-sora',    display: 'swap' });
 const manrope = Manrope({ subsets: ['latin'], weight: ['400','500','600','700','800'], variable: '--font-manrope', display: 'swap' });
 
-const C = {
-  ink:       '#0B1411',
-  ink2:      '#1A2620',
-  muted:     '#57655D',
-  muted2:    '#8A968F',
-  green:     '#0E9F6E',
-  deepBg:    '#0A3D2E',
-  deepCard:  '#0C4836',
-  greenText: '#0A6B4A',
-  lime:      '#CDFB5E',
-  surface2:  '#F4F7F5',
-  surface3:  '#F0F7F3',
-  border:    '#E6ECE8',
-  border2:   '#D9EAE1',
-};
+// Colors are derived per-request from creator's saved theme
+function buildC(primary: string, accent: string) {
+  return {
+    ink:      '#0B1411',
+    ink2:     '#1A2620',
+    muted:    '#57655D',
+    muted2:   '#8A968F',
+    green:    primary,
+    deepBg:   '#0A3D2E',
+    deepCard: '#0C4836',
+    greenText: primary,
+    lime:     accent,
+    surface2: '#F4F7F5',
+    surface3: '#F0F7F3',
+    border:   '#E6ECE8',
+    border2:  '#D9EAE1',
+  };
+}
 
 function price(p: number | null, dp: number | null, da: boolean | null) {
   const base = p ?? 0;
@@ -58,10 +61,16 @@ export default async function CreatorProfilePage({
   let social: Record<string, string> = {};
   try { social = JSON.parse((s as any).socialLinks ?? '{}'); } catch { /* empty */ }
 
-  const logoUrl   = (s as any).logoUrl   ? convertBlobUrlToApiUrl((s as any).logoUrl)   : null;
-  const bannerUrl = (s as any).bannerUrl ? convertBlobUrlToApiUrl((s as any).bannerUrl) : null;
-  const category  = ((s as any).category as string | null) ?? 'Creator';
-  const bio       = (s as any).bio as string | null;
+  const logoUrl      = (s as any).logoUrl      ? convertBlobUrlToApiUrl((s as any).logoUrl)      : null;
+  const bannerUrl    = (s as any).bannerUrl     ? convertBlobUrlToApiUrl((s as any).bannerUrl)    : null;
+  const category     = ((s as any).category     as string | null) ?? 'Creator';
+  const bio          = (s as any).bio           as string | null;
+  const primaryColor = ((s as any).primaryColor as string | null) ?? '#0E9F6E';
+  const accentColor  = ((s as any).accentColor  as string | null) ?? '#CDFB5E';
+  const tagline      = (s as any).tagline       as string | null;
+  const heroHeadline = (s as any).heroHeadline  as string | null;
+
+  const C = buildC(primaryColor, accentColor);
 
   const socialItems = [
     { icon: Globe, href: social.website,   label: 'Website' },
@@ -127,18 +136,36 @@ export default async function CreatorProfilePage({
             <span style={{ fontSize: 11, fontWeight: 800, color: C.greenText, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{category} creator</span>
           </div>
 
-          {/* H1 with lime highlight */}
+          {/* H1 with accent highlight on the creator name */}
           <h1 style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 'clamp(36px,5vw,56px)', lineHeight: 1.04, letterSpacing: '-0.025em', color: C.ink, margin: '0 0 22px' }}>
-            Learn {category}<br />from{' '}
-            <span style={{ position: 'relative', display: 'inline-block' }}>
-              <span style={{ position: 'relative', zIndex: 1 }}>{s.name}</span>
-              <span style={{ position: 'absolute', bottom: 3, left: -3, right: -3, height: '34%', background: C.lime, zIndex: 0, borderRadius: 4 }} />
-            </span>
+            {heroHeadline
+              ? (
+                <>
+                  {heroHeadline.includes(s.name)
+                    ? heroHeadline.split(s.name).map((part, i, arr) =>
+                        i < arr.length - 1
+                          ? <span key={i}>{part}<span style={{ position: 'relative', display: 'inline-block' }}><span style={{ position: 'relative', zIndex: 1 }}>{s.name}</span><span style={{ position: 'absolute', bottom: 3, left: -3, right: -3, height: '34%', background: C.lime, zIndex: 0, borderRadius: 4 }} /></span></span>
+                          : <span key={i}>{part}</span>
+                      )
+                    : heroHeadline
+                  }
+                </>
+              )
+              : (
+                <>
+                  Learn {category}<br />from{' '}
+                  <span style={{ position: 'relative', display: 'inline-block' }}>
+                    <span style={{ position: 'relative', zIndex: 1 }}>{s.name}</span>
+                    <span style={{ position: 'absolute', bottom: 3, left: -3, right: -3, height: '34%', background: C.lime, zIndex: 0, borderRadius: 4 }} />
+                  </span>
+                </>
+              )
+            }
           </h1>
 
-          {/* Subhead */}
+          {/* Subhead — tagline takes priority over bio */}
           <p style={{ fontSize: 17, lineHeight: 1.65, color: C.muted, margin: '0 0 36px', maxWidth: 460 }}>
-            {bio ?? `Exclusive courses and content from ${s.name}. Learn at your own pace and earn a certificate.`}
+            {tagline ?? bio ?? `Exclusive courses and content from ${s.name}. Learn at your own pace and earn a certificate.`}
           </p>
 
           {/* CTAs */}

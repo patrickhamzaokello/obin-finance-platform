@@ -68,8 +68,13 @@ export const school = pgTable('school', {
   category:          text('category'),                    // e.g. "Finance", "Tech", "Fitness"
   socialLinks:       text('socialLinks'),                 // JSON: { twitter, instagram, youtube, website }
   commissionPercent: integer('commissionPercent').notNull().default(0),
-  createdAt:         timestamp('createdAt').notNull().defaultNow(),
-  updatedAt:         timestamp('updatedAt').notNull().defaultNow(),
+  // Page customisation — set via creator profile settings
+  primaryColor:  text('primaryColor'),   // hex e.g. "#0E9F6E" — buttons, badges, accents
+  accentColor:   text('accentColor'),    // hex e.g. "#CDFB5E" — highlight on H1, CTA lime
+  tagline:       text('tagline'),        // short hero subline e.g. "I help 10k+ people invest smarter"
+  heroHeadline:  text('heroHeadline'),   // custom H1 override; falls back to "Learn {category} from {name}"
+  createdAt:     timestamp('createdAt').notNull().defaultNow(),
+  updatedAt:     timestamp('updatedAt').notNull().defaultNow(),
 });
 
 export const course = pgTable('course', {

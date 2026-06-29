@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { getCreatorProfile, updateCreatorProfile } from '@/app/actions/admin';
 import { uploadToBlob } from '@/lib/upload-client';
 import { convertBlobUrlToApiUrl } from '@/lib/blob-url';
-import { Loader2, Save, User, Globe, Link2, Upload, X, ImageIcon } from 'lucide-react';
+import { Loader2, Save, User, Globe, Link2, Upload, X, ImageIcon, Palette, Type } from 'lucide-react';
 
 const CATEGORIES = [
   'Finance', 'Tech', 'Fitness', 'Cooking', 'Music', 'Art', 'Business',
@@ -148,10 +148,14 @@ export default function CreatorProfilePage() {
   const [category,  setCategory]  = useState('');
   const [logoUrl,   setLogoUrl]   = useState('');
   const [bannerUrl, setBannerUrl] = useState('');
-  const [website,   setWebsite]   = useState('');
-  const [twitter,   setTwitter]   = useState('');
-  const [instagram, setInstagram] = useState('');
-  const [youtube,   setYoutube]   = useState('');
+  const [website,      setWebsite]      = useState('');
+  const [twitter,      setTwitter]      = useState('');
+  const [instagram,    setInstagram]    = useState('');
+  const [youtube,      setYoutube]      = useState('');
+  const [primaryColor, setPrimaryColor] = useState('#0E9F6E');
+  const [accentColor,  setAccentColor]  = useState('#CDFB5E');
+  const [tagline,      setTagline]      = useState('');
+  const [heroHeadline, setHeroHeadline] = useState('');
 
   useEffect(() => {
     getCreatorProfile().then((r) => {
@@ -170,6 +174,10 @@ export default function CreatorProfilePage() {
           setInstagram(social.instagram ?? '');
           setYoutube(social.youtube ?? '');
         } catch { /* empty */ }
+        setPrimaryColor(p.primaryColor ?? '#0E9F6E');
+        setAccentColor(p.accentColor ?? '#CDFB5E');
+        setTagline(p.tagline ?? '');
+        setHeroHeadline(p.heroHeadline ?? '');
       }
       setLoading(false);
     });
@@ -178,7 +186,7 @@ export default function CreatorProfilePage() {
   const handleSave = async () => {
     setSaving(true); setSaved(false); setError('');
     const socialLinks = JSON.stringify({ website, twitter, instagram, youtube });
-    const r = await updateCreatorProfile({ name, bio, category, logoUrl, bannerUrl, socialLinks });
+    const r = await updateCreatorProfile({ name, bio, category, logoUrl, bannerUrl, socialLinks, primaryColor, accentColor, tagline, heroHeadline });
     setSaving(false);
     if (r.success) setSaved(true);
     else setError(r.error ?? 'Failed to save');
@@ -286,6 +294,98 @@ export default function CreatorProfilePage() {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Page Theme */}
+      <div className="bg-white rounded-2xl shadow-sm p-6 space-y-6">
+        <div className="flex items-center gap-2 mb-1">
+          <Palette size={14} className="text-primary" />
+          <h2 className="text-sm font-bold text-foreground">Page Theme</h2>
+        </div>
+        <p className="text-xs text-muted-foreground -mt-4">These colors appear on your public creator page — buttons, badges, highlights, and the CTA panel.</p>
+
+        {/* Live preview strip */}
+        <div className="rounded-xl overflow-hidden border border-black/[0.06]">
+          <div style={{ background: primaryColor, padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ color: '#fff', fontSize: 12, fontWeight: 700 }}>Preview — button &amp; banner</span>
+            <span style={{ background: accentColor, color: primaryColor, fontSize: 11, fontWeight: 800, borderRadius: 999, padding: '4px 10px' }}>Join now</span>
+          </div>
+          <div style={{ padding: '12px 16px', background: '#F4F7F5', display: 'flex', gap: 8, alignItems: 'center' }}>
+            <span style={{ background: primaryColor + '20', color: primaryColor, fontSize: 11, fontWeight: 800, borderRadius: 999, padding: '3px 10px', border: `1px solid ${primaryColor}40` }}>Category badge</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#0B1411' }}>Learn from me{' '}
+              <span style={{ borderBottom: `3px solid ${accentColor}`, paddingBottom: 1 }}>here</span>
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-5">
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Brand Color</label>
+            <p className="text-[10px] text-muted-foreground mb-2">Buttons, badges, borders</p>
+            <div className="flex items-center gap-3">
+              <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)}
+                className="w-10 h-10 rounded-lg border border-black/[0.08] cursor-pointer p-0.5 bg-white" />
+              <input value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)}
+                className={inputCls + ' flex-1'} placeholder="#0E9F6E" maxLength={7} />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Accent / Highlight</label>
+            <p className="text-[10px] text-muted-foreground mb-2">Headline underline, CTA lime</p>
+            <div className="flex items-center gap-3">
+              <input type="color" value={accentColor} onChange={(e) => setAccentColor(e.target.value)}
+                className="w-10 h-10 rounded-lg border border-black/[0.08] cursor-pointer p-0.5 bg-white" />
+              <input value={accentColor} onChange={(e) => setAccentColor(e.target.value)}
+                className={inputCls + ' flex-1'} placeholder="#CDFB5E" maxLength={7} />
+            </div>
+          </div>
+        </div>
+
+        {/* Presets */}
+        <div>
+          <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Quick Presets</p>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { label: 'Forest',   primary: '#0E9F6E', accent: '#CDFB5E' },
+              { label: 'Ocean',    primary: '#0066CC', accent: '#7DF9FF' },
+              { label: 'Sunset',   primary: '#E8440A', accent: '#FFD166' },
+              { label: 'Midnight', primary: '#6E3CCA', accent: '#E0BBFF' },
+              { label: 'Rose',     primary: '#D63384', accent: '#FFB3D1' },
+              { label: 'Slate',    primary: '#334155', accent: '#94A3B8' },
+            ].map((p) => (
+              <button key={p.label} type="button"
+                onClick={() => { setPrimaryColor(p.primary); setAccentColor(p.accent); }}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-black/[0.08] text-xs font-semibold text-muted-foreground hover:bg-secondary transition-colors">
+                <span style={{ width: 12, height: 12, borderRadius: '50%', background: p.primary, display: 'inline-block', border: '1px solid rgba(0,0,0,0.1)' }} />
+                <span style={{ width: 12, height: 12, borderRadius: '50%', background: p.accent, display: 'inline-block', border: '1px solid rgba(0,0,0,0.1)' }} />
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Page Messaging */}
+      <div className="bg-white rounded-2xl shadow-sm p-6 space-y-5">
+        <div className="flex items-center gap-2 mb-1">
+          <Type size={14} className="text-primary" />
+          <h2 className="text-sm font-bold text-foreground">Hero Messaging</h2>
+        </div>
+        <p className="text-xs text-muted-foreground -mt-4">Control the big text on your public landing page hero section.</p>
+
+        <div>
+          <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">Hero Headline</label>
+          <input value={heroHeadline} onChange={(e) => setHeroHeadline(e.target.value)} className={inputCls}
+            placeholder={`Learn ${category || 'from me'} — default if left empty`} />
+          <p className="text-[10px] text-muted-foreground mt-1">Leave empty to use the default: &ldquo;Learn {category || '[your category]'} from {name || '[your name]'}&rdquo;</p>
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">Tagline</label>
+          <input value={tagline} onChange={(e) => setTagline(e.target.value)} className={inputCls}
+            placeholder="e.g. I've helped 10,000+ people invest smarter in Uganda" />
+          <p className="text-[10px] text-muted-foreground mt-1">Appears below the headline as your personal hook. Replaces your bio in the hero if set.</p>
+        </div>
       </div>
 
       {error && <p className="text-xs text-destructive">{error}</p>}
