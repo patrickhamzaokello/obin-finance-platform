@@ -11,10 +11,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Pkasemer',
+    default: 'Pkasemer — The Creator Course Platform',
     template: '%s · Pkasemer',
   },
-  description: 'Expert-led financial education courses on budgeting, investing, and wealth management.',
+  description: 'Pkasemer is the creator course platform. Build your branded channel, publish video and PDF courses, and earn revenue — with certificates built in.',
   icons: {
     icon: '/icon.svg',
     shortcut: '/icon.svg',
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   colorScheme: 'light',
-  themeColor: '#4F46E5',
+  themeColor: '#0E9F6E',
 }
 
 export default function RootLayout({

@@ -1,5 +1,30 @@
 import type { Metadata } from 'next';
-export const metadata: Metadata = { title: 'Pkasemer — The Creator Course Platform' };
+
+export const metadata: Metadata = {
+  title: 'Pkasemer — The Creator Course Platform',
+  description: 'Turn your knowledge into income. Pkasemer gives creators their own branded channel, course builder, and learner community — with payments and certificates built in.',
+  openGraph: {
+    title: 'Pkasemer — The Creator Course Platform',
+    description: 'Turn your knowledge into income. Build your branded channel, publish courses, and get paid — with certificates built in.',
+    url: 'https://pkasemer.com/platform',
+    siteName: 'Pkasemer',
+    images: [
+      {
+        url: '/images/og-platform.png',
+        width: 1200,
+        height: 630,
+        alt: 'Pkasemer — The Creator Course Platform',
+      },
+    ],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Pkasemer — The Creator Course Platform',
+    description: 'Turn your knowledge into income. Build your branded channel, publish courses, and get paid.',
+    images: ['/images/og-platform.png'],
+  },
+};
 
 import { isPlatformOwner } from '@/lib/school-context';
 import { redirect } from 'next/navigation';
