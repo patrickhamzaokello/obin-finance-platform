@@ -27,29 +27,29 @@ const C = {
 };
 
 export default async function PlatformLandingPage() {
-  if (await isPlatformOwner()) redirect('/admin');
+  if (await isPlatformOwner()) redirect('/platform/admin');
 
   const fonts = `${sora.variable} ${manrope.variable}`;
 
   const features = [
     { icon: Globe,      title: 'Your own creator channel',    desc: 'Get a branded subdomain (you.pkasemer.app) with your logo, bio, and course catalogue — all in one link.' },
-    { icon: Play,       title: 'Video & PDF courses',         desc: 'Upload videos or embed YouTube. Attach PDFs. Organise everything into modules your fans can follow step by step.' },
-    { icon: Award,      title: 'Auto certificates',           desc: 'Fans who complete your course automatically receive a branded certificate — zero admin on your end.' },
+    { icon: Play,       title: 'Video & PDF courses',         desc: 'Upload videos or embed YouTube. Attach PDFs. Organise everything into modules your learners can follow step by step.' },
+    { icon: Award,      title: 'Auto certificates',           desc: 'Learners who complete your course automatically receive a branded certificate — zero admin on your end.' },
     { icon: TrendingUp, title: 'Built-in monetisation',       desc: 'Set prices in your local currency, apply discounts, and get paid — the platform handles the rest.' },
-    { icon: Users,      title: 'Fan management',              desc: 'See who your fans are, track their progress, and manage access codes for gifted or promotional enrolments.' },
-    { icon: Zap,        title: 'Instant creator studio',      desc: 'A clean Creator Studio dashboard gives you live stats, course drafts, and fan feedback — no setup required.' },
+    { icon: Users,      title: 'Learner management',          desc: 'See who your learners are, track their progress, and manage access codes for gifted or promotional enrolments.' },
+    { icon: Zap,        title: 'Instant creator studio',      desc: 'A clean Creator Studio dashboard gives you live stats, course drafts, and learner activity — no setup required.' },
   ];
 
   const steps = [
     { n: '01', title: 'Create your channel', body: 'Sign up, choose your slug, upload your logo and banner. Your public profile is live in minutes.' },
     { n: '02', title: 'Build your course',   body: 'Add modules, upload videos, attach PDFs. Set a price or make it free. Publish when ready.' },
-    { n: '03', title: 'Grow your fan base',  body: 'Share your channel link. Fans sign up, enrol, learn, and earn certificates — you earn revenue.' },
+    { n: '03', title: 'Grow your audience',  body: 'Share your channel link. Learners sign up, enrol, and earn certificates — you earn revenue.' },
   ];
 
   const testimonials = [
     { quote: 'I launched my first paid course in one afternoon. The Creator Studio is genuinely the simplest tool I have ever used.', name: 'Alex M.', role: 'Finance creator' },
-    { quote: 'My fans love getting a certificate at the end. Completion rates went up the moment I turned that feature on.', name: 'Priya K.', role: 'Tech educator' },
-    { quote: 'Having my own subdomain makes the whole thing feel professional — fans trust it more than a generic link.', name: 'David O.', role: 'Business coach' },
+    { quote: 'My students love getting a certificate at the end. Completion rates went up the moment I turned that feature on.', name: 'Priya K.', role: 'Tech educator' },
+    { quote: 'Having my own subdomain makes the whole thing feel professional — learners take it more seriously than a generic link.', name: 'David O.', role: 'Business coach' },
   ];
 
   return (
@@ -95,7 +95,7 @@ export default async function PlatformLandingPage() {
 
           {/* H1 */}
           <h1 style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 'clamp(38px,5.5vw,60px)', lineHeight: 1.03, letterSpacing: '-0.03em', color: C.ink, margin: '0 0 24px' }}>
-            Teach your fans.<br />
+            Share your knowledge.<br />
             <span style={{ position: 'relative', display: 'inline-block' }}>
               <span style={{ position: 'relative', zIndex: 1 }}>Earn from what you know.</span>
               <span style={{ position: 'absolute', bottom: 4, left: -2, right: -2, height: '32%', background: C.lime, zIndex: 0, borderRadius: 4 }} />
@@ -104,7 +104,7 @@ export default async function PlatformLandingPage() {
 
           {/* Sub */}
           <p style={{ fontSize: 18, lineHeight: 1.65, color: C.muted, margin: '0 0 36px', maxWidth: 500 }}>
-            Pkasemer gives creators their own branded channel, course builder, and fan community — with payments and certificates built in.
+            Pkasemer gives creators their own branded channel, course builder, and learning community — with payments and certificates built in.
           </p>
 
           {/* CTAs */}
@@ -121,7 +121,7 @@ export default async function PlatformLandingPage() {
 
           {/* Trust */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {['Free to start — no credit card required','Your own subdomain in minutes','Fans get certificates, you get revenue'].map((t) => (
+            {['Free to start — no credit card required','Your own subdomain in minutes','Learners earn certificates, you earn revenue'].map((t) => (
               <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ width: 20, height: 20, borderRadius: '50%', background: C.surface3, border: `1px solid ${C.border2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <Check size={11} color={C.green} strokeWidth={3} />
@@ -132,40 +132,16 @@ export default async function PlatformLandingPage() {
           </div>
         </div>
 
-        {/* Right: mock creator profile card */}
-        <div style={{ flex: '1 1 380px', minWidth: 300 }}>
-          <div style={{ borderRadius: 24, overflow: 'hidden', border: `1px solid ${C.border}`, boxShadow: '0 30px 60px -20px rgba(11,20,17,.2)', background: '#fff' }}>
-            {/* Mock banner */}
-            <div style={{ height: 140, background: `linear-gradient(135deg, ${C.deepBg} 0%, #0E9F6E 100%)`, position: 'relative', display: 'flex', alignItems: 'flex-end', padding: '0 24px 0' }}>
-              <div style={{ width: 64, height: 64, borderRadius: 16, background: C.lime, border: '3px solid #fff', marginBottom: -32, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 24, color: C.deepBg }}>A</div>
-            </div>
-            <div style={{ padding: '40px 24px 24px' }}>
-              <p style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 18, color: C.ink, margin: '0 0 4px' }}>Alex Finance</p>
-              <span style={{ display: 'inline-block', background: C.surface3, color: C.greenText, fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', borderRadius: 999, padding: '4px 10px', border: `1px solid ${C.border2}` }}>Finance</span>
-              <p style={{ fontSize: 14, color: C.muted, margin: '12px 0 20px', lineHeight: 1.6 }}>Practical money skills for everyday people. Join 2,400+ fans learning to build wealth.</p>
-              {/* Mini course card */}
-              <div style={{ background: C.surface2, borderRadius: 14, padding: '14px 16px', display: 'flex', gap: 12, alignItems: 'center', marginBottom: 14, border: `1px solid ${C.border}` }}>
-                <div style={{ width: 44, height: 44, borderRadius: 10, background: C.green, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Play size={18} fill="#fff" color="#fff" />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: C.ink, margin: '0 0 2px' }}>TikTok to Money</p>
-                  <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>UGX 20,000 · 6 modules</p>
-                </div>
-                <span style={{ fontSize: 12, fontWeight: 800, color: C.green }}>Enroll →</span>
-              </div>
-              <div style={{ background: C.lime, borderRadius: 10, padding: '10px 16px', textAlign: 'center', fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 13, color: C.deepBg }}>
-                Become a fan — it&apos;s free →
-              </div>
-            </div>
-          </div>
+        {/* Right: creator character illustration */}
+        <div style={{ flex: '1 1 440px', minWidth: 320, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <img src="/images/creator-hero.png" alt="Happy creator with laptop pointing at a course" style={{ width: '100%', maxWidth: 600, height: 'auto', display: 'block' }} />
         </div>
       </section>
 
       {/* ── VALUE STRIP ─────────────────────────────────────────────────── */}
       <div style={{ background: C.surface2, borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}`, padding: '18px 24px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: '8px 0' }}>
-          {['Creator-first','Built-in payments','Custom subdomain','Auto certificates','Fan management','Video & PDF courses'].map((pill, i, arr) => (
+          {['Creator-first','Built-in payments','Custom subdomain','Auto certificates','Learner management','Video & PDF courses'].map((pill, i, arr) => (
             <span key={pill} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontSize: 13, fontWeight: 700, color: C.muted }}>{pill}</span>
               {i < arr.length - 1 && <span style={{ width: 4, height: 4, borderRadius: '50%', background: C.green, margin: '0 8px' }} />}
@@ -249,7 +225,7 @@ export default async function PlatformLandingPage() {
             {[
               'You create content but have no structured way to monetise your knowledge',
               'You want a professional course platform without months of setup or a developer',
-              'You want your fans to walk away with a tangible certificate — not just a video watched',
+              'You want your learners to walk away with a tangible certificate — not just a video watched',
             ].map((item, i, arr) => (
               <div key={item} style={{ display: 'flex', gap: 18, padding: '22px 0', borderBottom: i < arr.length - 1 ? `1px solid ${C.border}` : 'none' }}>
                 <div style={{ width: 34, height: 34, borderRadius: 10, background: C.surface3, border: `1px solid ${C.border2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
@@ -309,7 +285,7 @@ export default async function PlatformLandingPage() {
                 Ready to launch your creator channel?
               </h2>
               <p style={{ fontSize: 18, lineHeight: 1.65, color: 'rgba(255,255,255,.7)', margin: '0 auto 40px', maxWidth: 520 }}>
-                Join creators already building their fan communities and earning from their knowledge on Pkasemer.
+                Join creators already building learning communities and earning from their knowledge on Pkasemer.
               </p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, justifyContent: 'center' }}>
                 <Link href="/platform/apply"

@@ -113,6 +113,7 @@ export async function getCourseWithEnrollmentStatus(courseId: string) {
         ...courseData[0],
         modules: modulesWithContent,
         isEnrolled,
+        isLoggedIn: !!userId,
       },
     };
   } catch (error) {

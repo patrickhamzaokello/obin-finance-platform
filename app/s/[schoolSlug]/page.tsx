@@ -4,7 +4,7 @@ import { school, course } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { convertBlobUrlToApiUrl } from '@/lib/blob-url';
 import Link from 'next/link';
-import { BookOpen, Play, ArrowRight, Link2, Globe, Heart, Check } from 'lucide-react';
+import { BookOpen, Play, ArrowRight, Link2, Globe, Check, GraduationCap } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { Sora, Manrope } from 'next/font/google';
@@ -100,7 +100,7 @@ export default async function CreatorProfilePage({
 
           {/* Center anchors */}
           <nav style={{ display: 'flex', gap: 4 }}>
-            {[['#courses','Courses'],['#about','About'],['#reviews','Reviews']].map(([href, label]) => (
+            {[['#courses','Courses'],['#about','About']].map(([href, label]) => (
               <a key={href} href={href} style={{ padding: '6px 13px', fontSize: 13, fontWeight: 600, color: C.muted, borderRadius: 8, textDecoration: 'none' }}>{label}</a>
             ))}
           </nav>
@@ -115,7 +115,7 @@ export default async function CreatorProfilePage({
               <>
                 <Link href='/sign-in' style={{ padding: '10px 14px', fontSize: 13, fontWeight: 600, color: C.muted, textDecoration: 'none' }}>Sign in</Link>
                 <Link href='/sign-up' style={{ padding: '10px 20px', background: C.green, color: '#fff', borderRadius: 10, fontSize: 13, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, boxShadow: `0 4px 14px rgba(14,159,110,.3)` }}>
-                  <Heart size={13} fill='#fff' /> Become a fan
+                  <GraduationCap size={13} /> Start learning
                 </Link>
               </>
             )}
@@ -196,7 +196,7 @@ export default async function CreatorProfilePage({
               ) : (
                 <>
                   <Link href='/sign-up' style={{ padding: '14px 28px', background: C.green, color: '#fff', borderRadius: 12, fontSize: 15, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8, boxShadow: `0 6px 20px rgba(14,159,110,.28)` }}>
-                    <Heart size={15} fill='#fff' /> Become a fan →
+                    <GraduationCap size={15} /> Enroll for free →
                   </Link>
                   <a href='#courses' style={{ padding: '14px 28px', background: 'rgba(255,255,255,0.9)', color: C.ink, borderRadius: 12, fontSize: 15, fontWeight: 600, textDecoration: 'none', border: `1px solid ${C.border2}`, backdropFilter: 'blur(8px)' }}>
                     Browse courses
@@ -207,7 +207,7 @@ export default async function CreatorProfilePage({
 
             {/* Trust checkmarks */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {['Expert-led courses you can learn at your own pace', 'Earn a verified certificate on completion', 'Exclusive content straight from the creator'].map((t) => (
+              {['Self-paced courses you can start today', 'Earn a verified certificate on completion', 'Content created directly by ' + s.name].map((t) => (
                 <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(255,255,255,0.9)', border: `1px solid ${C.border2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <Check size={11} color={C.green} strokeWidth={3} />
@@ -410,14 +410,14 @@ export default async function CreatorProfilePage({
               This is for you if…
             </h2>
             <p style={{ fontSize: 16, lineHeight: 1.65, color: C.muted, margin: 0 }}>
-              {s.name}&apos;s courses are for people who want more than theory — real, actionable knowledge from someone who has done it.
+              {s.name}&apos;s courses are for people who want real, actionable knowledge — not textbook theory.
             </p>
           </div>
           <div style={{ flex: '1 1 380px', minWidth: 280 }}>
             {[
-              `You want practical ${category.toLowerCase()} skills — not just theory`,
-              'You learn better from creators who walk the talk',
-              "You're ready to invest in knowledge that pays for itself",
+              `You want practical ${category.toLowerCase()} skills, not just theory`,
+              `You prefer learning from someone actively working in ${category.toLowerCase()}`,
+              'You want a certificate you can actually show for your effort',
             ].map((item, i, arr) => (
               <div key={item} style={{ display: 'flex', alignItems: 'flex-start', gap: 16, padding: '22px 0', borderBottom: i < arr.length - 1 ? `1px solid ${C.border}` : 'none' }}>
                 <div style={{ width: 34, height: 34, borderRadius: 10, background: C.surface3, border: `1px solid ${C.border2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -475,11 +475,11 @@ export default async function CreatorProfilePage({
                   Ready to learn from {s.name}?
                 </h2>
                 <p style={{ fontSize: 17, lineHeight: 1.65, color: 'rgba(255,255,255,.7)', margin: '0 auto 36px', maxWidth: 480 }}>
-                  Join fans learning {category.toLowerCase()} skills at their own pace — with a certificate to show for it.
+                  Learn {category.toLowerCase()} at your own pace — with a verified certificate to show for it.
                 </p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
                   <Link href='/sign-up' style={{ padding: '15px 30px', background: C.lime, color: C.deepBg, borderRadius: 12, fontSize: 14, fontWeight: 800, textDecoration: 'none', fontFamily: 'var(--font-sora)' }}>
-                    Become a fan — it&apos;s free →
+                    Create free account →
                   </Link>
                   <a href='#courses' style={{ padding: '15px 30px', background: 'rgba(255,255,255,.08)', color: '#fff', borderRadius: 12, fontSize: 14, fontWeight: 700, textDecoration: 'none', border: '1px solid rgba(255,255,255,.2)' }}>
                     Browse courses

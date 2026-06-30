@@ -15,7 +15,7 @@ import {
 import { AccessCodesPanel } from './access-codes-panel';
 import {
   ChevronDown, ChevronUp, Play, FileText, Plus, Trash2, Pencil,
-  BookOpen, Check, AlertCircle, Video, Upload, Link2, ArrowLeft, Loader2,
+  BookOpen, Check, AlertCircle, Video, Upload, Link2, ArrowLeft, Loader2, Copy, ExternalLink,
 } from 'lucide-react';
 
 type Toast = { type: 'success' | 'error'; message: string; id: number };
@@ -68,6 +68,22 @@ export default function CourseEditor() {
   const [saving, setSaving]           = useState(false);
   const [showModuleForm, setShowModuleForm] = useState(false);
   const { toasts, show: showToast }   = useToast();
+  const [copied, setCopied] = useState(false);
+
+  const courseUrl = !isNew && typeof window !== 'undefined'
+    ? `${window.location.origin}/s/${schoolSlug}/course/${courseId}`
+    : !isNew
+      ? `/s/${schoolSlug}/course/${courseId}`
+      : '';
+
+  const handleCopy = () => {
+    if (!courseUrl) return;
+    const fullUrl = courseUrl.startsWith('http') ? courseUrl : `${window.location.origin}${courseUrl}`;
+    navigator.clipboard.writeText(fullUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
 
   useEffect(() => {
     if (!isNew) {
@@ -158,6 +174,48 @@ export default function CourseEditor() {
       <Link href="/admin/courses" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
         <ArrowLeft size={14} /> Courses
       </Link>
+
+      {/* Share link panel — only visible for saved courses */}
+      {!isNew && (
+        <div className={`mb-6 rounded-2xl border px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3 ${
+          course?.isPublished ? 'bg-green-50 border-green-100' : 'bg-secondary border-black/[0.06]'
+        }`}>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <Link2 size={13} className={course?.isPublished ? 'text-green-600' : 'text-muted-foreground'} />
+              <p className="text-xs font-bold text-foreground uppercase tracking-wider">
+                {course?.isPublished ? 'Shareable course link' : 'Course link — publish to make it live'}
+              </p>
+            </div>
+            <p className="text-sm font-mono text-muted-foreground truncate">
+              {typeof window !== 'undefined'
+                ? `${window.location.origin}/s/${schoolSlug}/course/${courseId}`
+                : `/s/${schoolSlug}/course/${courseId}`}
+            </p>
+            {!course?.isPublished && (
+              <p className="text-xs text-muted-foreground mt-1">Learners can view the course page but cannot enroll until it is published.</p>
+            )}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={handleCopy}
+              className={`inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl border transition-colors ${
+                copied ? 'bg-green-600 text-white border-green-600' : 'bg-white text-foreground border-black/[0.08] hover:bg-secondary'
+              }`}
+            >
+              <Copy size={11} /> {copied ? 'Copied!' : 'Copy link'}
+            </button>
+            <a
+              href={`/s/${schoolSlug}/course/${courseId}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl border bg-white text-foreground border-black/[0.08] hover:bg-secondary transition-colors"
+            >
+              <ExternalLink size={11} /> Preview
+            </a>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 

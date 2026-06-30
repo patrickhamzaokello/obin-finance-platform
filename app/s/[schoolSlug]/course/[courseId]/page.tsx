@@ -74,6 +74,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
   const totalVideos     = course.modules.reduce((s: number, m: any) => s + m.videos.length, 0);
   const totalPdfs       = course.modules.reduce((s: number, m: any) => s + m.pdfs.length, 0);
   const isEnrolled      = course.isEnrolled;
+  const isLoggedIn      = course.isLoggedIn ?? false;
   const price           = course.price ?? 0;
   const discountActive  = course.discountActive && (course.discountPercent ?? 0) > 0;
   const discountedPrice = discountActive ? Math.round(price * (1 - (course.discountPercent ?? 0) / 100)) : price;
@@ -180,7 +181,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
             {/* Mobile CTA */}
             <div className='lg:hidden'>
               <CtaCard
-                isFree={isFree} isEnrolled={isEnrolled} enrolling={enrolling}
+                isFree={isFree} isEnrolled={isEnrolled} isLoggedIn={isLoggedIn} enrolling={enrolling}
                 price={price} discountedPrice={discountedPrice}
                 discountActive={discountActive} discountPercent={course.discountPercent}
                 error={error} onEnroll={handleEnroll}
@@ -268,7 +269,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
           {/* ── Right: sticky CTA ── */}
           <div className='hidden lg:block w-[300px] shrink-0 sticky top-[57px]'>
             <CtaCard
-              isFree={isFree} isEnrolled={isEnrolled} enrolling={enrolling}
+              isFree={isFree} isEnrolled={isEnrolled} isLoggedIn={isLoggedIn} enrolling={enrolling}
               price={price} discountedPrice={discountedPrice}
               discountActive={discountActive} discountPercent={course.discountPercent}
               error={error} onEnroll={handleEnroll}
@@ -285,16 +286,21 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
 // ── CTA card ──────────────────────────────────────────────────────────────────
 
 function CtaCard({
-  isFree, isEnrolled, enrolling,
+  isFree, isEnrolled, isLoggedIn, enrolling,
   price, discountedPrice, discountActive, discountPercent,
   error, onEnroll, onContinue,
   modules, videos, pdfs,
 }: {
-  isFree: boolean; isEnrolled: boolean; enrolling: boolean;
+  isFree: boolean; isEnrolled: boolean; isLoggedIn: boolean; enrolling: boolean;
   price: number; discountedPrice: number; discountActive: boolean; discountPercent: number;
   error: string | null; onEnroll: () => void; onContinue: () => void;
   modules: number; videos: number; pdfs: number;
 }) {
+  // Capture the current path so sign-in/sign-up can redirect back here after auth
+  const returnPath = typeof window !== 'undefined' ? window.location.pathname : '';
+  const signInHref  = `/sign-in?redirect=${encodeURIComponent(returnPath)}`;
+  const signUpHref  = `/sign-up?redirect=${encodeURIComponent(returnPath)}`;
+
   return (
     <div className='bg-white rounded-2xl shadow-sm p-6 space-y-5'>
 
@@ -317,7 +323,7 @@ function CtaCard({
         </div>
       )}
 
-      {/* Button */}
+      {/* Action area */}
       {isEnrolled ? (
         <div className='space-y-2.5'>
           <p className='flex items-center gap-1.5 text-sm font-semibold text-primary'>
@@ -328,7 +334,8 @@ function CtaCard({
             <Play size={15} /> Continue Learning
           </button>
         </div>
-      ) : (
+      ) : isLoggedIn ? (
+        /* Logged in, not yet enrolled */
         <div className='space-y-2'>
           <button onClick={onEnroll} disabled={enrolling}
             className='w-full flex items-center justify-center gap-2 py-3.5 bg-primary text-primary-foreground font-bold text-sm rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-60'>
@@ -337,6 +344,18 @@ function CtaCard({
               : <><GraduationCap size={15} /> {isFree ? 'Enroll for Free' : 'Enroll Now'}</>}
           </button>
           {error && <p className='text-xs text-destructive text-center'>{error}</p>}
+        </div>
+      ) : (
+        /* Not logged in — gate enrollment behind account creation */
+        <div className='space-y-3'>
+          <Link href={signUpHref}
+            className='w-full flex items-center justify-center gap-2 py-3.5 bg-primary text-primary-foreground font-bold text-sm rounded-xl hover:bg-primary/90 transition-colors'>
+            <GraduationCap size={15} /> {isFree ? 'Sign up & enroll free' : 'Sign up to enroll'}
+          </Link>
+          <p className='text-center text-xs text-muted-foreground'>
+            Already have an account?{' '}
+            <Link href={signInHref} className='font-semibold text-primary hover:underline'>Sign in</Link>
+          </p>
         </div>
       )}
 
