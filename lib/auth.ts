@@ -34,10 +34,11 @@ export const auth = betterAuth({
     ...(process.env.VERCEL_PROJECT_PRODUCTION_URL
       ? [`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`]
       : []),
-    // Trust the apex domain and ALL school subdomains
+    // Trust the apex domain, www, and ALL school subdomains
     ...(baseDomain
       ? [
           `https://${baseDomain}`,
+          `https://www.${baseDomain}`,
           `https://*.${baseDomain}`,
         ]
       : []),
