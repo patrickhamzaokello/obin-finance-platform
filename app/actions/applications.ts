@@ -2,7 +2,7 @@
 
 import { db } from '@/lib/db';
 import { account, creatorApplication, school, schoolMember, user } from '@/lib/db/schema';
-import { hashPassword } from '@better-auth/utils/password';
+import bcrypt from 'bcryptjs';
 import { eq, desc } from 'drizzle-orm';
 import { requirePlatformOwner } from '@/lib/school-context';
 import { getCurrentOrganizationId } from '@/lib/organization';
@@ -216,7 +216,7 @@ export async function sendCreatorCredentials(applicationId: string) {
     } else {
       userId = existingUsers[0].id;
       // Reset password directly in the credentials account row
-      const hashed = await hashPassword(tempPassword);
+      const hashed = await bcrypt.hash(tempPassword, 10);
       await db.update(account)
         .set({ password: hashed, updatedAt: new Date() })
         .where(eq(account.userId, userId));
