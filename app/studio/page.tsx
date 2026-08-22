@@ -77,25 +77,57 @@ export default async function AdminDashboard() {
             </Link>
           </div>
         ) : (
-          <div className="divide-y divide-black/[0.04]">
+          <div className="divide-y divide-black/[0.05]">
             {courses.slice(0, 6).map((c: any) => (
-              <div key={c.id} className="flex items-center gap-4 px-6 py-4 hover:bg-black/[0.02] transition-colors">
-                <div className="w-10 h-10 rounded-xl bg-secondary overflow-hidden shrink-0">
+              <div key={c.id} className="flex items-center gap-5 px-6 py-5 hover:bg-black/[0.015] transition-colors group">
+
+                {/* Thumbnail — large */}
+                <div className="w-28 h-20 rounded-xl bg-secondary overflow-hidden shrink-0 shadow-sm">
                   {c.thumbnail
-                    ? <img src={c.thumbnail} alt={c.title} className="w-full h-full object-cover" />
-                    : <div className="w-full h-full flex items-center justify-center"><BookOpen size={15} className="text-border" /></div>
+                    ? <img src={c.thumbnail} alt={c.title} className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300" />
+                    : <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/20">
+                        <BookOpen size={22} className="text-primary/40" />
+                      </div>
                   }
                 </div>
+
+                {/* Text */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{c.title}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{c.instructor || 'No instructor'}</p>
+                  <p className="text-base font-semibold text-foreground leading-snug mb-1">{c.title}</p>
+                  {c.description && (
+                    <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{c.description}</p>
+                  )}
+                  <div className="flex items-center gap-3 mt-2">
+                    {c.instructor && (
+                      <p className="text-xs text-muted-foreground">By {c.instructor}</p>
+                    )}
+                    {(c.price ?? 0) === 0 ? (
+                      <span className="text-xs font-semibold text-primary">Free</span>
+                    ) : (
+                      <span className="text-xs font-semibold text-foreground">
+                        UGX {(c.discountActive && (c.discountPercent ?? 0) > 0
+                          ? Math.round((c.price ?? 0) * (1 - (c.discountPercent ?? 0) / 100))
+                          : (c.price ?? 0)
+                        ).toLocaleString()}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <span className={`shrink-0 text-[10px] font-semibold px-2.5 py-1 rounded-full ${
-                  c.isPublished ? 'bg-green-50 text-green-700' : 'bg-secondary text-muted-foreground'
-                }`}>
-                  {c.isPublished ? 'Live' : 'Draft'}
-                </span>
-                <Link href={`/studio/courses/${c.id}`} className="shrink-0 text-xs font-semibold text-primary hover:underline">Edit</Link>
+
+                {/* Status + action */}
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                    c.isPublished ? 'bg-green-50 text-green-700' : 'bg-secondary text-muted-foreground'
+                  }`}>
+                    {c.isPublished ? 'Live' : 'Draft'}
+                  </span>
+                  <Link
+                    href={`/studio/courses/${c.id}`}
+                    className="px-4 py-2 text-xs font-semibold bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-colors"
+                  >
+                    Edit
+                  </Link>
+                </div>
               </div>
             ))}
           </div>
