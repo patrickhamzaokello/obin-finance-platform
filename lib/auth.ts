@@ -61,6 +61,11 @@ export const auth = betterAuth({
       },
     },
   },
+  rateLimit: {
+    window: 60,   // 60-second window
+    max: 10,      // allow 10 requests per window (default is very low)
+    storage: 'memory',
+  },
   advanced: {
     // Unique prefix prevents platform-admin cookies (set on the apex domain in a
     // previous config with domain: '.ObinAcademy.com') from colliding with school
