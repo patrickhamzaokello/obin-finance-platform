@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { authClient } from '@/lib/auth-client';
-import { BookOpen, Trophy, LayoutDashboard, LogOut, Users } from 'lucide-react';
+import { BookOpen, Trophy, LayoutDashboard, Users } from 'lucide-react';
+import { UserMenu } from '@/components/user-menu';
 
 export default function LearnNav({
   userName,
@@ -21,25 +21,16 @@ export default function LearnNav({
     { href: '/learn/achievements', label: 'Achievements', icon: Trophy },
   ];
 
-  const initials = userName
-    ? userName.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
-    : (userEmail?.[0] ?? 'U').toUpperCase();
-
-  const handleSignOut = async () => {
-    await authClient.signOut();
-    window.location.href = '/sign-in';
-  };
-
   return (
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-black/[0.06]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14">
 
-          <Link href="/learn/dashboard" className="font-extrabold text-base text-primary tracking-tight">
+          <Link href="/learn/dashboard" className="font-extrabold text-base text-primary tracking-tight shrink-0">
             Pkasemer
           </Link>
 
-          <nav className="hidden sm:flex items-center gap-0.5">
+          <nav className="hidden sm:flex items-center gap-0.5 flex-1 justify-center">
             {links.map(({ href, label, icon: Icon }) => (
               <Link
                 key={href}
@@ -56,20 +47,13 @@ export default function LearnNav({
             ))}
           </nav>
 
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary">
-                {initials}
-              </div>
-              <span className="text-xs font-medium text-foreground">{userName || userEmail}</span>
-            </div>
-            <button
-              onClick={handleSignOut}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-black/[0.04] transition-all"
-            >
-              <LogOut size={13} />
-              <span className="hidden sm:inline">Sign out</span>
-            </button>
+          <div className="shrink-0">
+            <UserMenu
+              name={userName}
+              email={userEmail}
+              dashboardHref="/learn/dashboard"
+              dashboardLabel="My Learning"
+            />
           </div>
         </div>
 

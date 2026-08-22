@@ -2,7 +2,8 @@ import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { isPlatformOwner, getCurrentMembership } from '@/lib/school-context';
 import Link from 'next/link';
-import { BookOpen, LayoutDashboard, Play, Users } from 'lucide-react';
+import { BookOpen, Play, Users } from 'lucide-react';
+import { UserMenu } from '@/components/user-menu';
 
 /**
  * Server-rendered nav for public pages (/courses, /course/[id], etc.)
@@ -63,12 +64,12 @@ export async function PublicNav({ activePath }: { activePath?: 'courses' | 'crea
           {/* Right CTAs */}
           <div className="ml-auto flex items-center gap-2 shrink-0">
             {user ? (
-              <Link
-                href={dashboardHref}
-                className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors"
-              >
-                <LayoutDashboard size={13} /> {dashboardLabel}
-              </Link>
+              <UserMenu
+                name={user.name ?? ''}
+                email={user.email ?? ''}
+                dashboardHref={dashboardHref}
+                dashboardLabel={dashboardLabel}
+              />
             ) : (
               <>
                 <Link

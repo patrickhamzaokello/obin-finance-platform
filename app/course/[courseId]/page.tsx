@@ -266,6 +266,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
             {/* Mobile CTA */}
             <div className='lg:hidden'>
               <CtaCard
+                title={course.title}
                 isFree={isFree} isEnrolled={isEnrolled} isLoggedIn={isLoggedIn} enrolling={enrolling}
                 price={price} discountedPrice={discountedPrice}
                 discountActive={discountActive} discountPercent={course.discountPercent}
@@ -362,6 +363,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
               onContinue={() => router.push(`/learn/${courseId}`)}
               onPay={() => setPaymentOpen(true)}
               modules={course.modules.length} videos={totalVideos} pdfs={totalPdfs}
+              title={course.title}
             />
           </div>
         </div>
@@ -471,17 +473,17 @@ function CtaCard({
   isFree, isEnrolled, isLoggedIn, enrolling,
   price, discountedPrice, discountActive, discountPercent,
   error, onEnroll, onContinue, onPay,
-  modules, videos, pdfs,
+  modules, videos, pdfs, title,
 }: {
   isFree: boolean; isEnrolled: boolean; isLoggedIn: boolean; enrolling: boolean;
   price: number; discountedPrice: number; discountActive: boolean; discountPercent: number;
   error: string | null; onEnroll: () => void; onContinue: () => void; onPay: () => void;
-  modules: number; videos: number; pdfs: number;
+  modules: number; videos: number; pdfs: number; title: string;
 }) {
-  // Capture the current path so sign-in/sign-up can redirect back here after auth
-  const returnPath = typeof window !== 'undefined' ? window.location.pathname : '';
-  const signInHref  = `/sign-in?redirect=${encodeURIComponent(returnPath)}`;
-  const signUpHref  = `/sign-up?redirect=${encodeURIComponent(returnPath)}`;
+  const returnPath  = typeof window !== 'undefined' ? window.location.pathname : '';
+  const ctaParam    = `?next=${encodeURIComponent(returnPath)}&courseTitle=${encodeURIComponent(title)}`;
+  const signInHref  = `/sign-in${ctaParam}`;
+  const signUpHref  = `/sign-up${ctaParam}`;
 
   return (
     <div className='bg-white rounded-2xl shadow-sm p-6 space-y-5'>

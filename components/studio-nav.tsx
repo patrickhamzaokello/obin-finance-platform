@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { authClient } from '@/lib/auth-client';
-import { LayoutDashboard, BookOpen, Users, LogOut, MessageCircle, UserCircle } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Users, MessageCircle, UserCircle } from 'lucide-react';
+import { UserMenu } from '@/components/user-menu';
 
 interface StudioNavProps {
   schoolName: string;
@@ -28,15 +28,6 @@ export function StudioNav({ schoolName, userName, userEmail, role }: StudioNavPr
       ? pathname === '/studio'
       : pathname.startsWith(href);
 
-  const initials = userName
-    ? userName.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
-    : (userEmail?.[0] ?? 'U').toUpperCase();
-
-  const handleSignOut = async () => {
-    await authClient.signOut();
-    window.location.href = '/sign-in';
-  };
-
   return (
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-black/[0.06]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -52,7 +43,7 @@ export function StudioNav({ schoolName, userName, userEmail, role }: StudioNavPr
             </div>
           </div>
 
-          <nav className="hidden sm:flex items-center gap-0.5">
+          <nav className="hidden sm:flex items-center gap-0.5 flex-1 justify-center">
             {links.map(({ href, label, icon: Icon }) => (
               <Link
                 key={href}
@@ -69,23 +60,13 @@ export function StudioNav({ schoolName, userName, userEmail, role }: StudioNavPr
             ))}
           </nav>
 
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary">
-                {initials}
-              </div>
-              <div className="text-right leading-tight">
-                <p className="text-xs font-semibold text-foreground">{userName || userEmail}</p>
-                <p className="text-[10px] text-muted-foreground capitalize">{role}</p>
-              </div>
-            </div>
-            <button
-              onClick={handleSignOut}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-black/[0.04] transition-all"
-            >
-              <LogOut size={13} />
-              <span className="hidden sm:inline">Sign out</span>
-            </button>
+          <div className="shrink-0">
+            <UserMenu
+              name={userName}
+              email={userEmail}
+              dashboardHref="/studio"
+              dashboardLabel="Creator Studio"
+            />
           </div>
         </div>
 

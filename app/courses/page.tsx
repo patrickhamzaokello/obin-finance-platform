@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
-import { course, school, courseEnrollment, courseReview } from '@/lib/db/schema';
-import { eq, and, desc, sql, count } from 'drizzle-orm';
+import { course, school, courseEnrollment } from '@/lib/db/schema';
+import { eq, desc, count } from 'drizzle-orm';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { PublicNav } from '@/components/public-nav';
@@ -11,45 +11,53 @@ export const metadata: Metadata = {
 };
 
 const CATEGORIES = ['All', 'Finance', 'Tech', 'Fitness', 'Business', 'Creative', 'Education'];
-const LEVELS     = ['All levels', 'Beginner', 'Intermediate', 'Advanced'];
+const PAGE_SIZE  = 12;
 
 interface Props {
-  searchParams: Promise<{ category?: string; level?: string; q?: string; price?: string }>;
+  searchParams: Promise<{ category?: string; level?: string; q?: string; price?: string; page?: string }>;
 }
 
 export default async function CoursesMarketplace({ searchParams }: Props) {
-  const params   = await searchParams;
-  const category = params.category ?? 'All';
-  const level    = params.level ?? 'All levels';
-  const q        = params.q ?? '';
-  const priceFilter = params.price ?? 'all'; // 'all' | 'free' | 'paid'
+  const params      = await searchParams;
+  const category    = params.category ?? 'All';
+  const level       = params.level ?? 'All levels';
+  const q           = params.q ?? '';
+  const priceFilter = params.price ?? 'all';
+  const page        = Math.max(1, parseInt(params.page ?? '1', 10));
 
-  // Fetch published courses + their school
+  // Fetch published courses + school info
   const rows = await db
     .select({
-      id:          course.id,
-      title:       course.title,
-      description: course.description,
-      thumbnail:   course.thumbnail,
-      instructor:  course.instructor,
-      price:       course.price,
+      id:              course.id,
+      title:           course.title,
+      description:     course.description,
+      thumbnail:       course.thumbnail,
+      instructor:      course.instructor,
+      price:           course.price,
       discountPercent: course.discountPercent,
       discountActive:  course.discountActive,
-      level:       course.level,
-      language:    course.language,
-      schoolId:    course.schoolId,
-      schoolName:  school.name,
-      schoolSlug:  school.slug,
-      schoolLogo:  school.logoUrl,
-      category:    school.category,
-      createdAt:   course.createdAt,
+      level:           course.level,
+      language:        course.language,
+      schoolId:        course.schoolId,
+      schoolName:      school.name,
+      schoolSlug:      school.slug,
+      schoolLogo:      school.logoUrl,
+      category:        school.category,
+      createdAt:       course.createdAt,
     })
     .from(course)
     .innerJoin(school, eq(course.schoolId, school.id))
     .where(eq(course.isPublished, true))
     .orderBy(desc(course.createdAt));
 
-  // Client-side-style filtering (server-side on the already-small result set)
+  // Fetch enrollment counts for all published courses
+  const enrollCounts = await db
+    .select({ courseId: courseEnrollment.courseId, cnt: count() })
+    .from(courseEnrollment)
+    .groupBy(courseEnrollment.courseId);
+  const enrollMap = Object.fromEntries(enrollCounts.map(e => [e.courseId, Number(e.cnt)]));
+
+  // Server-side filtering
   const filtered = rows.filter(r => {
     if (q && !r.title.toLowerCase().includes(q.toLowerCase()) &&
         !(r.description ?? '').toLowerCase().includes(q.toLowerCase())) return false;
@@ -59,6 +67,9 @@ export default async function CoursesMarketplace({ searchParams }: Props) {
     if (priceFilter === 'paid' && (r.price ?? 0) === 0) return false;
     return true;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   function effectivePrice(r: typeof rows[0]) {
     const base = r.price ?? 0;
@@ -81,7 +92,7 @@ export default async function CoursesMarketplace({ searchParams }: Props) {
 
   return (
     <div style={{ minHeight: '100vh', background: '#F8F7F4', fontFamily: 'system-ui,sans-serif' }}>
-      <style>{`.course-card:hover{box-shadow:0 4px 20px rgba(0,0,0,0.08)}`}</style>
+      <style>{`.course-card:hover{box-shadow:0 4px 24px rgba(0,0,0,0.10);transform:translateY(-1px)}.course-card{transition:box-shadow 0.15s,transform 0.15s}`}</style>
       <PublicNav activePath="courses" />
 
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 20px 80px' }}>
@@ -95,12 +106,12 @@ export default async function CoursesMarketplace({ searchParams }: Props) {
           </p>
         </div>
 
-        {/* Search + filters */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 32 }}>
+        {/* Search */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 24 }}>
           <form action="/courses" method="GET" style={{ flex: '1 1 260px', display: 'flex', gap: 8 }}>
-            {category !== 'All'       && <input type="hidden" name="category" value={category} />}
-            {level !== 'All levels'   && <input type="hidden" name="level"    value={level}    />}
-            {priceFilter !== 'all'    && <input type="hidden" name="price"    value={priceFilter} />}
+            {category !== 'All'     && <input type="hidden" name="category" value={category} />}
+            {level !== 'All levels' && <input type="hidden" name="level"    value={level}    />}
+            {priceFilter !== 'all'  && <input type="hidden" name="price"    value={priceFilter} />}
             <input
               name="q"
               defaultValue={q}
@@ -113,12 +124,12 @@ export default async function CoursesMarketplace({ searchParams }: Props) {
           </form>
         </div>
 
-        {/* Category pills */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+        {/* Category pills + price filters */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 28 }}>
           {CATEGORIES.map(cat => (
             <Link
               key={cat}
-              href={filterUrl({ category: cat === 'All' ? '' : cat })}
+              href={filterUrl({ category: cat === 'All' ? '' : cat, page: '1' })}
               style={{
                 padding: '6px 14px', borderRadius: 100, fontSize: 13, fontWeight: 600,
                 textDecoration: 'none',
@@ -129,10 +140,10 @@ export default async function CoursesMarketplace({ searchParams }: Props) {
             >{cat}</Link>
           ))}
           <span style={{ width: 1, background: '#E4E1DA', margin: '0 4px' }} />
-          {['all', 'free', 'paid'].map(p => (
+          {(['all', 'free', 'paid'] as const).map(p => (
             <Link
               key={p}
-              href={filterUrl({ price: p === 'all' ? '' : p })}
+              href={filterUrl({ price: p === 'all' ? '' : p, page: '1' })}
               style={{
                 padding: '6px 14px', borderRadius: 100, fontSize: 13, fontWeight: 600,
                 textDecoration: 'none',
@@ -140,20 +151,21 @@ export default async function CoursesMarketplace({ searchParams }: Props) {
                 color:      priceFilter === p ? '#fff' : '#78716C',
                 border:     `1px solid ${priceFilter === p ? '#1C1917' : '#E4E1DA'}`,
               }}
-            >{{all:'Any price', free:'Free', paid:'Paid'}[p]}</Link>
+            >{{ all: 'Any price', free: 'Free', paid: 'Paid' }[p]}</Link>
           ))}
         </div>
 
-        {/* Course grid */}
-        {filtered.length === 0 ? (
+        {/* Grid */}
+        {paginated.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '80px 20px', color: '#A8A29E' }}>
             <p style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>No courses found</p>
             <p style={{ fontSize: 14 }}>Try a different search or filter.</p>
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 20 }}>
-            {filtered.map(r => {
-              const price = effectivePrice(r);
+            {paginated.map(r => {
+              const price   = effectivePrice(r);
+              const enrolled = enrollMap[r.id] ?? 0;
               return (
                 <Link
                   key={r.id}
@@ -161,9 +173,8 @@ export default async function CoursesMarketplace({ searchParams }: Props) {
                   style={{ textDecoration: 'none', display: 'block' }}
                 >
                   <div className="course-card" style={{
-                    background: '#fff', borderRadius: 12, overflow: 'hidden',
+                    background: '#fff', borderRadius: 14, overflow: 'hidden',
                     border: '1px solid #E4E1DA',
-                    transition: 'box-shadow 0.15s',
                   }}>
                     {/* Thumbnail */}
                     <div style={{ height: 160, background: '#E4E1DA', overflow: 'hidden', position: 'relative' }}>
@@ -177,16 +188,25 @@ export default async function CoursesMarketplace({ searchParams }: Props) {
                       {r.level && (
                         <span style={{
                           position: 'absolute', top: 10, left: 10,
-                          background: 'rgba(0,0,0,0.7)', color: '#fff',
+                          background: 'rgba(0,0,0,0.65)', color: '#fff',
                           fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 6,
-                          textTransform: 'capitalize',
+                          textTransform: 'capitalize', backdropFilter: 'blur(4px)',
                         }}>{r.level}</span>
+                      )}
+                      {enrolled > 0 && (
+                        <span style={{
+                          position: 'absolute', top: 10, right: 10,
+                          background: 'rgba(255,255,255,0.92)', color: '#1C1917',
+                          fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 6,
+                          display: 'flex', alignItems: 'center', gap: 4,
+                        }}>
+                          👥 {enrolled.toLocaleString()}
+                        </span>
                       )}
                     </div>
 
                     {/* Body */}
                     <div style={{ padding: '16px 16px 20px' }}>
-                      {/* Creator */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                         {r.schoolLogo ? (
                           <img src={r.schoolLogo} alt={r.schoolName} style={{ width: 22, height: 22, borderRadius: 4, objectFit: 'cover' }} />
@@ -205,36 +225,67 @@ export default async function CoursesMarketplace({ searchParams }: Props) {
                         {r.title}
                       </h3>
                       {r.description && (
-                        <p style={{ fontSize: 13, color: '#78716C', margin: '0 0 12px', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                        <p style={{ fontSize: 13, color: '#78716C', margin: '0 0 14px', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                           {r.description}
                         </p>
                       )}
 
-                      {/* Price */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        {price === 0 ? (
-                          <span style={{ fontSize: 15, fontWeight: 700, color: '#0E9F6E' }}>Free</span>
-                        ) : (
-                          <>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                          {price === 0 ? (
+                            <span style={{ fontSize: 15, fontWeight: 700, color: '#0E9F6E' }}>Free</span>
+                          ) : (
                             <span style={{ fontSize: 15, fontWeight: 800, color: '#1C1917' }}>
                               UGX {new Intl.NumberFormat('en-UG').format(price)}
                             </span>
-                            {r.discountActive && (r.discountPercent ?? 0) > 0 && (
-                              <span style={{ fontSize: 12, color: '#A8A29E', textDecoration: 'line-through' }}>
-                                {new Intl.NumberFormat('en-UG').format(r.price ?? 0)}
-                              </span>
-                            )}
-                          </>
+                          )}
+                          {r.discountActive && (r.discountPercent ?? 0) > 0 && (
+                            <span style={{ fontSize: 12, color: '#A8A29E', textDecoration: 'line-through', marginLeft: 6 }}>
+                              {new Intl.NumberFormat('en-UG').format(r.price ?? 0)}
+                            </span>
+                          )}
+                        </div>
+                        {enrolled > 0 && (
+                          <span style={{ fontSize: 12, color: '#A8A29E', display: 'flex', alignItems: 'center', gap: 4 }}>
+                            {enrolled.toLocaleString()} enrolled
+                          </span>
                         )}
-                        <span style={{ marginLeft: 'auto', fontSize: 12, color: '#A8A29E' }}>
-                          by {r.instructor ?? r.schoolName}
-                        </span>
                       </div>
                     </div>
                   </div>
                 </Link>
               );
             })}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 48 }}>
+            {page > 1 && (
+              <Link href={filterUrl({ page: String(page - 1) })} style={{ padding: '8px 18px', border: '1px solid #E4E1DA', borderRadius: 8, fontSize: 14, fontWeight: 600, color: '#1C1917', textDecoration: 'none', background: '#fff' }}>
+                ← Prev
+              </Link>
+            )}
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(pg => (
+              <Link
+                key={pg}
+                href={filterUrl({ page: String(pg) })}
+                style={{
+                  padding: '8px 14px', border: '1px solid #E4E1DA', borderRadius: 8, fontSize: 14, fontWeight: 600,
+                  textDecoration: 'none',
+                  background: pg === page ? '#0E9F6E' : '#fff',
+                  color:      pg === page ? '#fff' : '#1C1917',
+                }}
+              >
+                {pg}
+              </Link>
+            ))}
+            {page < totalPages && (
+              <Link href={filterUrl({ page: String(page + 1) })} style={{ padding: '8px 18px', border: '1px solid #E4E1DA', borderRadius: 8, fontSize: 14, fontWeight: 600, color: '#1C1917', textDecoration: 'none', background: '#fff' }}>
+                Next →
+              </Link>
+            )}
           </div>
         )}
       </div>
