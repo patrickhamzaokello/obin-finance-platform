@@ -48,6 +48,14 @@ export const verification = pgTable('verification', {
   updatedAt: timestamp('updatedAt'),
 });
 
+// Multi-tenancy: each organization maps to a domain (e.g. obinacademy.com)
+export const organization = pgTable('organization', {
+  id:        text('id').primaryKey(),
+  domain:    text('domain').notNull().unique(), // e.g. 'obinacademy.com'
+  name:      text('name').notNull(),            // e.g. 'ObinAcademy'
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+});
+
 // App-specific tables
 // Links a user to a school with a role. One school per user (unique on userId).
 export const schoolMember = pgTable('school_member', {
@@ -72,9 +80,10 @@ export const school = pgTable('school', {
   primaryColor:  text('primaryColor'),   // hex e.g. "#0E9F6E" — buttons, badges, accents
   accentColor:   text('accentColor'),    // hex e.g. "#CDFB5E" — highlight on H1, CTA lime
   tagline:       text('tagline'),        // short hero subline e.g. "I help 10k+ people invest smarter"
-  heroHeadline:  text('heroHeadline'),   // custom H1 override; falls back to "Learn {category} from {name}"
-  createdAt:     timestamp('createdAt').notNull().defaultNow(),
-  updatedAt:     timestamp('updatedAt').notNull().defaultNow(),
+  heroHeadline:   text('heroHeadline'),    // custom H1 override; falls back to "Learn {category} from {name}"
+  organizationId: text('organizationId'), // FK → organization.id (which platform this school belongs to)
+  createdAt:      timestamp('createdAt').notNull().defaultNow(),
+  updatedAt:      timestamp('updatedAt').notNull().defaultNow(),
 });
 
 export const course = pgTable('course', {

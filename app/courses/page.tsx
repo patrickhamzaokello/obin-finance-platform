@@ -7,6 +7,7 @@ import { PublicNav } from '@/components/public-nav';
 import LearnNav from '@/app/learn/learn-nav';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
+import { getCurrentOrganizationId } from '@/lib/organization';
 
 export const metadata: Metadata = {
   title: 'Browse Classes',
@@ -22,7 +23,10 @@ interface Props {
 
 export default async function CoursesMarketplace({ searchParams }: Props) {
   const params      = await searchParams;
-  const session     = await auth.api.getSession({ headers: await headers() });
+  const [session, orgId] = await Promise.all([
+    auth.api.getSession({ headers: await headers() }),
+    getCurrentOrganizationId(),
+  ]);
   const category    = params.category ?? 'All';
   const level       = params.level ?? 'All levels';
   const q           = params.q ?? '';
@@ -51,7 +55,11 @@ export default async function CoursesMarketplace({ searchParams }: Props) {
     })
     .from(course)
     .innerJoin(school, eq(course.schoolId, school.id))
-    .where(eq(course.isPublished, true))
+    .where(
+      orgId
+        ? and(eq(course.isPublished, true), eq(school.organizationId, orgId))
+        : eq(course.isPublished, true)
+    )
     .orderBy(desc(course.createdAt));
 
   // Fetch enrollment counts for all published classes

@@ -369,11 +369,14 @@ export async function getSchools() {
 export async function createSchool(data: { name: string; slug: string; logoUrl?: string; commissionPercent?: number }) {
   try {
     await requirePlatformOwner();
-    const slug = data.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-');
-    const id   = `school-${Date.now()}`;
+    const slug   = data.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    const id     = `school-${Date.now()}`;
+    const { getCurrentOrganizationId } = await import('@/lib/organization');
+    const orgId  = await getCurrentOrganizationId();
     await db.insert(school).values({
       id, slug, name: data.name, logoUrl: data.logoUrl || null,
       commissionPercent: Math.min(100, Math.max(0, data.commissionPercent ?? 10)),
+      organizationId: orgId,
     });
     revalidatePath('/admin/schools');
     return { success: true, data: { id, slug, name: data.name } };

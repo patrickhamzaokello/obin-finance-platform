@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { creatorApplication, school } from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { requirePlatformOwner } from '@/lib/school-context';
+import { getCurrentOrganizationId } from '@/lib/organization';
 import { revalidatePath } from 'next/cache';
 import {
   sendApplicationReceivedEmail,
@@ -103,11 +104,13 @@ export async function approveApplication(applicationId: string) {
     const slug     = await uniqueSlug(app.channelName);
     const schoolId = `school-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 
+    const orgId = await getCurrentOrganizationId();
     await db.insert(school).values({
-      id:   schoolId,
+      id:             schoolId,
       slug,
-      name: app.channelName,
-      bio:  app.bio ?? null,
+      name:           app.channelName,
+      bio:            app.bio ?? null,
+      organizationId: orgId,
     });
 
     // Mark application approved + link to school

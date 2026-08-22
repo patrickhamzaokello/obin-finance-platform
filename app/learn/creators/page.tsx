@@ -7,6 +7,7 @@ import { eq, count } from 'drizzle-orm';
 import Link from 'next/link';
 import { convertBlobUrlToApiUrl } from '@/lib/blob-url';
 import { BookOpen, Users, Search } from 'lucide-react';
+import { getCurrentOrganizationId } from '@/lib/organization';
 
 const CATEGORIES = ['All', 'Finance', 'Tech', 'Fitness', 'Business', 'Cooking', 'Music', 'Art', 'Education', 'Lifestyle', 'Other'];
 const PAGE_SIZE  = 12;
@@ -21,7 +22,9 @@ export default async function BrowseCommunities({ searchParams }: Props) {
   const category = params.category ?? 'All';
   const page     = Math.max(1, parseInt(params.page ?? '1', 10));
 
-  const creators = await db
+  const orgId = await getCurrentOrganizationId();
+
+  const creatorsQuery = db
     .select({
       id:        school.id,
       slug:      school.slug,
@@ -34,6 +37,11 @@ export default async function BrowseCommunities({ searchParams }: Props) {
     })
     .from(school)
     .orderBy(school.name);
+
+  // Filter by org when one is resolved; show all if org table is empty (bootstrap)
+  const creators = orgId
+    ? await creatorsQuery.where(eq(school.organizationId, orgId))
+    : await creatorsQuery;
 
   // Per-school published course counts
   const courseCounts = await db
