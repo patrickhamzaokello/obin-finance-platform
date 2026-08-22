@@ -4,6 +4,9 @@ import { eq, desc, count } from 'drizzle-orm';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { PublicNav } from '@/components/public-nav';
+import LearnNav from '@/app/learn/learn-nav';
+import { auth } from '@/lib/auth';
+import { headers } from 'next/headers';
 
 export const metadata: Metadata = {
   title: 'Browse Classes',
@@ -19,6 +22,7 @@ interface Props {
 
 export default async function CoursesMarketplace({ searchParams }: Props) {
   const params      = await searchParams;
+  const session     = await auth.api.getSession({ headers: await headers() });
   const category    = params.category ?? 'All';
   const level       = params.level ?? 'All levels';
   const q           = params.q ?? '';
@@ -93,7 +97,11 @@ export default async function CoursesMarketplace({ searchParams }: Props) {
   return (
     <div style={{ minHeight: '100vh', background: '#F8F7F4', fontFamily: 'system-ui,sans-serif' }}>
       <style>{`.course-card:hover{box-shadow:0 4px 24px rgba(0,0,0,0.10);transform:translateY(-1px)}.course-card{transition:box-shadow 0.15s,transform 0.15s}`}</style>
-      <PublicNav activePath="courses" />
+      {session?.user ? (
+        <LearnNav userName={session.user.name ?? session.user.email} userEmail={session.user.email} />
+      ) : (
+        <PublicNav activePath="courses" />
+      )}
 
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 20px 80px' }}>
         {/* Header */}
