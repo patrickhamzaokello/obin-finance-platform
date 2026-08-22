@@ -14,7 +14,9 @@ const s3 = new S3Client({
     accessKeyId:     process.env.AWS_ACCESS_KEY_ID!,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
   },
-  followRegionRedirects: true, // handles region mismatches gracefully
+  followRegionRedirects: true,   // handles region mismatches gracefully
+  requestChecksumCalculation: 'WHEN_REQUIRED',  // don't auto-inject CRC32 checksums
+  responseChecksumValidation:  'WHEN_REQUIRED',
 });
 
 const BUCKET  = process.env.AWS_S3_BUCKET_NAME ?? 'learningplatform';
@@ -87,9 +89,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     Bucket:      BUCKET,
     Key:         key,
     ContentType: contentType,
+    ChecksumAlgorithm: undefined, // prevent SDK from injecting CRC32 into presigned URL
   });
 
-  const presignedUrl = await getSignedUrl(s3, command, { expiresIn: 300 });
+  const presignedUrl = await getSignedUrl(s3, command, {
+    expiresIn: 300,
+    unhoistableHeaders: new Set(['x-amz-checksum-algorithm', 'x-amz-sdk-checksum-algorithm']),
+  });
   const publicUrl    = CF_BASE
     ? `${CF_BASE}/${key}`
     : `https://${BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
