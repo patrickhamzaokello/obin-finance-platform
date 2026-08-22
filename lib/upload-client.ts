@@ -53,10 +53,20 @@ function uploadWithProgress(
     }
 
     xhr.addEventListener('load', () => {
-      if (xhr.status >= 200 && xhr.status < 300) resolve();
-      else reject(new Error(`S3 upload failed: ${xhr.status}`));
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve();
+      } else {
+        // Parse S3's XML error body for a useful message
+        const body = xhr.responseText ?? '';
+        const code    = body.match(/<Code>(.*?)<\/Code>/)?.[1] ?? '';
+        const message = body.match(/<Message>(.*?)<\/Message>/)?.[1] ?? '';
+        reject(new Error(`S3 ${xhr.status}${code ? ` ${code}` : ''}: ${message || body.slice(0, 200)}`));
+      }
     });
-    xhr.addEventListener('error', () => reject(new Error('Network error during upload')));
+    xhr.addEventListener('error', () => {
+      // XHR 'error' fires only for network-level failures (CORS preflight blocked, DNS, SSL)
+      reject(new Error(`Network error — check S3 CORS and bucket policy (status=${xhr.status})`));
+    });
     xhr.send(file);
   });
 }

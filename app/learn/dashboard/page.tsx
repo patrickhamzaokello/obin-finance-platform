@@ -4,14 +4,22 @@ export const metadata: Metadata = { title: 'My Learning' };
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { db } from '@/lib/db';
-import { courseEnrollment, course, school, userProgress, module } from '@/lib/db/schema';
+import { courseEnrollment, course, school, userProgress, module, schoolMember } from '@/lib/db/schema';
 import { eq, and, count } from 'drizzle-orm';
 import Link from 'next/link';
-import { BookOpen, Play, ChevronRight, GraduationCap } from 'lucide-react';
+import { BookOpen, Play, ChevronRight, GraduationCap, LayoutDashboard, ArrowRight } from 'lucide-react';
 
 export default async function LearnDashboard() {
   const session = await auth.api.getSession({ headers: await headers() });
   const userId = session!.user.id;
+
+  // Check if user is a school admin
+  const membership = await db
+    .select()
+    .from(schoolMember)
+    .where(and(eq(schoolMember.userId, userId), eq(schoolMember.role, 'school_admin')))
+    .limit(1);
+  const isSchoolAdmin = membership.length > 0;
 
   // My classes with school name and module count
   const enrolled = await db
@@ -50,6 +58,26 @@ export default async function LearnDashboard() {
 
   return (
     <div className="space-y-8">
+
+      {/* Studio banner — school admins only */}
+      {isSchoolAdmin && (
+        <Link
+          href="/studio"
+          className="flex items-center justify-between gap-4 px-5 py-4 bg-primary text-primary-foreground rounded-2xl hover:bg-primary/90 transition-colors group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
+              <LayoutDashboard size={16} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold leading-tight">Go to Creator Studio</p>
+              <p className="text-xs text-primary-foreground/70 mt-0.5">Manage your courses, learners and profile</p>
+            </div>
+          </div>
+          <ArrowRight size={16} className="shrink-0 opacity-70 group-hover:translate-x-1 transition-transform" />
+        </Link>
+      )}
+
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground tracking-tight">My Learning</h1>

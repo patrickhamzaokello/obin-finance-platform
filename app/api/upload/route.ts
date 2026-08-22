@@ -19,7 +19,7 @@ const s3 = new S3Client({
   responseChecksumValidation:  'WHEN_REQUIRED',
 });
 
-const BUCKET  = process.env.AWS_S3_BUCKET_NAME ?? 'learningplatform';
+const BUCKET  = process.env.AWS_S3_BUCKET_NAME ?? 'pkasemerplatform';
 const CF_BASE = (process.env.AWS_CLOUDFRONT_DOMAIN || '').replace(/\/$/, '');
 
 const ALLOWED_TYPES: Record<string, string[]> = {
