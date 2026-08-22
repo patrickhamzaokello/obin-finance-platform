@@ -5,28 +5,28 @@ import { usePathname } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
 import { LayoutDashboard, BookOpen, Users, LogOut, MessageCircle, UserCircle } from 'lucide-react';
 
-interface AdminNavProps {
+interface StudioNavProps {
   schoolName: string;
   userName: string;
   userEmail: string;
   role: string;
 }
 
-export function AdminNav({ schoolName, userName, userEmail, role }: AdminNavProps) {
+export function StudioNav({ schoolName, userName, userEmail, role }: StudioNavProps) {
   const pathname = usePathname();
 
   const links = [
-    { href: '/creator/admin',          label: 'Studio',    icon: LayoutDashboard },
-    { href: '/creator/admin/courses',  label: 'Courses',   icon: BookOpen },
-    { href: '/creator/admin/users',    label: 'Learners',  icon: Users },
-    { href: '/creator/admin/messages', label: 'Feedback',  icon: MessageCircle },
-    { href: '/creator/admin/profile',  label: 'Profile',   icon: UserCircle },
+    { href: '/studio',          label: 'Studio',    icon: LayoutDashboard },
+    { href: '/studio/courses',  label: 'Courses',   icon: BookOpen },
+    { href: '/studio/learners', label: 'Learners',  icon: Users },
+    { href: '/studio/messages', label: 'Feedback',  icon: MessageCircle },
+    { href: '/studio/profile',  label: 'Profile',   icon: UserCircle },
   ];
 
   const isActive = (href: string) =>
-    href === '/creator/admin'
-      ? pathname === '/creator/admin' || pathname.endsWith('/creator/admin')
-      : pathname.includes(href);
+    href === '/studio'
+      ? pathname === '/studio'
+      : pathname.startsWith(href);
 
   const initials = userName
     ? userName.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
@@ -42,10 +42,9 @@ export function AdminNav({ schoolName, userName, userEmail, role }: AdminNavProp
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14">
 
-          {/* Creator name */}
           <div className="flex items-center gap-2.5 shrink-0">
             <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-[10px] font-bold text-primary-foreground">
-              {schoolName?.[0]?.toUpperCase() ?? 'C'}
+              {schoolName?.[0]?.toUpperCase() ?? 'S'}
             </div>
             <div className="leading-tight">
               <p className="text-xs font-bold text-foreground tracking-tight">{schoolName}</p>
@@ -53,7 +52,6 @@ export function AdminNav({ schoolName, userName, userEmail, role }: AdminNavProp
             </div>
           </div>
 
-          {/* Nav links */}
           <nav className="hidden sm:flex items-center gap-0.5">
             {links.map(({ href, label, icon: Icon }) => (
               <Link
@@ -71,7 +69,6 @@ export function AdminNav({ schoolName, userName, userEmail, role }: AdminNavProp
             ))}
           </nav>
 
-          {/* User info + sign out */}
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex items-center gap-2.5">
               <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary">
@@ -84,7 +81,7 @@ export function AdminNav({ schoolName, userName, userEmail, role }: AdminNavProp
             </div>
             <button
               onClick={handleSignOut}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-black/[0.04] transition-all duration-150"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-black/[0.04] transition-all"
             >
               <LogOut size={13} />
               <span className="hidden sm:inline">Sign out</span>
@@ -98,7 +95,7 @@ export function AdminNav({ schoolName, userName, userEmail, role }: AdminNavProp
             <Link
               key={href}
               href={href}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all duration-150 ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
                 isActive(href)
                   ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:text-foreground hover:bg-black/[0.04]'

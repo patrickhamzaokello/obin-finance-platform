@@ -1,13 +1,9 @@
 'use client';
 
-import { LogOut } from 'lucide-react';
 import { authClient } from '@/lib/auth-client';
+import { LogOut } from 'lucide-react';
 
-interface SignOutButtonProps {
-  className?: string;
-}
-
-export function SignOutButton({ className }: SignOutButtonProps) {
+export function SignOutButton({ className }: { className?: string }) {
   const handleSignOut = async () => {
     await authClient.signOut();
     window.location.href = '/sign-in';
@@ -15,8 +11,7 @@ export function SignOutButton({ className }: SignOutButtonProps) {
 
   return (
     <button onClick={handleSignOut} className={className}>
-      <LogOut size={13} />
-      <span className="hidden sm:inline">Sign out</span>
+      <LogOut size={14} /> Sign out
     </button>
   );
 }

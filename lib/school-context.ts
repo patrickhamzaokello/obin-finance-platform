@@ -8,27 +8,42 @@ import { cache } from 'react';
 export type School = typeof school.$inferSelect;
 export type SchoolMember = typeof schoolMember.$inferSelect;
 
-/** Get the current school from the x-school-slug header (set by middleware). */
+/**
+ * Get the current school for the logged-in creator.
+ * Looks up the school via the session user's schoolMember record.
+ * Returns null if the user is not logged in or has no school.
+ */
 export const getCurrentSchool = cache(async (): Promise<School | null> => {
   const h = await headers();
-  const slug = h.get('x-school-slug');
-  if (!slug) return null;
-  const rows = await db.select().from(school).where(eq(school.slug, slug)).limit(1);
-  return rows[0] ?? null;
+  const session = await auth.api.getSession({ headers: h });
+  if (!session?.user) return null;
+
+  // Two-step lookup to avoid table-reference shorthand ambiguity in Drizzle select
+  const [member] = await db
+    .select({ schoolId: schoolMember.schoolId })
+    .from(schoolMember)
+    .where(eq(schoolMember.userId, session.user.id))
+    .limit(1);
+
+  if (!member?.schoolId) return null;
+
+  const [schoolRow] = await db
+    .select()
+    .from(school)
+    .where(eq(school.id, member.schoolId))
+    .limit(1);
+
+  return schoolRow ?? null;
 });
 
-/** Get the current school or throw if not found. Use inside school routes. */
 export async function requireSchool(): Promise<School> {
   const s = await getCurrentSchool();
   if (!s) throw new Error('No school context');
   return s;
 }
 
-/** Get the current user's school membership for the active school. */
 export async function getCurrentMembership(): Promise<SchoolMember | null> {
-  const [h, s] = await Promise.all([headers(), getCurrentSchool()]);
-  if (!s) return null;
-
+  const h = await headers();
   const session = await auth.api.getSession({ headers: h });
   if (!session?.user) return null;
 
@@ -38,13 +53,9 @@ export async function getCurrentMembership(): Promise<SchoolMember | null> {
     .where(eq(schoolMember.userId, session.user.id))
     .limit(1);
 
-  // Only return the membership if it belongs to the current school
-  const m = rows[0];
-  if (!m || m.schoolId !== s.id) return null;
-  return m;
+  return rows[0] ?? null;
 }
 
-/** True if the current session user is the platform owner. */
 export async function isPlatformOwner(): Promise<boolean> {
   const h = await headers();
   const session = await auth.api.getSession({ headers: h });
@@ -54,12 +65,10 @@ export async function isPlatformOwner(): Promise<boolean> {
   return rows[0]?.platformRole === 'owner';
 }
 
-/** Require platform owner or throw. */
 export async function requirePlatformOwner(): Promise<void> {
   if (!(await isPlatformOwner())) throw new Error('Unauthorized: platform owner only');
 }
 
-/** Require school_admin role for the current school or throw. */
 export async function requireSchoolAdmin(): Promise<SchoolMember> {
   const m = await getCurrentMembership();
   if (!m || m.role !== 'school_admin') throw new Error('Unauthorized: school admin only');

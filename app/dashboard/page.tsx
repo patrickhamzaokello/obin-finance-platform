@@ -1,13 +1,24 @@
 import { redirect } from 'next/navigation';
-import { isPlatformOwner } from '@/lib/school-context';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
+import { isPlatformOwner, getCurrentMembership } from '@/lib/school-context';
 
-// On the apex domain /dashboard has no school context.
-// Platform owners → /platform/admin. Everyone else → /sign-in.
-export default async function DashboardPage() {
+/**
+ * Role-based router:
+ *   Platform owner  → /admin
+ *   Creator         → /studio
+ *   Learner / guest → /learn/dashboard
+ */
+export default async function DashboardRouter() {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) redirect('/platform');
-  if (await isPlatformOwner()) redirect('/platform/admin');
-  redirect('/platform');
+  if (!session?.user) redirect('/sign-in');
+
+  const [isOwner, membership] = await Promise.all([
+    isPlatformOwner(),
+    getCurrentMembership(),
+  ]);
+
+  if (isOwner) redirect('/admin');
+  if (membership?.role === 'school_admin') redirect('/studio');
+  redirect('/learn/dashboard');
 }

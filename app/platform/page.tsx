@@ -100,7 +100,8 @@ export default async function PlatformLandingPage() {
 
           {/* Right */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Link href="/sign-in" style={{ padding: '9px 16px', fontSize: 14, fontWeight: 600, color: C.muted, textDecoration: 'none' }}>Creator login</Link>
+            <Link href="/courses" style={{ padding: '9px 16px', fontSize: 14, fontWeight: 600, color: C.muted, textDecoration: 'none' }}>Browse courses</Link>
+            <Link href="/sign-in" style={{ padding: '9px 16px', fontSize: 14, fontWeight: 600, color: C.muted, textDecoration: 'none' }}>Sign in</Link>
             <Link href="/platform/apply" style={{ padding: '9px 20px', background: C.green, color: '#fff', borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: 'none', boxShadow: `0 6px 20px rgba(14,159,110,.28)` }}>
               Apply to create →
             </Link>
@@ -336,14 +337,12 @@ export default async function PlatformLandingPage() {
             </div>
             <span style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 15, color: C.ink }}>Pkasemer</span>
           </div>
-          <div style={{ display: 'flex', gap: 24 }}>
-            {[['#features','Features'],['#how-it-works','How it works'],['#testimonials','Stories'],'/sign-in'].map((item) => {
-              if (Array.isArray(item)) {
-                const [href, label] = item;
-                return <a key={href} href={href} style={{ fontSize: 13, fontWeight: 600, color: C.muted2, textDecoration: 'none' }}>{label}</a>;
-              }
-              return <Link key={item} href={item} style={{ fontSize: 13, fontWeight: 600, color: C.muted2, textDecoration: 'none' }}>Creator login</Link>;
-            })}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24 }}>
+            {[['#features','Features'],['#how-it-works','How it works'],['#testimonials','Stories']].map(([href, label]) => (
+              <a key={href} href={href} style={{ fontSize: 13, fontWeight: 600, color: C.muted2, textDecoration: 'none' }}>{label}</a>
+            ))}
+            <Link href="/courses" style={{ fontSize: 13, fontWeight: 600, color: C.muted2, textDecoration: 'none' }}>Browse Courses</Link>
+            <Link href="/sign-in" style={{ fontSize: 13, fontWeight: 600, color: C.muted2, textDecoration: 'none' }}>Sign in</Link>
           </div>
           <p style={{ fontSize: 12, color: C.muted2, margin: 0 }}>© {new Date().getFullYear()} Pkasemer. All rights reserved.</p>
         </div>

@@ -88,6 +88,12 @@ export const course = pgTable('course', {
   price:           integer('price').default(0),           // UGX, 0 = free
   discountPercent: integer('discountPercent').default(0), // 0–100
   discountActive:  boolean('discountActive').notNull().default(false),
+  // Rich course content fields (Phase 1 — sales page upgrades)
+  level:           text('level'),                        // 'beginner' | 'intermediate' | 'advanced'
+  language:        text('language').default('English'),
+  whatYoullLearn:  text('whatYoullLearn'),               // JSON: string[]
+  requirements:    text('requirements'),                 // JSON: string[]
+  targetAudience:  text('targetAudience'),
   createdAt:       timestamp('createdAt').notNull().defaultNow(),
   updatedAt:       timestamp('updatedAt').notNull().defaultNow(),
 });
@@ -212,6 +218,22 @@ export const creatorApplication = pgTable('creator_application', {
   schoolId:    text('schoolId'),                // set on approval
   createdAt:   timestamp('createdAt').notNull().defaultNow(),
   reviewedAt:  timestamp('reviewedAt'),
+});
+
+// ioTec Pay payment records — one row per collection attempt
+export const payment = pgTable('payment', {
+  id:                 text('id').primaryKey(),
+  userId:             text('userId').notNull(),
+  courseId:           text('courseId').notNull(),
+  schoolId:           text('schoolId'),
+  phone:              text('phone').notNull(),             // payer MSISDN
+  amount:             integer('amount').notNull(),         // UGX charged
+  status:             text('status').notNull().default('pending'), // pending | success | failed
+  iotecTransactionId: text('iotecTransactionId'),          // ioTec UUID (set after initiation)
+  externalId:         text('externalId').notNull().unique(), // our reference (payment-{timestamp}-{rand})
+  statusMessage:      text('statusMessage'),               // ioTec status message for display
+  createdAt:          timestamp('createdAt').notNull().defaultNow(),
+  updatedAt:          timestamp('updatedAt').notNull().defaultNow(),
 });
 
 export const userProgress = pgTable(

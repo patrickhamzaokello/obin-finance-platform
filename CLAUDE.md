@@ -84,4 +84,11 @@ DATABASE_URL           # PostgreSQL connection string
 BETTER_AUTH_SECRET     # Auth signing secret
 BETTER_AUTH_URL        # App base URL (optional, auto-detected on Vercel)
 BLOB_READ_WRITE_TOKEN  # Vercel Blob token (for file uploads)
+IOTEC_CLIENT_ID        # ioTec Pay OAuth client ID
+IOTEC_CLIENT_SECRET    # ioTec Pay OAuth client secret
+IOTEC_WALLET_ID        # ioTec Pay wallet UUID
+IOTEC_CURRENCY         # Default currency (UGX)
+IOTEC_WEBHOOK_SECRET   # Optional: shared secret for verifying ioTec callbacks
+PLUNK_SECRET_KEY       # Plunk transactional email API key
+PLUNK_FROM_EMAIL       # Verified sender email address
 ```
