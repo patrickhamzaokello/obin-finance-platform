@@ -29,7 +29,7 @@ export default async function SignInPage({ searchParams }: Props) {
             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-sm">
               <Play size={16} fill="white" color="white" />
             </div>
-            <span className="font-extrabold text-xl text-foreground tracking-tight">Pkasemer</span>
+            <span className="font-extrabold text-xl text-foreground tracking-tight">ObinAcademy</span>
           </Link>
           <h1 className="text-xl font-bold text-foreground tracking-tight">Welcome back</h1>
           {courseTitle ? (
@@ -37,7 +37,7 @@ export default async function SignInPage({ searchParams }: Props) {
               Sign in to enroll in <span className="font-semibold text-foreground">{courseTitle}</span>
             </p>
           ) : (
-            <p className="text-sm text-muted-foreground mt-1">Sign in to your Pkasemer account</p>
+            <p className="text-sm text-muted-foreground mt-1">Sign in to your ObinAcademy account</p>
           )}
         </div>
 

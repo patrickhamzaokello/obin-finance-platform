@@ -80,7 +80,7 @@ export default async function BrowseCreators({ searchParams }: Props) {
       <div>
         <h1 className="text-2xl font-bold text-foreground tracking-tight">Browse Creators</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          {filtered.length} creator{filtered.length !== 1 ? 's' : ''} on Pkasemer
+          {filtered.length} creator{filtered.length !== 1 ? 's' : ''} on ObinAcademy
         </p>
       </div>
 

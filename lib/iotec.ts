@@ -107,7 +107,7 @@ export async function initiateCollection(
       externalId,
       payer:      phone,
       amount,
-      payerNote:  payerNote ?? 'Course payment – Pkasemer',
+      payerNote:  payerNote ?? 'Course payment – ObinAcademy',
       payeeNote:  `Ref: ${externalId}`,
     }),
   });
@@ -152,7 +152,7 @@ export async function initiateDisbursement(
       payee:      phone,
       payeeName,
       amount,
-      payeeNote:  `Creator payout – Pkasemer – Ref: ${externalId}`,
+      payeeNote:  `Creator payout – ObinAcademy – Ref: ${externalId}`,
     }),
   });
 }

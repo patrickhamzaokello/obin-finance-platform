@@ -511,7 +511,7 @@ export default async function CreatorProfilePage({
           )}
           <p style={{ fontSize: 11, color: C.muted2, margin: 0 }}>© {new Date().getFullYear()} {s.name}. All rights reserved.</p>
           <a href="/" style={{ fontSize: 11, color: C.muted2, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 5, opacity: 0.6 }}>
-            <span style={{ fontSize: 10 }}>⚡</span> Powered by <strong style={{ fontWeight: 700 }}>Pkasemer</strong>
+            <span style={{ fontSize: 10 }}>⚡</span> Powered by <strong style={{ fontWeight: 700 }}>ObinAcademy</strong>
           </a>
         </div>
       </footer>

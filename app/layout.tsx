@@ -11,10 +11,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Pkasemer — The Creator Course Platform',
-    template: '%s · Pkasemer',
+    default: 'ObinAcademy — The Creator Course Platform',
+    template: '%s · ObinAcademy',
   },
-  description: 'Pkasemer is the creator course platform. Build your branded channel, publish video and PDF courses, and earn revenue — with certificates built in.',
+  description: 'ObinAcademy is the creator course platform. Build your branded channel, publish video and PDF courses, and earn revenue — with certificates built in.',
   icons: {
     icon: '/icon.svg',
     shortcut: '/icon.svg',

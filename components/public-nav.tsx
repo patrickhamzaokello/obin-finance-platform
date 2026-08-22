@@ -34,7 +34,7 @@ export async function PublicNav({ activePath }: { activePath?: 'courses' | 'crea
             <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
               <Play size={13} fill="white" color="white" />
             </div>
-            <span className="font-extrabold text-base text-foreground tracking-tight">Pkasemer</span>
+            <span className="font-extrabold text-base text-foreground tracking-tight">ObinAcademy</span>
           </Link>
 
           {/* Centre links */}

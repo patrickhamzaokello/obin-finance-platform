@@ -110,7 +110,7 @@ export default function CreatorApplyPage() {
           <div style={{ width: 30, height: 30, borderRadius: 8, background: C.green, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Play size={13} fill="#fff" color="#fff" />
           </div>
-          <span style={{ fontFamily: 'Sora, system-ui', fontWeight: 800, fontSize: 15, color: C.ink }}>Pkasemer</span>
+          <span style={{ fontFamily: 'Sora, system-ui', fontWeight: 800, fontSize: 15, color: C.ink }}>ObinAcademy</span>
         </Link>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: C.muted, textDecoration: 'none' }}>
           <ArrowLeft size={14} /> Back

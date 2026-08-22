@@ -1,26 +1,26 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Pkasemer — The Creator Course Platform',
-  description: 'Turn your knowledge into income. Pkasemer gives creators their own branded channel, course builder, and learner community — with payments and certificates built in.',
+  title: 'ObinAcademy — The Creator Course Platform',
+  description: 'Turn your knowledge into income. ObinAcademy gives creators their own branded channel, course builder, and learner community — with payments and certificates built in.',
   openGraph: {
-    title: 'Pkasemer — The Creator Course Platform',
+    title: 'ObinAcademy — The Creator Course Platform',
     description: 'Turn your knowledge into income. Build your branded channel, publish courses, and get paid — with certificates built in.',
-    url: 'https://pkasemer.com/platform',
-    siteName: 'Pkasemer',
+    url: 'https://ObinAcademy.com/platform',
+    siteName: 'ObinAcademy',
     images: [
       {
         url: '/images/og-platform.png',
         width: 1200,
         height: 630,
-        alt: 'Pkasemer — The Creator Course Platform',
+        alt: 'ObinAcademy — The Creator Course Platform',
       },
     ],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Pkasemer — The Creator Course Platform',
+    title: 'ObinAcademy — The Creator Course Platform',
     description: 'Turn your knowledge into income. Build your branded channel, publish courses, and get paid.',
     images: ['/images/og-platform.png'],
   },
@@ -57,7 +57,7 @@ export default async function PlatformLandingPage() {
   const fonts = `${sora.variable} ${manrope.variable}`;
 
   const features = [
-    { icon: Globe,      title: 'Your own creator channel',    desc: 'Get a branded subdomain (you.pkasemer.app) with your logo, bio, and course catalogue — all in one link.' },
+    { icon: Globe,      title: 'Your own creator channel',    desc: 'Get a branded subdomain (you.ObinAcademy.app) with your logo, bio, and course catalogue — all in one link.' },
     { icon: Play,       title: 'Video & PDF courses',         desc: 'Upload videos or embed YouTube. Attach PDFs. Organise everything into modules your learners can follow step by step.' },
     { icon: Award,      title: 'Auto certificates',           desc: 'Learners who complete your course automatically receive a branded certificate — zero admin on your end.' },
     { icon: TrendingUp, title: 'Built-in monetisation',       desc: 'Set prices in your local currency, apply discounts, and get paid — the platform handles the rest.' },
@@ -88,7 +88,7 @@ export default async function PlatformLandingPage() {
             <div style={{ width: 34, height: 34, borderRadius: 10, background: C.green, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Play size={16} fill="#fff" color="#fff" />
             </div>
-            <span style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 17, color: C.ink, letterSpacing: '-0.02em' }}>Pkasemer</span>
+            <span style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 17, color: C.ink, letterSpacing: '-0.02em' }}>ObinAcademy</span>
           </div>
 
           {/* Center links */}
@@ -130,7 +130,7 @@ export default async function PlatformLandingPage() {
 
           {/* Sub */}
           <p style={{ fontSize: 18, lineHeight: 1.65, color: C.muted, margin: '0 0 36px', maxWidth: 500 }}>
-            Pkasemer gives creators their own branded channel, course builder, and learning community — with payments and certificates built in.
+            ObinAcademy gives creators their own branded channel, course builder, and learning community — with payments and certificates built in.
           </p>
 
           {/* CTAs */}
@@ -244,7 +244,7 @@ export default async function PlatformLandingPage() {
               Built for people who have something to teach
             </h2>
             <p style={{ fontSize: 17, lineHeight: 1.65, color: C.muted }}>
-              Whether you&apos;re a coach, educator, influencer, or subject-matter expert — if you have knowledge worth sharing, Pkasemer gives you the infrastructure to turn it into income.
+              Whether you&apos;re a coach, educator, influencer, or subject-matter expert — if you have knowledge worth sharing, ObinAcademy gives you the infrastructure to turn it into income.
             </p>
           </div>
           <div style={{ flex: '1 1 380px', minWidth: 280 }}>
@@ -311,7 +311,7 @@ export default async function PlatformLandingPage() {
                 Ready to launch your creator channel?
               </h2>
               <p style={{ fontSize: 18, lineHeight: 1.65, color: 'rgba(255,255,255,.7)', margin: '0 auto 40px', maxWidth: 520 }}>
-                Join creators already building learning communities and earning from their knowledge on Pkasemer.
+                Join creators already building learning communities and earning from their knowledge on ObinAcademy.
               </p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, justifyContent: 'center' }}>
                 <Link href="/platform/apply"
@@ -335,7 +335,7 @@ export default async function PlatformLandingPage() {
             <div style={{ width: 28, height: 28, borderRadius: 8, background: C.green, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Play size={12} fill="#fff" color="#fff" />
             </div>
-            <span style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 15, color: C.ink }}>Pkasemer</span>
+            <span style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 15, color: C.ink }}>ObinAcademy</span>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24 }}>
             {[['#features','Features'],['#how-it-works','How it works'],['#testimonials','Stories']].map(([href, label]) => (
@@ -344,7 +344,7 @@ export default async function PlatformLandingPage() {
             <Link href="/courses" style={{ fontSize: 13, fontWeight: 600, color: C.muted2, textDecoration: 'none' }}>Browse Courses</Link>
             <Link href="/sign-in" style={{ fontSize: 13, fontWeight: 600, color: C.muted2, textDecoration: 'none' }}>Sign in</Link>
           </div>
-          <p style={{ fontSize: 12, color: C.muted2, margin: 0 }}>© {new Date().getFullYear()} Pkasemer. All rights reserved.</p>
+          <p style={{ fontSize: 12, color: C.muted2, margin: 0 }}>© {new Date().getFullYear()} ObinAcademy. All rights reserved.</p>
         </div>
       </footer>
 

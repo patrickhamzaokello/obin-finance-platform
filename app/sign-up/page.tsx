@@ -28,7 +28,7 @@ export default async function SignUpPage({ searchParams }: Props) {
             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-sm">
               <Play size={16} fill="white" color="white" />
             </div>
-            <span className="font-extrabold text-xl text-foreground tracking-tight">Pkasemer</span>
+            <span className="font-extrabold text-xl text-foreground tracking-tight">ObinAcademy</span>
           </Link>
           <h1 className="text-xl font-bold text-foreground tracking-tight">Create your account</h1>
           {courseTitle ? (
@@ -36,7 +36,7 @@ export default async function SignUpPage({ searchParams }: Props) {
               to enroll in <span className="font-semibold text-foreground">{courseTitle}</span>
             </p>
           ) : (
-            <p className="text-sm text-muted-foreground mt-1">Join thousands of learners on Pkasemer</p>
+            <p className="text-sm text-muted-foreground mt-1">Join thousands of learners on ObinAcademy</p>
           )}
         </div>
 

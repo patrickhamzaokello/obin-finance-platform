@@ -1,7 +1,7 @@
 import { betterAuth } from 'better-auth'
 import { pool } from '@/lib/db'
 
-const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN; // e.g. "pkasemer.com"
+const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN; // e.g. "ObinAcademy.com"
 
 export const auth = betterAuth({
   database: pool,
@@ -40,7 +40,7 @@ export const auth = betterAuth({
   },
   advanced: {
     // Unique prefix prevents platform-admin cookies (set on the apex domain in a
-    // previous config with domain: '.pkasemer.com') from colliding with school
+    // previous config with domain: '.ObinAcademy.com') from colliding with school
     // user cookies on subdomains.
     cookiePrefix: 'ba',
     ...(process.env.NODE_ENV === 'development'

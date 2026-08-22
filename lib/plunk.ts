@@ -35,7 +35,7 @@ async function sendEmail(payload: PlunkPayload): Promise<void> {
       subject: payload.subject,
       body:    payload.body,
       name:    payload.name,
-      from:    payload.from ?? process.env.PLUNK_FROM_EMAIL ?? 'hello@pkasemer.com',
+      from:    payload.from ?? process.env.PLUNK_FROM_EMAIL ?? 'hello@ObinAcademy.com',
     }),
     cache: 'no-store',
   });
@@ -69,7 +69,7 @@ export async function sendEnrollmentConfirmation(opts: {
     <p style="color:#059669;margin:0;font-size:14px;">by ${opts.schoolName}</p>
   </div>
   <a href="${opts.courseUrl}" style="display:inline-block;background:#0E9F6E;color:#fff;text-decoration:none;font-weight:600;padding:12px 28px;border-radius:8px;font-size:15px;">Start Learning →</a>
-  <p style="color:#A8A29E;font-size:13px;margin:32px 0 0;">Pkasemer · The Creator Course Platform</p>
+  <p style="color:#A8A29E;font-size:13px;margin:32px 0 0;">ObinAcademy · The Creator Course Platform</p>
 </div>`,
   });
 }
@@ -83,13 +83,13 @@ export async function sendWelcomeEmail(opts: {
   await sendEmail({
     to:      opts.email,
     name:    opts.name,
-    subject: `Welcome to ${opts.schoolName} on Pkasemer`,
+    subject: `Welcome to ${opts.schoolName} on ObinAcademy`,
     body: `
 <div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;color:#1C1917;">
   <h1 style="font-size:24px;font-weight:700;margin:0 0 8px;">Welcome, ${opts.name}!</h1>
   <p style="color:#78716C;margin:0 0 24px;">Your account on <strong>${opts.schoolName}</strong> is ready. Start exploring courses and learning today.</p>
   <a href="${opts.signInUrl}" style="display:inline-block;background:#0E9F6E;color:#fff;text-decoration:none;font-weight:600;padding:12px 28px;border-radius:8px;font-size:15px;">Go to your dashboard →</a>
-  <p style="color:#A8A29E;font-size:13px;margin:32px 0 0;">Pkasemer · The Creator Course Platform</p>
+  <p style="color:#A8A29E;font-size:13px;margin:32px 0 0;">ObinAcademy · The Creator Course Platform</p>
 </div>`,
   });
 }
@@ -109,7 +109,7 @@ export async function sendCertificateEmail(opts: {
   <h1 style="font-size:24px;font-weight:700;margin:0 0 8px;">Congratulations, ${opts.name}! 🏆</h1>
   <p style="color:#78716C;margin:0 0 24px;">You've completed <strong>${opts.courseTitle}</strong> and earned your certificate.</p>
   <a href="${opts.certUrl}" style="display:inline-block;background:#0E9F6E;color:#fff;text-decoration:none;font-weight:600;padding:12px 28px;border-radius:8px;font-size:15px;">View & download certificate →</a>
-  <p style="color:#A8A29E;font-size:13px;margin:32px 0 0;">Pkasemer · The Creator Course Platform</p>
+  <p style="color:#A8A29E;font-size:13px;margin:32px 0 0;">ObinAcademy · The Creator Course Platform</p>
 </div>`,
   });
 }
@@ -137,7 +137,7 @@ export async function sendPaymentReceiptEmail(opts: {
     <tr><td style="padding:10px 0;color:#78716C;font-size:14px;">Paid from</td><td style="padding:10px 0;font-weight:600;text-align:right;">${opts.phone}</td></tr>
   </table>
   <a href="${opts.courseUrl}" style="display:inline-block;background:#0E9F6E;color:#fff;text-decoration:none;font-weight:600;padding:12px 28px;border-radius:8px;font-size:15px;">Start Learning →</a>
-  <p style="color:#A8A29E;font-size:13px;margin:32px 0 0;">Pkasemer · The Creator Course Platform</p>
+  <p style="color:#A8A29E;font-size:13px;margin:32px 0 0;">ObinAcademy · The Creator Course Platform</p>
 </div>`,
   });
 }

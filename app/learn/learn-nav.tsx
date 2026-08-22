@@ -27,7 +27,7 @@ export default function LearnNav({
         <div className="flex items-center justify-between h-14">
 
           <Link href="/learn/dashboard" className="font-extrabold text-base text-primary tracking-tight shrink-0">
-            Pkasemer
+            ObinAcademy
           </Link>
 
           <nav className="hidden sm:flex items-center gap-0.5 flex-1 justify-center">

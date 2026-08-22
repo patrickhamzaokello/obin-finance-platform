@@ -1,7 +1,7 @@
-# Pkasemer Admin Panel Guide
+# ObinAcademy Admin Panel Guide
 
 ## Overview
-The admin panel allows authorized administrators to manage courses, modules, videos, PDFs, and users in the Pkasemer Learning Platform.
+The admin panel allows authorized administrators to manage courses, modules, videos, PDFs, and users in the ObinAcademy Learning Platform.
 
 ## Accessing the Admin Panel
 

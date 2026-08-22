@@ -184,7 +184,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
             <div style={{ width: 28, height: 28, background: T.green, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 6 }}>
               <Play size={12} fill="white" color="white" />
             </div>
-            <span style={{ fontFamily: FONT_BODY, fontWeight: 700, fontSize: 16, color: T.ink }}>Pkasemer</span>
+            <span style={{ fontFamily: FONT_BODY, fontWeight: 700, fontSize: 16, color: T.ink }}>ObinAcademy</span>
           </Link>
           <div style={{ width: 1, height: 18, background: T.border }} />
           <Link href="/courses" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 500, color: T.muted, textDecoration: 'none' }}>

@@ -7,7 +7,7 @@ import { PublicNav } from '@/components/public-nav';
 
 export const metadata: Metadata = {
   title: 'Browse Courses',
-  description: 'Explore courses from creators across the Pkasemer platform.',
+  description: 'Explore courses from creators across the ObinAcademy platform.',
 };
 
 const CATEGORIES = ['All', 'Finance', 'Tech', 'Fitness', 'Business', 'Creative', 'Education'];
