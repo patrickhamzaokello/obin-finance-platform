@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { approveApplication, rejectApplication } from '@/app/actions/applications';
-import { Check, X, ExternalLink, Clock, CheckCircle, XCircle, User, Loader2, Copy } from 'lucide-react';
+import { approveApplication, rejectApplication, sendCreatorCredentials } from '@/app/actions/applications';
+import { Check, X, ExternalLink, CheckCircle, XCircle, User, Loader2, Copy, Mail } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 type App = {
@@ -25,6 +25,8 @@ export default function ApplicationsClient({ applications }: { applications: App
   const [isPending, startTransition] = useTransition();
   const [actionId, setActionId] = useState<string | null>(null);
   const [approvedSlug, setApprovedSlug] = useState<{ id: string; slug: string } | null>(null);
+  const [sendingCreds, setSendingCreds] = useState<string | null>(null);
+  const [credsSent, setCredsSent] = useState<Set<string>>(new Set());
   const router = useRouter();
 
   const visible = filter === 'all' ? applications : applications.filter(a => a.status === filter);
@@ -61,6 +63,20 @@ export default function ApplicationsClient({ applications }: { applications: App
         router.refresh();
       } else {
         alert(res.error ?? 'Failed to reject');
+      }
+    });
+  }
+
+  function handleSendCredentials(id: string, email: string) {
+    if (!confirm(`Reset password and send login credentials to ${email}?`)) return;
+    setSendingCreds(id);
+    startTransition(async () => {
+      const res = await sendCreatorCredentials(id);
+      setSendingCreds(null);
+      if (res.success) {
+        setCredsSent(prev => new Set([...prev, id]));
+      } else {
+        alert(res.error ?? 'Failed to send credentials');
       }
     });
   }
@@ -229,9 +245,29 @@ export default function ApplicationsClient({ applications }: { applications: App
                 )}
 
                 {app.status === 'approved' && app.schoolId && (
-                  <p style={{ fontSize: 13, color: '#06007A', fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <CheckCircle size={14} /> Channel created — ID: <span style={{ fontFamily: 'monospace' }}>{app.schoolId}</span>
-                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+                    <p style={{ fontSize: 13, color: '#06007A', fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <CheckCircle size={14} /> Channel created — ID: <span style={{ fontFamily: 'monospace' }}>{app.schoolId}</span>
+                    </p>
+                    <button
+                      onClick={() => handleSendCredentials(app.id, app.email)}
+                      disabled={sendingCreds === app.id}
+                      style={{
+                        padding: '8px 14px', fontSize: 12, fontWeight: 700, border: 'none', cursor: sendingCreds === app.id ? 'not-allowed' : 'pointer',
+                        borderRadius: 8, display: 'flex', alignItems: 'center', gap: 6,
+                        background: credsSent.has(app.id) ? '#D1FAE5' : '#EEF2FF',
+                        color: credsSent.has(app.id) ? '#065F46' : '#3730A3',
+                        opacity: sendingCreds === app.id ? 0.7 : 1,
+                      }}
+                    >
+                      {sendingCreds === app.id
+                        ? <><Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> Sending…</>
+                        : credsSent.has(app.id)
+                          ? <><CheckCircle size={12} /> Credentials sent</>
+                          : <><Mail size={12} /> Send credentials</>
+                      }
+                    </button>
+                  </div>
                 )}
                 {app.status === 'rejected' && (
                   <p style={{ fontSize: 13, color: '#991B1B', margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>

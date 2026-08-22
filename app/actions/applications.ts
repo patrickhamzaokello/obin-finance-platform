@@ -1,16 +1,24 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { creatorApplication, school } from '@/lib/db/schema';
+import { creatorApplication, school, schoolMember, user } from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { requirePlatformOwner } from '@/lib/school-context';
 import { getCurrentOrganizationId } from '@/lib/organization';
 import { revalidatePath } from 'next/cache';
+import { auth } from '@/lib/auth';
 import {
   sendApplicationReceivedEmail,
   sendApplicationApprovedEmail,
   sendApplicationRejectedEmail,
 } from '@/lib/plunk';
+
+/** Generate a readable temporary password: e.g. "Hx7k-Pm2n-Wd9q" */
+function generateTempPassword(): string {
+  const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  const seg = () => Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  return `${seg()}-${seg()}-${seg()}`;
+}
 
 function slugify(text: string) {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -118,19 +126,98 @@ export async function approveApplication(applicationId: string) {
       .set({ status: 'approved', schoolId, reviewedAt: new Date() })
       .where(eq(creatorApplication.id, applicationId));
 
+    // ── Create or find the user account ──────────────────────────────────
+    const tempPassword = generateTempPassword();
+    const existingUsers = await db.select({ id: user.id })
+      .from(user).where(eq(user.email, app.email)).limit(1);
+
+    let userId: string;
+    let isNewAccount = true;
+
+    if (existingUsers.length === 0) {
+      // No account yet — create one with the temp password
+      const signUpResult = await auth.api.signUpEmail({
+        body: { email: app.email, password: tempPassword, name: app.name },
+      });
+      userId = signUpResult.user.id;
+    } else {
+      userId = existingUsers[0].id;
+      isNewAccount = false;
+    }
+
+    // ── Link user to their school as school_admin (skip if already linked) ──
+    const existingMember = await db.select({ id: schoolMember.id })
+      .from(schoolMember).where(eq(schoolMember.userId, userId)).limit(1);
+
+    if (existingMember.length === 0) {
+      await db.insert(schoolMember).values({
+        id:       `member-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        userId,
+        schoolId,
+        role:     'school_admin',
+      });
+    }
+
     revalidatePath('/platform/admin');
     revalidatePath('/platform/admin/applications');
 
-    // Email the creator their studio link (non-blocking)
+    // ── Email the creator their credentials ──────────────────────────────
     const base = process.env.BETTER_AUTH_URL ?? 'https://obinacademy.com';
     sendApplicationApprovedEmail({
       email:       app.email,
       name:        app.name,
       channelName: app.channelName,
       studioUrl:   `${base}/studio`,
+      ...(isNewAccount ? { tempPassword } : {}),
     }).catch(console.error);
 
     return { success: true, data: { slug, schoolId } };
+  } catch (error) {
+    return { success: false, error: String(error) };
+  }
+}
+
+export async function sendCreatorCredentials(applicationId: string) {
+  try {
+    await requirePlatformOwner();
+
+    const apps = await db.select().from(creatorApplication).where(eq(creatorApplication.id, applicationId)).limit(1);
+    if (!apps.length) return { success: false, error: 'Application not found' };
+    const app = apps[0];
+
+    if (app.status !== 'approved') {
+      return { success: false, error: 'Can only send credentials for approved applications' };
+    }
+
+    // Find the user account
+    const existingUsers = await db.select({ id: user.id })
+      .from(user).where(eq(user.email, app.email)).limit(1);
+
+    const tempPassword = generateTempPassword();
+
+    if (existingUsers.length === 0) {
+      // No account yet — create one
+      await auth.api.signUpEmail({
+        body: { email: app.email, password: tempPassword, name: app.name },
+      });
+    } else {
+      // Reset password via admin API
+      await auth.api.admin.setUserPassword({
+        body: { userId: existingUsers[0].id, newPassword: tempPassword },
+      });
+    }
+
+    // Send credentials email
+    const base = process.env.BETTER_AUTH_URL ?? 'https://obinacademy.com';
+    await sendApplicationApprovedEmail({
+      email:       app.email,
+      name:        app.name,
+      channelName: app.channelName,
+      studioUrl:   `${base}/studio`,
+      tempPassword,
+    });
+
+    return { success: true };
   } catch (error) {
     return { success: false, error: String(error) };
   }

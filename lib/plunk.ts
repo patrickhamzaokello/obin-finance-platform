@@ -147,11 +147,32 @@ export async function sendApplicationReceivedEmail(opts: {
 }
 
 export async function sendApplicationApprovedEmail(opts: {
-  email:        string;
-  name:         string;
-  channelName:  string;
-  studioUrl:    string;
+  email:         string;
+  name:          string;
+  channelName:   string;
+  studioUrl:     string;
+  tempPassword?: string;  // present only for newly created accounts
 }) {
+  const credentialsBlock = opts.tempPassword ? `
+  <div style="background:#FFF8E1;border:2px solid #F59E0B;border-radius:10px;padding:20px 24px;margin-bottom:24px;">
+    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#92400E;margin:0 0 12px;">🔑 Your login credentials</p>
+    <p style="font-size:13px;color:#555;margin:0 0 10px;">Use these to sign in for the first time. Please change your password after logging in.</p>
+    <table style="width:100%;border-collapse:collapse;">
+      <tr>
+        <td style="padding:8px 12px;background:#fff;border:1px solid #F59E0B;border-radius:6px 6px 0 0;font-size:12px;font-weight:700;color:#92400E;text-transform:uppercase;letter-spacing:0.06em;">Email</td>
+        <td style="padding:8px 12px;background:#fff;border:1px solid #F59E0B;border-top:none;font-size:14px;font-weight:600;color:#111;font-family:monospace;">${opts.email}</td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;background:#fff;border:1px solid #F59E0B;border-top:none;border-radius:0 0 6px 6px;font-size:12px;font-weight:700;color:#92400E;text-transform:uppercase;letter-spacing:0.06em;">Temp&nbsp;password</td>
+        <td style="padding:8px 12px;background:#fff;border:1px solid #F59E0B;border-top:none;font-size:15px;font-weight:700;color:#0B00FF;font-family:monospace;letter-spacing:0.08em;">${opts.tempPassword}</td>
+      </tr>
+    </table>
+    <p style="font-size:12px;color:#92400E;margin:10px 0 0;">⚠️ This password is temporary. Change it in your profile settings after you first log in.</p>
+  </div>` : `
+  <div style="background:#F4F4FB;border:1px solid #D0D0E8;border-radius:10px;padding:16px 20px;margin-bottom:24px;">
+    <p style="font-size:14px;color:#444;margin:0;">You already have an ObinAcademy account with <strong>${opts.email}</strong>. Sign in with your existing password.</p>
+  </div>`;
+
   await sendEmail({
     to:      opts.email,
     name:    opts.name,
@@ -162,7 +183,8 @@ export async function sendApplicationApprovedEmail(opts: {
     <h1 style="font-size:26px;font-weight:800;color:#fff;margin:0 0 8px;letter-spacing:-0.02em;">You're approved! 🎉</h1>
     <p style="color:rgba(255,255,255,0.8);margin:0;font-size:15px;">Your creator community <strong style="color:#CDFB5E;">${opts.channelName}</strong> is live on ObinAcademy.</p>
   </div>
-  <p style="color:#444;margin:0 0 20px;line-height:1.6;">Hi ${opts.name}, welcome to the creator family. Your community is set up and ready — head to your studio to upload your first class.</p>
+  <p style="color:#444;margin:0 0 20px;line-height:1.6;">Hi ${opts.name}, welcome to the creator family. Your community is set up and ready.</p>
+  ${credentialsBlock}
   <a href="${opts.studioUrl}" style="display:inline-block;background:#0B00FF;color:#fff;text-decoration:none;font-weight:700;padding:14px 32px;border-radius:10px;font-size:15px;margin-bottom:24px;">Open your creator studio →</a>
   <div style="background:#F4F4FB;border:1px solid #D0D0E8;border-radius:10px;padding:20px 24px;margin-bottom:24px;">
     <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#5c5c8a;margin:0 0 10px;">Getting started checklist</p>

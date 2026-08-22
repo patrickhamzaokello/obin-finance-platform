@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Eye, EyeOff, BookOpen, Users, Award } from 'lucide-react';
 import { authClient } from '@/lib/auth-client';
+import { getPostSignInRedirect } from '@/app/actions/auth';
 import type { Metadata } from 'next';
 
 // Note: metadata export won't work in a 'use client' component.
@@ -36,7 +37,9 @@ export default function SignInPage() {
       setError(authErr.message ?? 'Invalid email or password');
       return;
     }
-    window.location.href = '/learn/dashboard';
+    // Redirect school admins to studio, everyone else to dashboard
+    const { redirect } = await getPostSignInRedirect();
+    window.location.href = redirect;
   }
 
   const inp = (hasErr = false): React.CSSProperties => ({
