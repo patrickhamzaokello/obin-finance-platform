@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+﻿import type { Metadata } from 'next';
 export const metadata: Metadata = { title: 'My Learning' };
 
 import { auth } from '@/lib/auth';
@@ -13,7 +13,7 @@ export default async function LearnDashboard() {
   const session = await auth.api.getSession({ headers: await headers() });
   const userId = session!.user.id;
 
-  // Enrolled courses with school name and module count
+  // My classes with school name and module count
   const enrolled = await db
     .select({
       enrollmentId:    courseEnrollment.id,
@@ -56,7 +56,7 @@ export default async function LearnDashboard() {
         <p className="text-sm text-muted-foreground mt-1">
           {enrolled.length === 0
             ? 'You haven\'t enrolled in any courses yet.'
-            : `${enrolled.length} course${enrolled.length !== 1 ? 's' : ''} enrolled`}
+            : `${enrolled.length} class${enrolled.length !== 1 ? 'es' : ''} enrolled`}
         </p>
       </div>
 
@@ -67,13 +67,13 @@ export default async function LearnDashboard() {
           </div>
           <h2 className="text-lg font-semibold text-foreground mb-2">Start learning today</h2>
           <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">
-            Browse courses from Uganda's top creators and enroll to begin your learning journey.
+            Browse classes from Uganda's top creators and enroll to begin your learning journey.
           </p>
           <Link
             href="/courses"
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors"
           >
-            Browse Courses <ChevronRight size={14} />
+            Browse Classes <ChevronRight size={14} />
           </Link>
         </div>
       ) : (
@@ -153,7 +153,7 @@ export default async function LearnDashboard() {
             href="/courses"
             className="inline-flex items-center gap-1.5 px-5 py-2.5 border border-black/[0.08] bg-white text-sm font-semibold text-foreground rounded-xl hover:bg-black/[0.02] transition-colors"
           >
-            <BookOpen size={14} /> Browse more courses
+            <BookOpen size={14} /> Browse more classes
           </Link>
         </div>
       )}

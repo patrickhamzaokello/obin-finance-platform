@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth';
+﻿import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { isPlatformOwner, getCurrentMembership } from '@/lib/school-context';
 import Link from 'next/link';
@@ -47,7 +47,7 @@ export async function PublicNav({ activePath }: { activePath?: 'courses' | 'crea
                   : 'text-muted-foreground hover:text-foreground hover:bg-black/[0.04]'
               }`}
             >
-              <BookOpen size={13} /> Courses
+              <BookOpen size={13} /> Classes
             </Link>
             <Link
               href="/learn/creators"
@@ -57,7 +57,7 @@ export async function PublicNav({ activePath }: { activePath?: 'courses' | 'crea
                   : 'text-muted-foreground hover:text-foreground hover:bg-black/[0.04]'
               }`}
             >
-              <Users size={13} /> Creators
+              <Users size={13} /> Communities
             </Link>
           </nav>
 
@@ -92,10 +92,10 @@ export async function PublicNav({ activePath }: { activePath?: 'courses' | 'crea
         {/* Mobile nav strip */}
         <div className="sm:hidden flex gap-1 pb-2">
           <Link href="/courses" className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${activePath === 'courses' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}>
-            <BookOpen size={12} /> Courses
+            <BookOpen size={12} /> Classes
           </Link>
           <Link href="/learn/creators" className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${activePath === 'creators' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}>
-            <Users size={12} /> Creators
+            <Users size={12} /> Communities
           </Link>
         </div>
       </div>

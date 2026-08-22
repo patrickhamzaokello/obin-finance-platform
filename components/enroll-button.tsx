@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { enrollCourse } from '@/app/actions/courses';
@@ -27,7 +27,7 @@ export function EnrollButton({ courseId, isEnrolled }: EnrollButtonProps) {
           router.push(`/learning/${courseId}`);
         }, 500);
       } else {
-        setError(result.error || 'Failed to enroll in course');
+        setError(result.error || 'Failed to enroll in class');
       }
     } catch (err) {
       setError('An error occurred. Please try again.');

@@ -16,8 +16,8 @@ export default function LearnNav({
 
   const links = [
     { href: '/learn/dashboard',    label: 'My Learning',  icon: LayoutDashboard },
-    { href: '/courses',            label: 'Courses',      icon: BookOpen },
-    { href: '/learn/creators',     label: 'Creators',     icon: Users },
+    { href: '/courses',            label: 'Classes',      icon: BookOpen },
+    { href: '/learn/creators',     label: 'Communities',  icon: Users },
     { href: '/learn/achievements', label: 'Achievements', icon: Trophy },
   ];
 

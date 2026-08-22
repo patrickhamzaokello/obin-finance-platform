@@ -1,11 +1,12 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { courseAccessCode, course, schoolMember, user } from '@/lib/db/schema';
-import { eq, and, isNull, desc } from 'drizzle-orm';
+import { courseAccessCode, course, courseEnrollment, payment, school, schoolMember, user } from '@/lib/db/schema';
+import { eq, and, isNull, desc, or } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { getCurrentSchool, isPlatformOwner } from '@/lib/school-context';
+import { sendEnrollmentConfirmation } from '@/lib/plunk';
 import { revalidatePath } from 'next/cache';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -220,5 +221,115 @@ export async function activateAccessCode(rawCode: string, courseId: string) {
   } catch (error) {
     console.error('activateAccessCode:', error);
     return { success: false, error: 'Something went wrong. Please try again.' };
+  }
+}
+
+/**
+ * Resend (or generate fresh) an access code for a course the user is eligible for.
+ *
+ * Eligibility:
+ *   - Free course (priceAtEnrollment === 0 on the enrollment row), OR
+ *   - Paid course with a successful payment record for this user+course
+ *
+ * Strategy:
+ *   1. Find any existing unused code for this user+course (label = auto-generated).
+ *      If one exists, re-send it — no new code created.
+ *   2. Otherwise generate a new code and email it.
+ */
+export async function resendAccessCode(courseId: string) {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user) return { success: false, error: 'You must be signed in.' };
+    const { user: u } = session;
+
+    // 1. Must be enrolled
+    const [enrollment] = await db
+      .select({ priceAtEnrollment: courseEnrollment.priceAtEnrollment })
+      .from(courseEnrollment)
+      .where(and(eq(courseEnrollment.userId, u.id), eq(courseEnrollment.courseId, courseId)))
+      .limit(1);
+
+    if (!enrollment) {
+      return { success: false, error: 'You are not enrolled in this course.' };
+    }
+
+    // 2. Eligibility: free OR successful payment
+    const isFree = enrollment.priceAtEnrollment === 0;
+    if (!isFree) {
+      const [successfulPayment] = await db
+        .select({ id: payment.id })
+        .from(payment)
+        .where(and(
+          eq(payment.userId, u.id),
+          eq(payment.courseId, courseId),
+          eq(payment.status, 'success'),
+        ))
+        .limit(1);
+
+      if (!successfulPayment) {
+        return {
+          success: false,
+          error: 'No successful payment found for this course. Complete your payment first.',
+        };
+      }
+    }
+
+    // 3. Look for an existing unused code created for this user (createdBy = userId, usedBy = null)
+    const [existingCode] = await db
+      .select({ code: courseAccessCode.code })
+      .from(courseAccessCode)
+      .where(and(
+        eq(courseAccessCode.courseId, courseId),
+        eq(courseAccessCode.createdBy, u.id),
+        isNull(courseAccessCode.usedBy),
+      ))
+      .orderBy(desc(courseAccessCode.createdAt))
+      .limit(1);
+
+    const codeValue = existingCode?.code ?? (() => {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      const r = (n: number) => Array.from({ length: n }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+      return `${r(4)}-${r(4)}-${r(4)}`;
+    })();
+
+    // 4. Persist a new code if we didn't find an existing one
+    if (!existingCode) {
+      await db.insert(courseAccessCode).values({
+        id:        `code-resend-${Date.now()}`,
+        courseId,
+        code:      codeValue,
+        createdBy: u.id,
+        label:     isFree ? 'Resent — free enrollment' : 'Resent — paid enrollment',
+      });
+    }
+
+    // 5. Fetch course + school name for the email
+    const [courseRow] = await db
+      .select({ title: course.title, schoolId: course.schoolId })
+      .from(course)
+      .where(eq(course.id, courseId))
+      .limit(1);
+
+    let schoolName = 'ObinAcademy';
+    if (courseRow?.schoolId) {
+      const [schoolRow] = await db.select({ name: school.name }).from(school).where(eq(school.id, courseRow.schoolId)).limit(1);
+      if (schoolRow) schoolName = schoolRow.name;
+    }
+
+    const learningUrl = `${process.env.BETTER_AUTH_URL ?? 'https://obinacademy.com'}/learn/${courseId}`;
+
+    await sendEnrollmentConfirmation({
+      email:       u.email,
+      name:        u.name ?? u.email,
+      courseTitle: courseRow?.title ?? 'your course',
+      schoolName,
+      learningUrl,
+      accessCode:  codeValue,
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('resendAccessCode:', error);
+    return { success: false, error: 'Failed to resend your code. Please try again.' };
   }
 }

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { uploadToBlob } from '@/lib/upload-client';
@@ -25,7 +25,7 @@ export function FileOrUrlInput({ value, onChange, fileType, schoolSlug, label, p
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!schoolSlug) { setUploadError('No school selected — choose a school for this course first'); return; }
+    if (!schoolSlug) { setUploadError('No community selected — choose a school for this course first'); return; }
     setIsUploading(true);
     setUploadError(null);
     setProgress(0);
@@ -81,7 +81,7 @@ export function FileOrUrlInput({ value, onChange, fileType, schoolSlug, label, p
       )}
 
       {!schoolSlug && (
-        <p className='text-xs text-muted-foreground'>Select a school above to enable file uploads.</p>
+        <p className='text-xs text-muted-foreground'>Select a community above to enable file uploads.</p>
       )}
     </div>
   );

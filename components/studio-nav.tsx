@@ -17,7 +17,7 @@ export function StudioNav({ schoolName, userName, userEmail, role }: StudioNavPr
 
   const links = [
     { href: '/studio',          label: 'Studio',    icon: LayoutDashboard },
-    { href: '/studio/courses',  label: 'Courses',   icon: BookOpen },
+    { href: '/studio/courses',  label: 'Classes',   icon: BookOpen },
     { href: '/studio/learners', label: 'Learners',  icon: Users },
     { href: '/studio/messages', label: 'Feedback',  icon: MessageCircle },
     { href: '/studio/profile',  label: 'Profile',   icon: UserCircle },

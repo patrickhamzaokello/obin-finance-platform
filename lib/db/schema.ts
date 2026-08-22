@@ -67,7 +67,7 @@ export const school = pgTable('school', {
   bio:               text('bio'),                         // creator short bio
   category:          text('category'),                    // e.g. "Finance", "Tech", "Fitness"
   socialLinks:       text('socialLinks'),                 // JSON: { twitter, instagram, youtube, website }
-  commissionPercent: integer('commissionPercent').notNull().default(0),
+  commissionPercent: integer('commissionPercent').notNull().default(10),
   // Page customisation — set via creator profile settings
   primaryColor:  text('primaryColor'),   // hex e.g. "#0E9F6E" — buttons, badges, accents
   accentColor:   text('accentColor'),    // hex e.g. "#CDFB5E" — highlight on H1, CTA lime

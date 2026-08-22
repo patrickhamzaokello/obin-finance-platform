@@ -40,6 +40,7 @@ export default async function LearnCoursePage({
         courseId={courseId}
         courseTitle={course.title}
         courseThumbnail={course.thumbnail}
+        userEmail={session.user.email}
       />
     );
   }

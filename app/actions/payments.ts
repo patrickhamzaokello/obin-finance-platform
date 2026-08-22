@@ -202,9 +202,11 @@ export async function fulfillPayment(
   });
 
   revalidatePath('/dashboard');
+  revalidatePath(`/learning/${row.courseId}`);
 
-  // 3. Send confirmation email (non-blocking)
-  const courseUrl = `${process.env.BETTER_AUTH_URL ?? ''}/course/${row.courseId}`;
+  // 3. Send confirmation emails (non-blocking)
+  const baseUrl     = process.env.BETTER_AUTH_URL ?? '';
+  const learningUrl = `${baseUrl}/learning/${row.courseId}`;
 
   sendPaymentReceiptEmail({
     email:       user.email,
@@ -212,7 +214,8 @@ export async function fulfillPayment(
     courseTitle: courseRow?.title ?? 'your course',
     amount:      row.amount,
     phone:       row.phone,
-    courseUrl,
+    learningUrl,
+    accessCode:  codeValue,
   }).catch(console.error);
 
   if (schoolRow) {
@@ -221,7 +224,8 @@ export async function fulfillPayment(
       name:        user.name ?? user.email,
       courseTitle: courseRow?.title ?? 'your course',
       schoolName:  schoolRow.name,
-      courseUrl,
+      learningUrl,
+      accessCode:  codeValue,
     }).catch(console.error);
   }
 }

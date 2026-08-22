@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+﻿import type { Metadata } from 'next';
 export const metadata: Metadata = { title: 'Platform Overview' };
 
 import { getEarningsReport } from '@/app/actions/admin';
@@ -31,9 +31,9 @@ export default async function PlatformDashboard() {
   }, 0);
 
   const stats = [
-    { label: 'Creators',    value: schools.length,                          icon: User,      color: 'bg-blue-50 text-blue-600' },
+    { label: 'Communities',    value: schools.length,                          icon: User,      color: 'bg-blue-50 text-blue-600' },
     { label: 'Fans',        value: Number(totalUsers[0]?.count ?? 0),       icon: Users,     color: 'bg-purple-50 text-purple-600' },
-    { label: 'Courses',     value: Number(totalCourses[0]?.count ?? 0),     icon: BookOpen,  color: 'bg-orange-50 text-orange-600' },
+    { label: 'Classes',     value: Number(totalCourses[0]?.count ?? 0),     icon: BookOpen,  color: 'bg-orange-50 text-orange-600' },
     { label: 'Enrollments', value: Number(totalEnrollments[0]?.count ?? 0), icon: Heart,     color: 'bg-pink-50 text-pink-600' },
     { label: 'My Earnings', value: `UGX ${totalEarnings.toLocaleString()}`, icon: TrendingUp,color: 'bg-green-50 text-green-600' },
   ];
@@ -42,7 +42,7 @@ export default async function PlatformDashboard() {
     <div className='px-8 py-8 space-y-8'>
       <div>
         <h1 className='text-2xl font-bold text-foreground'>Platform Overview</h1>
-        <p className='text-sm text-muted-foreground mt-1'>All creators and earnings across the platform</p>
+        <p className='text-sm text-muted-foreground mt-1'>All communities and earnings across the platform</p>
       </div>
 
       {/* Stats */}
@@ -64,7 +64,7 @@ export default async function PlatformDashboard() {
       {/* Schools list */}
       <div className='bg-white rounded-2xl shadow-sm overflow-hidden'>
         <div className='px-6 py-4 border-b border-black/[0.06] flex items-center justify-between'>
-          <h2 className='text-sm font-semibold text-foreground'>Creators</h2>
+          <h2 className='text-sm font-semibold text-foreground'>Communities</h2>
           <Link href='/admin/schools'
             className='inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:bg-primary/90 transition-colors'
           >
@@ -73,7 +73,7 @@ export default async function PlatformDashboard() {
         </div>
         {schools.length === 0 ? (
           <div className='px-6 py-12 text-center text-muted-foreground text-sm'>
-            No creators yet. <Link href='/admin/schools' className='text-primary underline'>Add the first one.</Link>
+            No communities yet. <Link href='/admin/schools' className='text-primary underline'>Add the first one.</Link>
           </div>
         ) : (
           <table className='w-full text-sm'>

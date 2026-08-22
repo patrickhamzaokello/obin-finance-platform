@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+﻿import type { Metadata } from 'next';
 export const metadata: Metadata = { title: 'Achievements' };
 
 import { auth } from '@/lib/auth';
@@ -53,10 +53,10 @@ export default async function AchievementsPage() {
           <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
             <Trophy className="w-8 h-8 text-border mx-auto mb-3" />
             <p className="text-sm text-muted-foreground mb-4">
-              Complete a course to earn your first certificate.
+              Complete a class to earn your first certificate.
             </p>
             <Link href="/courses" className="text-sm font-semibold text-primary hover:underline">
-              Browse courses →
+              Browse classes →
             </Link>
           </div>
         ) : (

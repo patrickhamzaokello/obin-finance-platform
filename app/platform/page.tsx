@@ -1,353 +1,502 @@
-import type { Metadata } from 'next';
-
+﻿import type { Metadata } from 'next';
 export const metadata: Metadata = {
-  title: 'ObinAcademy — The Creator Course Platform',
-  description: 'Turn your knowledge into income. ObinAcademy gives creators their own branded channel, course builder, and learner community — with payments and certificates built in.',
-  openGraph: {
-    title: 'ObinAcademy — The Creator Course Platform',
-    description: 'Turn your knowledge into income. Build your branded channel, publish courses, and get paid — with certificates built in.',
-    url: 'https://ObinAcademy.com/platform',
-    siteName: 'ObinAcademy',
-    images: [
-      {
-        url: '/images/og-platform.png',
-        width: 1200,
-        height: 630,
-        alt: 'ObinAcademy — The Creator Course Platform',
-      },
-    ],
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'ObinAcademy — The Creator Course Platform',
-    description: 'Turn your knowledge into income. Build your branded channel, publish courses, and get paid.',
-    images: ['/images/og-platform.png'],
-  },
+  title: 'ObinAcademy',
+  description: 'Discover classes from expert creators. Learn finance, tech, business and more — right here in Uganda.',
 };
 
 import { isPlatformOwner } from '@/lib/school-context';
+import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import Link from 'next/link';
-import { Sora, Manrope } from 'next/font/google';
-import { Check, ArrowRight, Star, Play, Award, TrendingUp, Users, Zap, Globe, Shield } from 'lucide-react';
+import { db } from '@/lib/db';
+import { course, school, courseEnrollment } from '@/lib/db/schema';
+import { eq, desc, count } from 'drizzle-orm';
+import { convertBlobUrlToApiUrl } from '@/lib/blob-url';
+import {
+  Search, Play, Users, Bell, MessageSquare, ChevronRight,
+} from 'lucide-react';
 
-const sora    = Sora({ subsets: ['latin'], weight: ['500','600','700','800'], variable: '--font-sora',    display: 'swap' });
-const manrope = Manrope({ subsets: ['latin'], weight: ['400','500','600','700','800'], variable: '--font-manrope', display: 'swap' });
+const CATEGORIES = [
+  'Trending', 'Finance', 'Tech', 'Business', 'Fitness',
+  'Music', 'Art', 'Education', 'Lifestyle',
+];
 
-const C = {
-  ink:       '#0B1411',
-  ink2:      '#1A2620',
-  muted:     '#57655D',
-  muted2:    '#8A968F',
-  green:     '#0B00FF',
-  deepBg:    '#06007A',
-  deepCard:  '#0C4836',
-  greenText: '#0A6B4A',
-  lime:      '#CDFB5E',
-  surface2:  '#F4F7F5',
-  surface3:  '#F0F7F3',
-  border:    '#E6ECE8',
-  border2:   '#D9EAE1',
-};
+const PAGE_SIZE = 12;
 
-export default async function PlatformLandingPage() {
+interface Props {
+  searchParams: Promise<{ q?: string; category?: string; page?: string }>;
+}
+
+function effectivePrice(price: number | null, discountActive: boolean | null, discountPercent: number | null) {
+  const base = price ?? 0;
+  if (discountActive && (discountPercent ?? 0) > 0) {
+    return Math.round(base * (1 - (discountPercent ?? 0) / 100));
+  }
+  return base;
+}
+
+export default async function DiscoverPage({ searchParams }: Props) {
   if (await isPlatformOwner()) redirect('/platform/admin');
 
-  const fonts = `${sora.variable} ${manrope.variable}`;
+  const params   = await searchParams;
+  const q        = params.q?.trim() ?? '';
+  const category = params.category ?? 'Trending';
+  const page     = Math.max(1, parseInt(params.page ?? '1', 10));
 
-  const features = [
-    { icon: Globe,      title: 'Your own creator channel',    desc: 'Get a branded subdomain (you.ObinAcademy.app) with your logo, bio, and course catalogue — all in one link.' },
-    { icon: Play,       title: 'Video & PDF courses',         desc: 'Upload videos or embed YouTube. Attach PDFs. Organise everything into modules your learners can follow step by step.' },
-    { icon: Award,      title: 'Auto certificates',           desc: 'Learners who complete your course automatically receive a branded certificate — zero admin on your end.' },
-    { icon: TrendingUp, title: 'Built-in monetisation',       desc: 'Set prices in your local currency, apply discounts, and get paid — the platform handles the rest.' },
-    { icon: Users,      title: 'Learner management',          desc: 'See who your learners are, track their progress, and manage access codes for gifted or promotional enrolments.' },
-    { icon: Zap,        title: 'Instant creator studio',      desc: 'A clean Creator Studio dashboard gives you live stats, course drafts, and learner activity — no setup required.' },
-  ];
+  // Auth state for nav
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user    = session?.user ?? null;
 
-  const steps = [
-    { n: '01', title: 'Create your channel', body: 'Sign up, choose your slug, upload your logo and banner. Your public profile is live in minutes.' },
-    { n: '02', title: 'Build your course',   body: 'Add modules, upload videos, attach PDFs. Set a price or make it free. Publish when ready.' },
-    { n: '03', title: 'Grow your audience',  body: 'Share your channel link. Learners sign up, enrol, and earn certificates — you earn revenue.' },
-  ];
+  // Fetch all published classes with school info
+  const rows = await db
+    .select({
+      id:              course.id,
+      title:           course.title,
+      description:     course.description,
+      thumbnail:       course.thumbnail,
+      price:           course.price,
+      discountPercent: course.discountPercent,
+      discountActive:  course.discountActive,
+      schoolId:        course.schoolId,
+      schoolName:      school.name,
+      schoolSlug:      school.slug,
+      schoolLogo:      school.logoUrl,
+      schoolCategory:  school.category,
+      createdAt:       course.createdAt,
+    })
+    .from(course)
+    .innerJoin(school, eq(course.schoolId, school.id))
+    .where(eq(course.isPublished, true))
+    .orderBy(desc(course.createdAt));
 
-  const testimonials = [
-    { quote: 'I launched my first paid course in one afternoon. The Creator Studio is genuinely the simplest tool I have ever used.', name: 'Alex M.', role: 'Finance creator' },
-    { quote: 'My students love getting a certificate at the end. Completion rates went up the moment I turned that feature on.', name: 'Priya K.', role: 'Tech educator' },
-    { quote: 'Having my own subdomain makes the whole thing feel professional — learners take it more seriously than a generic link.', name: 'David O.', role: 'Business coach' },
-  ];
+  // Enrollment counts
+  const enrollCounts = await db
+    .select({ courseId: courseEnrollment.courseId, cnt: count() })
+    .from(courseEnrollment)
+    .groupBy(courseEnrollment.courseId);
+  const enrollMap = Object.fromEntries(enrollCounts.map(e => [e.courseId, Number(e.cnt)]));
+
+  // Filter
+  const filtered = rows.filter((r) => {
+    if (q) {
+      const haystack = `${r.title} ${r.description ?? ''} ${r.schoolName}`.toLowerCase();
+      if (!haystack.includes(q.toLowerCase())) return false;
+    }
+    if (category !== 'Trending' && category !== 'All') {
+      if ((r.schoolCategory ?? '') !== category) return false;
+    }
+    return true;
+  });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  function filterUrl(extra: Record<string, string>) {
+    const p = new URLSearchParams({
+      ...(q ? { q } : {}),
+      ...(category !== 'Trending' ? { category } : {}),
+      ...extra,
+    });
+    const s = p.toString();
+    return `/platform${s ? `?${s}` : ''}`;
+  }
 
   return (
-    <div className={fonts} style={{ fontFamily: 'var(--font-manrope), system-ui, sans-serif', color: C.ink, background: '#fff' }}>
+    <div style={{ minHeight: '100vh', background: '#F5F5F5', fontFamily: "var(--font-geist-sans), system-ui, sans-serif", color: '#1a1a1a' }}>
 
-      {/* ── NAV ─────────────────────────────────────────────────────────── */}
-      <header style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(16px)', borderBottom: `1px solid ${C.border}` }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24 }}>
-          {/* Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-            <div style={{ width: 34, height: 34, borderRadius: 10, background: C.green, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Play size={16} fill="#fff" color="#fff" />
-            </div>
-            <span style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 17, color: C.ink, letterSpacing: '-0.02em' }}>ObinAcademy</span>
+      {/* ── NAV ───────────────────────────────────────────────────────── */}
+      <header style={{
+        position: 'sticky', top: 0, zIndex: 50,
+        background: '#0B00FF',
+        borderBottom: '1px solid rgba(255,255,255,0.1)',
+        height: 56,
+        display: 'flex', alignItems: 'center',
+        padding: '0 20px', gap: 16,
+      }}>
+        {/* Logo */}
+        <Link href="/platform" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', flexShrink: 0 }}>
+          <img src="/images/white-logo.png" alt="ObinAcademy" style={{ height: 32, width: 'auto', display: 'block' }} />
+        </Link>
+
+        {/* Search — center */}
+        <form action="/platform" method="GET" style={{ flex: 1, maxWidth: 560, margin: '0 auto' }}>
+          {category !== 'Trending' && <input type="hidden" name="category" value={category} />}
+          <div style={{ position: 'relative' }}>
+            <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.5)', pointerEvents: 'none' }} />
+            <input
+              name="q"
+              defaultValue={q}
+              placeholder="Search classes, creators…"
+              style={{
+                width: '100%', boxSizing: 'border-box',
+                paddingLeft: 36, paddingRight: 16, paddingTop: 7, paddingBottom: 7,
+                border: '1.5px solid rgba(255,255,255,0.2)', borderRadius: 8, fontSize: 14,
+                background: 'rgba(255,255,255,0.12)', outline: 'none',
+                fontFamily: 'inherit', color: '#fff',
+              }}
+            />
           </div>
+        </form>
 
-          {/* Center links */}
-          <nav style={{ display: 'flex', gap: 4 }} className="hidden sm:flex">
-            {[['#features','Features'],['#how-it-works','How it works'],['#testimonials','Stories']].map(([href, label]) => (
-              <a key={href} href={href} style={{ padding: '6px 14px', fontSize: 14, fontWeight: 600, color: C.muted, borderRadius: 8, textDecoration: 'none' }}>{label}</a>
-            ))}
-          </nav>
-
-          {/* Right */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Link href="/courses" style={{ padding: '9px 16px', fontSize: 14, fontWeight: 600, color: C.muted, textDecoration: 'none' }}>Browse courses</Link>
-            <Link href="/sign-in" style={{ padding: '9px 16px', fontSize: 14, fontWeight: 600, color: C.muted, textDecoration: 'none' }}>Sign in</Link>
-            <Link href="/platform/apply" style={{ padding: '9px 20px', background: C.green, color: '#fff', borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: 'none', boxShadow: `0 6px 20px rgba(14,159,110,.28)` }}>
-              Apply to create →
-            </Link>
-          </div>
+        {/* Right */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          {user ? (
+            <>
+              <Link href="/learn/dashboard" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.8)', textDecoration: 'none' }}>
+                <MessageSquare size={16} />
+              </Link>
+              <Link href="/learn/dashboard" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.8)', textDecoration: 'none' }}>
+                <Bell size={16} />
+              </Link>
+              <Link href="/learn/dashboard" style={{ width: 34, height: 34, borderRadius: '50%', background: '#CDFB5E', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 13, color: '#06007A', textDecoration: 'none' }}>
+                {(user.name ?? user.email ?? 'U')[0].toUpperCase()}
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/sign-in" style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.8)', textDecoration: 'none', padding: '6px 12px' }}>
+                Sign in
+              </Link>
+              <Link href="/platform/apply" style={{
+                fontSize: 13, fontWeight: 700, color: '#06007A',
+                background: '#CDFB5E', padding: '7px 16px', borderRadius: 8,
+                textDecoration: 'none',
+              }}>
+                Apply to teach
+              </Link>
+            </>
+          )}
         </div>
       </header>
 
-      {/* ── HERO ────────────────────────────────────────────────────────── */}
-      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '100px 24px 80px', display: 'flex', flexWrap: 'wrap', gap: 64, alignItems: 'center' }}>
-        {/* Left */}
-        <div style={{ flex: '1 1 420px', minWidth: 300 }}>
+      {/* ── HERO ─────────────────────────────────────────────────────── */}
+      <div style={{
+        background: 'linear-gradient(160deg, #0B00FF 0%, #06007A 100%)',
+        padding: 'clamp(40px, 6vw, 72px) 24px 0',
+        position: 'relative', overflow: 'hidden',
+      }}>
+        {/* Decorative blobs */}
+        <div style={{ position: 'absolute', top: -60, right: -80, width: 340, height: 340, borderRadius: '50%', background: 'rgba(205,251,94,0.07)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: 20, left: -60, width: 220, height: 220, borderRadius: '50%', background: 'rgba(255,255,255,0.04)', pointerEvents: 'none' }} />
+
+        <div style={{ maxWidth: 760, margin: '0 auto', textAlign: 'center', position: 'relative' }}>
+
           {/* Eyebrow */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: C.surface3, border: `1px solid ${C.border2}`, borderRadius: 999, padding: '6px 14px', marginBottom: 28 }}>
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.green, flexShrink: 0 }} />
-            <span style={{ fontSize: 12, fontWeight: 800, color: C.greenText, letterSpacing: '0.08em', textTransform: 'uppercase' }}>The creator course platform</span>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(205,251,94,0.12)', border: '1px solid rgba(205,251,94,0.25)', borderRadius: 999, padding: '5px 14px', marginBottom: 24 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#CDFB5E', display: 'block', flexShrink: 0 }} />
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#CDFB5E', letterSpacing: '0.07em', textTransform: 'uppercase' }}>Uganda&apos;s creator platform</span>
           </div>
 
-          {/* H1 */}
-          <h1 style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 'clamp(38px,5.5vw,60px)', lineHeight: 1.03, letterSpacing: '-0.03em', color: C.ink, margin: '0 0 24px' }}>
-            Share your knowledge.<br />
-            <span style={{ position: 'relative', display: 'inline-block' }}>
-              <span style={{ position: 'relative', zIndex: 1 }}>Earn from what you know.</span>
-              <span style={{ position: 'absolute', bottom: 4, left: -2, right: -2, height: '32%', background: C.lime, zIndex: 0, borderRadius: 4 }} />
-            </span>
+          {/* Headline */}
+          <h1 style={{
+            fontWeight: 900, fontSize: 'clamp(32px, 5.5vw, 58px)',
+            letterSpacing: '-0.035em', lineHeight: 1.08,
+            color: '#fff', margin: '0 0 18px',
+          }}>
+            Learn from East Africa&apos;s<br />
+            <span style={{ color: '#CDFB5E' }}>best creators.</span>
           </h1>
 
           {/* Sub */}
-          <p style={{ fontSize: 18, lineHeight: 1.65, color: C.muted, margin: '0 0 36px', maxWidth: 500 }}>
-            ObinAcademy gives creators their own branded channel, course builder, and learning community — with payments and certificates built in.
+          <p style={{ fontSize: 'clamp(14px, 1.8vw, 17px)', color: 'rgba(255,255,255,0.65)', margin: '0 0 36px', lineHeight: 1.6, maxWidth: 520, marginLeft: 'auto', marginRight: 'auto' }}>
+            Finance, tech, and business classes — paid instantly with MTN or Airtel Money.{' '}
+            <Link href="/platform/apply" style={{ color: '#CDFB5E', fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+              Want to teach? →
+            </Link>
           </p>
 
-          {/* CTAs */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 40 }}>
-            <Link href="/platform/apply"
-              style={{ padding: '15px 32px', background: C.green, color: '#fff', borderRadius: 12, fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: `0 6px 20px rgba(14,159,110,.28)`, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-              Apply to become a creator →
-            </Link>
-            <a href="#features"
-              style={{ padding: '15px 32px', background: '#fff', color: C.ink, borderRadius: 12, fontSize: 15, fontWeight: 600, textDecoration: 'none', border: `1px solid ${C.border2}` }}>
-              See how it works
-            </a>
-          </div>
+          {/* Search bar */}
+          <form action="/platform" method="GET" style={{ marginBottom: 28 }}>
+            {category !== 'Trending' && <input type="hidden" name="category" value={category} />}
+            <div style={{ position: 'relative', maxWidth: 580, margin: '0 auto' }}>
+              <Search size={18} style={{ position: 'absolute', left: 18, top: '50%', transform: 'translateY(-50%)', color: '#aaa', pointerEvents: 'none' }} />
+              <input
+                name="q"
+                defaultValue={q}
+                placeholder="Search classes, creators, topics…"
+                style={{
+                  width: '100%', boxSizing: 'border-box',
+                  paddingLeft: 50, paddingRight: 20, paddingTop: 16, paddingBottom: 16,
+                  border: 'none', borderRadius: 14, fontSize: 15,
+                  background: '#fff', outline: 'none',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+                  fontFamily: 'inherit', color: '#111',
+                }}
+              />
+            </div>
+          </form>
 
-          {/* Trust */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {['Free to start — no credit card required','Your own subdomain in minutes','Learners earn certificates, you earn revenue'].map((t) => (
-              <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 20, height: 20, borderRadius: '50%', background: C.surface3, border: `1px solid ${C.border2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Check size={11} color={C.green} strokeWidth={3} />
-                </div>
-                <span style={{ fontSize: 14, fontWeight: 600, color: C.ink2 }}>{t}</span>
-              </div>
-            ))}
+          {/* Category pills — on dark bg */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 8, paddingBottom: 32 }}>
+            {CATEGORIES.map((cat) => {
+              const active = category === cat;
+              return (
+                <Link
+                  key={cat}
+                  href={filterUrl({ category: cat, page: '1' })}
+                  style={{
+                    padding: '7px 16px', borderRadius: 999, fontSize: 13, fontWeight: 600,
+                    textDecoration: 'none', transition: 'all 0.15s',
+                    background: active ? '#CDFB5E' : 'rgba(255,255,255,0.1)',
+                    color: active ? '#06007A' : 'rgba(255,255,255,0.85)',
+                    border: active ? '1.5px solid #CDFB5E' : '1.5px solid rgba(255,255,255,0.15)',
+                  }}
+                >
+                  {cat}
+                </Link>
+              );
+            })}
           </div>
         </div>
 
-        {/* Right: creator character illustration */}
-        <div style={{ flex: '1 1 440px', minWidth: 320, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <img src="/images/creator-hero.png" alt="Happy creator with laptop pointing at a course" style={{ width: '100%', maxWidth: 600, height: 'auto', display: 'block' }} />
-        </div>
-      </section>
-
-      {/* ── VALUE STRIP ─────────────────────────────────────────────────── */}
-      <div style={{ background: C.surface2, borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}`, padding: '18px 24px' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: '8px 0' }}>
-          {['Creator-first','Built-in payments','Custom subdomain','Auto certificates','Learner management','Video & PDF courses'].map((pill, i, arr) => (
-            <span key={pill} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: C.muted }}>{pill}</span>
-              {i < arr.length - 1 && <span style={{ width: 4, height: 4, borderRadius: '50%', background: C.green, margin: '0 8px' }} />}
-            </span>
+        {/* Stats strip — sits at the bottom of the hero, fades into page */}
+        <div style={{
+          maxWidth: 1200, margin: '0 auto',
+          borderTop: '1px solid rgba(255,255,255,0.1)',
+          display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '12px 36px',
+          padding: '18px 24px',
+        }}>
+          {[
+            { n: '1,200+',     label: 'learners enrolled' },
+            { n: '50+',        label: 'classes published' },
+            { n: 'MTN & Airtel', label: 'Mobile Money supported' },
+            { n: '10+',        label: 'expert creators' },
+          ].map(({ n, label }) => (
+            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontWeight: 800, fontSize: 15, color: '#CDFB5E' }}>{n}</span>
+              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>{label}</span>
+            </div>
           ))}
         </div>
       </div>
 
-      {/* ── HOW IT WORKS ────────────────────────────────────────────────── */}
-      <section id="how-it-works" style={{ padding: '96px 24px' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 64 }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: C.surface3, border: `1px solid ${C.border2}`, borderRadius: 999, padding: '6px 14px', marginBottom: 20 }}>
-              <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.green }} />
-              <span style={{ fontSize: 12, fontWeight: 800, color: C.greenText, letterSpacing: '0.08em', textTransform: 'uppercase' }}>How it works</span>
-            </div>
-            <h2 style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 'clamp(28px,4vw,40px)', letterSpacing: '-0.02em', color: C.ink, margin: 0 }}>
-              From creator to earning in three steps
-            </h2>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 24 }}>
-            {steps.map(({ n, title, body }) => (
-              <div key={n} style={{ background: C.surface2, borderRadius: 20, padding: '36px 32px', border: `1px solid ${C.border}`, position: 'relative', overflow: 'hidden' }}>
-                <div style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 64, color: C.green, opacity: .08, lineHeight: 1, position: 'absolute', top: 16, right: 24 }}>{n}</div>
-                <div style={{ width: 40, height: 40, borderRadius: 12, background: C.surface3, border: `1px solid ${C.border2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
-                  <span style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 14, color: C.greenText }}>{n}</span>
-                </div>
-                <h3 style={{ fontFamily: 'var(--font-sora)', fontWeight: 700, fontSize: 20, color: C.ink, margin: '0 0 12px' }}>{title}</h3>
-                <p style={{ fontSize: 15, lineHeight: 1.65, color: C.muted, margin: 0 }}>{body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* ── COURSE GRID ───────────────────────────────────────────────── */}
+      <main style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 20px' }}>
 
-      {/* ── FEATURES ────────────────────────────────────────────────────── */}
-      <section id="features" style={{ background: C.surface2, padding: '96px 24px', borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 56 }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', border: `1px solid ${C.border2}`, borderRadius: 999, padding: '6px 14px', marginBottom: 20 }}>
-              <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.green }} />
-              <span style={{ fontSize: 12, fontWeight: 800, color: C.greenText, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Features</span>
-            </div>
-            <h2 style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 'clamp(28px,4vw,40px)', letterSpacing: '-0.02em', color: C.ink, margin: '0 0 16px' }}>
-              Everything a creator needs
-            </h2>
-            <p style={{ fontSize: 17, color: C.muted, maxWidth: 500, margin: '0 auto' }}>
-              One platform, zero plugins. Everything to build, sell, and grow your course business.
-            </p>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 20 }}>
-            {features.map(({ icon: Icon, title, desc }) => (
-              <div key={title} style={{ background: '#fff', borderRadius: 20, padding: '28px 28px', border: `1px solid ${C.border}` }}>
-                <div style={{ width: 42, height: 42, borderRadius: 12, background: C.surface3, border: `1px solid ${C.border2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
-                  <Icon size={19} color={C.green} />
-                </div>
-                <h3 style={{ fontFamily: 'var(--font-sora)', fontWeight: 700, fontSize: 17, color: C.ink, margin: '0 0 10px' }}>{title}</h3>
-                <p style={{ fontSize: 14, lineHeight: 1.65, color: C.muted, margin: 0 }}>{desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+        {/* Result count */}
+        {q && (
+          <p style={{ fontSize: 13, color: '#888', marginBottom: 20 }}>
+            {filtered.length} result{filtered.length !== 1 ? 's' : ''} for &ldquo;<strong style={{ color: '#333' }}>{q}</strong>&rdquo;
+          </p>
+        )}
 
-      {/* ── IS THIS FOR YOU ─────────────────────────────────────────────── */}
-      <section style={{ padding: '96px 24px' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: 64, alignItems: 'flex-start' }}>
-          <div style={{ flex: '1 1 380px', minWidth: 280 }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: C.surface3, border: `1px solid ${C.border2}`, borderRadius: 999, padding: '6px 14px', marginBottom: 20 }}>
-              <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.green }} />
-              <span style={{ fontSize: 12, fontWeight: 800, color: C.greenText, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Who is this for?</span>
-            </div>
-            <h2 style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 'clamp(26px,3.5vw,38px)', letterSpacing: '-0.02em', color: C.ink, margin: '0 0 18px', lineHeight: 1.1 }}>
-              Built for people who have something to teach
-            </h2>
-            <p style={{ fontSize: 17, lineHeight: 1.65, color: C.muted }}>
-              Whether you&apos;re a coach, educator, influencer, or subject-matter expert — if you have knowledge worth sharing, ObinAcademy gives you the infrastructure to turn it into income.
-            </p>
+        {paginated.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '80px 24px', color: '#999' }}>
+            <p style={{ fontSize: 18, fontWeight: 700, color: '#555', margin: '0 0 8px' }}>No Classes found</p>
+            <p style={{ fontSize: 14 }}>Try a different search or category.</p>
+            <Link href="/platform" style={{ display: 'inline-block', marginTop: 16, color: '#0B00FF', fontWeight: 600, fontSize: 14, textDecoration: 'none' }}>
+              Clear filters →
+            </Link>
           </div>
-          <div style={{ flex: '1 1 380px', minWidth: 280 }}>
-            {[
-              'You create content but have no structured way to monetise your knowledge',
-              'You want a professional course platform without months of setup or a developer',
-              'You want your learners to walk away with a tangible certificate — not just a video watched',
-            ].map((item, i, arr) => (
-              <div key={item} style={{ display: 'flex', gap: 18, padding: '22px 0', borderBottom: i < arr.length - 1 ? `1px solid ${C.border}` : 'none' }}>
-                <div style={{ width: 34, height: 34, borderRadius: 10, background: C.surface3, border: `1px solid ${C.border2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
-                  <ArrowRight size={15} color={C.green} />
-                </div>
-                <p style={{ fontSize: 15, fontWeight: 600, color: C.ink2, lineHeight: 1.55, margin: 0 }}>{item}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+        ) : (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            gap: 20,
+          }}>
+            {paginated.map((r) => {
+              const price    = effectivePrice(r.price, r.discountActive, r.discountPercent);
+              const enrolled = enrollMap[r.id] ?? 0;
+              const logo     = r.schoolLogo ? convertBlobUrlToApiUrl(r.schoolLogo) : null;
+              const thumb    = r.thumbnail  ? convertBlobUrlToApiUrl(r.thumbnail)  : null;
 
-      {/* ── TESTIMONIALS ────────────────────────────────────────────────── */}
-      <section id="testimonials" style={{ background: C.deepBg, padding: '96px 24px' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 56 }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(205,251,94,.12)', border: `1px solid rgba(205,251,94,.25)`, borderRadius: 999, padding: '6px 14px', marginBottom: 20 }}>
-              <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.lime }} />
-              <span style={{ fontSize: 12, fontWeight: 800, color: C.lime, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Creator stories</span>
-            </div>
-            <h2 style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 'clamp(26px,3.5vw,38px)', letterSpacing: '-0.02em', color: '#fff', margin: 0 }}>
-              Creators who made the switch
-            </h2>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 20 }}>
-            {testimonials.map(({ quote, name, role }) => (
-              <div key={name} style={{ background: C.deepCard, borderRadius: 20, padding: '32px 28px', border: '1px solid rgba(255,255,255,.07)' }}>
-                <div style={{ display: 'flex', gap: 3, marginBottom: 20 }}>
-                  {[1,2,3,4,5].map((i) => <Star key={i} size={14} fill={C.lime} color={C.lime} />)}
-                </div>
-                <p style={{ fontSize: 15, lineHeight: 1.7, color: 'rgba(255,255,255,.8)', margin: '0 0 24px', fontStyle: 'italic' }}>
-                  &ldquo;{quote}&rdquo;
-                </p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(205,251,94,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 14, color: C.lime, flexShrink: 0 }}>
-                    {name[0]}
+              return (
+                <Link
+                  key={r.id}
+                  href={`/course/${r.id}`}
+                  style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column' }}
+                >
+                  <div className="course-card" style={{
+                    background: '#fff',
+                    borderRadius: 12,
+                    overflow: 'hidden',
+                    border: '1px solid #E8E8E8',
+                    flex: 1, display: 'flex', flexDirection: 'column',
+                  }}>
+                    {/* Thumbnail */}
+                    <div style={{ width: '100%', aspectRatio: '16/9', background: '#E8E8F0', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
+                      {thumb ? (
+                        <img src={thumb} alt={r.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{
+                          width: '100%', height: '100%',
+                          background: `linear-gradient(135deg, #0B00FF22, #0B00FF44)`,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          <Play size={32} color="#0B00FF" style={{ opacity: 0.4 }} />
+                        </div>
+                      )}
+                      {/* Price badge */}
+                      <div style={{
+                        position: 'absolute', top: 10, right: 10,
+                        background: price === 0 ? '#22C55E' : '#1a1a1a',
+                        color: '#fff', borderRadius: 6,
+                        padding: '3px 9px', fontSize: 12, fontWeight: 700,
+                      }}>
+                        {price === 0 ? 'Free' : `UGX ${price.toLocaleString()}`}
+                      </div>
+                    </div>
+
+                    {/* Card body */}
+                    <div style={{ padding: '16px 16px 18px', flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {/* Creator row */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {logo ? (
+                          <img src={logo} alt={r.schoolName} style={{ width: 24, height: 24, borderRadius: 6, objectFit: 'cover', border: '1px solid #eee', flexShrink: 0 }} />
+                        ) : (
+                          <div style={{
+                            width: 24, height: 24, borderRadius: 6, background: '#0B00FF',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontWeight: 800, fontSize: 11, color: '#fff', flexShrink: 0,
+                          }}>
+                            {r.schoolName.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {r.schoolName}
+                        </span>
+                        {r.schoolCategory && (
+                          <span style={{ marginLeft: 'auto', fontSize: 10, fontWeight: 700, color: '#0B00FF', background: '#EEEEFF', padding: '2px 7px', borderRadius: 4, flexShrink: 0 }}>
+                            {r.schoolCategory}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Title */}
+                      <h2 style={{
+                        fontWeight: 700, fontSize: 15, lineHeight: 1.35,
+                        color: '#111', margin: 0,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                      }}>
+                        {r.title}
+                      </h2>
+
+                      {/* Description */}
+                      {r.description && (
+                        <p style={{
+                          fontSize: 13, color: '#777', lineHeight: 1.5, margin: 0,
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          flex: 1,
+                        }}>
+                          {r.description}
+                        </p>
+                      )}
+
+                      {/* Footer */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 'auto' }}>
+                        <Users size={12} color="#aaa" />
+                        <span style={{ fontSize: 12, color: '#aaa', fontWeight: 600 }}>
+                          {enrolled.toLocaleString()} {enrolled === 1 ? 'learner' : 'learners'}
+                        </span>
+                        <span style={{ marginLeft: 'auto', fontWeight: 700, fontSize: 13, color: price === 0 ? '#22C55E' : '#111' }}>
+                          {price === 0 ? 'Free' : `UGX ${price.toLocaleString()}`}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p style={{ fontSize: 14, fontWeight: 700, color: '#fff', margin: 0 }}>{name}</p>
-                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,.4)', margin: 0 }}>{role}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── FINAL CTA ───────────────────────────────────────────────────── */}
-      <section style={{ padding: '80px 24px' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ background: C.deepBg, borderRadius: 28, padding: 'clamp(48px,6vw,80px)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: -80, right: -80, width: 320, height: 320, borderRadius: '50%', background: C.lime, opacity: .06, pointerEvents: 'none' }} />
-            <div style={{ position: 'absolute', bottom: -60, left: -60, width: 200, height: 200, borderRadius: '50%', background: C.lime, opacity: .04, pointerEvents: 'none' }} />
-            <div style={{ position: 'relative', zIndex: 1 }}>
-              <h2 style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 'clamp(28px,4vw,46px)', letterSpacing: '-0.02em', color: '#fff', margin: '0 0 18px', lineHeight: 1.08 }}>
-                Ready to launch your creator channel?
-              </h2>
-              <p style={{ fontSize: 18, lineHeight: 1.65, color: 'rgba(255,255,255,.7)', margin: '0 auto 40px', maxWidth: 520 }}>
-                Join creators already building learning communities and earning from their knowledge on ObinAcademy.
-              </p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, justifyContent: 'center' }}>
-                <Link href="/platform/apply"
-                  style={{ padding: '16px 32px', background: C.lime, color: C.deepBg, borderRadius: 12, fontSize: 15, fontWeight: 800, textDecoration: 'none', fontFamily: 'var(--font-sora)' }}>
-                  Apply now →
                 </Link>
-                <a href="#features"
-                  style={{ padding: '16px 32px', background: 'rgba(255,255,255,.08)', color: '#fff', borderRadius: 12, fontSize: 15, fontWeight: 700, textDecoration: 'none', border: '1px solid rgba(255,255,255,.2)' }}>
-                  See all features
-                </a>
-              </div>
-            </div>
+              );
+            })}
           </div>
-        </div>
-      </section>
+        )}
 
-      {/* ── FOOTER ──────────────────────────────────────────────────────── */}
-      <footer style={{ borderTop: `1px solid ${C.border}`, padding: '32px 24px' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 28, height: 28, borderRadius: 8, background: C.green, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Play size={12} fill="#fff" color="#fff" />
-            </div>
-            <span style={{ fontFamily: 'var(--font-sora)', fontWeight: 800, fontSize: 15, color: C.ink }}>ObinAcademy</span>
+        {/* ── PAGINATION ───────────────────────────────────────────────── */}
+        {totalPages > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, marginTop: 48 }}>
+            {page > 1 && (
+              <Link href={filterUrl({ page: String(page - 1) })} style={{
+                display: 'flex', alignItems: 'center', gap: 4,
+                padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                color: '#555', border: '1.5px solid #E0E0E0', background: '#fff', textDecoration: 'none',
+              }}>
+                ← Previous
+              </Link>
+            )}
+
+            {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+              let pg: number;
+              if (totalPages <= 7) {
+                pg = i + 1;
+              } else if (page <= 4) {
+                pg = i + 1;
+              } else if (page >= totalPages - 3) {
+                pg = totalPages - 6 + i;
+              } else {
+                pg = page - 3 + i;
+              }
+              return (
+                <Link key={pg} href={filterUrl({ page: String(pg) })} style={{
+                  width: 36, height: 36, borderRadius: 8,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 13, fontWeight: 700, textDecoration: 'none',
+                  background: pg === page ? '#1a1a1a' : '#fff',
+                  color: pg === page ? '#fff' : '#555',
+                  border: pg === page ? '1.5px solid #1a1a1a' : '1.5px solid #E0E0E0',
+                }}>
+                  {pg}
+                </Link>
+              );
+            })}
+
+            {totalPages > 7 && page < totalPages - 3 && (
+              <span style={{ fontSize: 13, color: '#aaa' }}>…</span>
+            )}
+            {totalPages > 7 && (
+              <Link href={filterUrl({ page: String(totalPages) })} style={{
+                width: 36, height: 36, borderRadius: 8,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 13, fontWeight: 700, textDecoration: 'none',
+                background: '#fff', color: '#555', border: '1.5px solid #E0E0E0',
+              }}>
+                {totalPages}
+              </Link>
+            )}
+
+            {page < totalPages && (
+              <Link href={filterUrl({ page: String(page + 1) })} style={{
+                display: 'flex', alignItems: 'center', gap: 4,
+                padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                color: '#555', border: '1.5px solid #E0E0E0', background: '#fff', textDecoration: 'none',
+              }}>
+                Next →
+              </Link>
+            )}
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24 }}>
-            {[['#features','Features'],['#how-it-works','How it works'],['#testimonials','Stories']].map(([href, label]) => (
-              <a key={href} href={href} style={{ fontSize: 13, fontWeight: 600, color: C.muted2, textDecoration: 'none' }}>{label}</a>
+        )}
+      </main>
+
+      {/* ── FOOTER ────────────────────────────────────────────────────── */}
+      <footer style={{ borderTop: '1px solid #E5E5E5', background: '#fff', padding: '20px 24px', marginTop: 40 }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <img src="/images/white-logo.png" alt="ObinAcademy" style={{ height: 24, width: 'auto', filter: 'brightness(0)', opacity: 0.7 }} />
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20 }}>
+            {[
+              ['Community', '/learn/creators'],
+              ['Become a teacher', '/platform/apply'],
+              ['Sign in', '/sign-in'],
+            ].map(([label, href]) => (
+              <Link key={label} href={href} style={{ fontSize: 13, fontWeight: 600, color: '#888', textDecoration: 'none' }}>{label}</Link>
             ))}
-            <Link href="/courses" style={{ fontSize: 13, fontWeight: 600, color: C.muted2, textDecoration: 'none' }}>Browse Courses</Link>
-            <Link href="/sign-in" style={{ fontSize: 13, fontWeight: 600, color: C.muted2, textDecoration: 'none' }}>Sign in</Link>
           </div>
-          <p style={{ fontSize: 12, color: C.muted2, margin: 0 }}>© {new Date().getFullYear()} ObinAcademy. All rights reserved.</p>
+          <p style={{ fontSize: 12, color: '#bbb', margin: 0 }}>
+            © {new Date().getFullYear()} ObinAcademy
+          </p>
         </div>
       </footer>
 
+      <style>{`
+        .course-card { transition: box-shadow 0.15s, transform 0.15s; cursor: pointer; }
+        .course-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.12); transform: translateY(-2px); }
+      `}</style>
     </div>
   );
 }

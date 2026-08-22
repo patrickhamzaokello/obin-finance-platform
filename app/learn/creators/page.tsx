@@ -1,5 +1,5 @@
-import type { Metadata } from 'next';
-export const metadata: Metadata = { title: 'Browse Creators' };
+﻿import type { Metadata } from 'next';
+export const metadata: Metadata = { title: 'Browse Communities' };
 
 import { db } from '@/lib/db';
 import { school, course, courseEnrollment } from '@/lib/db/schema';
@@ -15,7 +15,7 @@ interface Props {
   searchParams: Promise<{ q?: string; category?: string; page?: string }>;
 }
 
-export default async function BrowseCreators({ searchParams }: Props) {
+export default async function BrowseCommunities({ searchParams }: Props) {
   const params   = await searchParams;
   const q        = params.q?.trim() ?? '';
   const category = params.category ?? 'All';
@@ -78,9 +78,9 @@ export default async function BrowseCreators({ searchParams }: Props) {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground tracking-tight">Browse Creators</h1>
+        <h1 className="text-2xl font-bold text-foreground tracking-tight">Browse Communities</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          {filtered.length} creator{filtered.length !== 1 ? 's' : ''} on ObinAcademy
+          {filtered.length} communit{filtered.length !== 1 ? 'ies' : 'y'} on ObinAcademy
         </p>
       </div>
 
@@ -92,7 +92,7 @@ export default async function BrowseCreators({ searchParams }: Props) {
           <input
             name="q"
             defaultValue={q}
-            placeholder="Search creators…"
+            placeholder="Search communities…"
             className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border border-black/[0.08] rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-sm"
           />
         </div>
@@ -125,7 +125,7 @@ export default async function BrowseCreators({ searchParams }: Props) {
       {paginated.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-sm p-16 text-center">
           <Users className="w-8 h-8 text-border mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">No creators found. Try a different search.</p>
+          <p className="text-sm text-muted-foreground">No communities found. Try a different search.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -181,7 +181,7 @@ export default async function BrowseCreators({ searchParams }: Props) {
 
                   <div className="flex items-center gap-3 mt-auto">
                     <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                      <BookOpen size={11} /> {numCourses} course{numCourses !== 1 ? 's' : ''}
+                      <BookOpen size={11} /> {numCourses} class{numCourses !== 1 ? 'es' : ''}
                     </span>
                     {numLearners > 0 && (
                       <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">

@@ -17,7 +17,7 @@ export function AdminNav({ schoolName, userName, userEmail, role }: AdminNavProp
 
   const links = [
     { href: '/creator/admin',          label: 'Studio',    icon: LayoutDashboard },
-    { href: '/creator/admin/courses',  label: 'Courses',   icon: BookOpen },
+    { href: '/creator/admin/courses',  label: 'Classes',   icon: BookOpen },
     { href: '/creator/admin/users',    label: 'Learners',  icon: Users },
     { href: '/creator/admin/messages', label: 'Feedback',  icon: MessageCircle },
     { href: '/creator/admin/profile',  label: 'Profile',   icon: UserCircle },

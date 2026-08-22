@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+﻿import type { Metadata } from 'next';
 export const metadata: Metadata = { title: 'Creator Studio' };
 
 import Link from 'next/link';
@@ -19,7 +19,7 @@ export default async function AdminDashboard() {
   const fanCount       = members.filter((m: any) => m.role === 'learner').length;
 
   const stats = [
-    { label: 'Courses',    value: courses.length, icon: BookOpen,   color: 'bg-blue-50 text-blue-600' },
+    { label: 'Classes',    value: courses.length, icon: BookOpen,   color: 'bg-blue-50 text-blue-600' },
     { label: 'Published',  value: publishedCount, icon: TrendingUp, color: 'bg-green-50 text-green-600' },
     { label: 'Total Fans', value: members.length, icon: Users,      color: 'bg-purple-50 text-purple-600' },
     { label: 'Active Fans',value: fanCount,       icon: Heart,      color: 'bg-pink-50 text-pink-600' },
@@ -59,21 +59,21 @@ export default async function AdminDashboard() {
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
         <div className="px-6 py-5 flex items-center justify-between border-b border-black/[0.05]">
           <div>
-            <h2 className="text-base font-semibold text-foreground">Your Courses</h2>
+            <h2 className="text-base font-semibold text-foreground">Your Classes</h2>
             <p className="text-xs text-muted-foreground mt-0.5">{courses.length} total</p>
           </div>
           <Link href="/studio/courses/new"
             className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-primary text-primary-foreground text-xs font-semibold rounded-xl hover:bg-primary/90 transition-colors">
-            <Plus size={13} /> New Course
+            <Plus size={13} /> New Class
           </Link>
         </div>
 
         {courses.length === 0 ? (
           <div className="px-6 py-12 text-center">
             <BookOpen className="w-8 h-8 text-border mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground mb-4">No courses yet. Create your first course to start earning.</p>
+            <p className="text-sm text-muted-foreground mb-4">No classes yet. Create your first class to start earning.</p>
             <Link href="/studio/courses/new" className="text-sm font-semibold text-primary hover:underline">
-              Create your first course →
+              Create your first class →
             </Link>
           </div>
         ) : (
@@ -104,7 +104,7 @@ export default async function AdminDashboard() {
         {courses.length > 6 && (
           <div className="px-6 py-4 border-t border-black/[0.05]">
             <Link href="/studio/courses" className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
-              View all courses <ChevronRight size={14} />
+              View all classes <ChevronRight size={14} />
             </Link>
           </div>
         )}
@@ -116,10 +116,10 @@ export default async function AdminDashboard() {
           <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center mb-4">
             <BookOpen size={18} className="text-blue-600" />
           </div>
-          <h3 className="font-semibold text-foreground mb-1">Manage Courses</h3>
-          <p className="text-sm text-muted-foreground mb-4">Create, edit, and publish course content for your fans.</p>
+          <h3 className="font-semibold text-foreground mb-1">Manage Classes</h3>
+          <p className="text-sm text-muted-foreground mb-4">Create, edit, and publish class content for your fans.</p>
           <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary group-hover:gap-2 transition-all">
-            Go to Courses <ChevronRight size={14} />
+            Go to Classes <ChevronRight size={14} />
           </span>
         </Link>
         <Link href="/studio/users" className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200">
@@ -127,7 +127,7 @@ export default async function AdminDashboard() {
             <Users size={18} className="text-purple-600" />
           </div>
           <h3 className="font-semibold text-foreground mb-1">Your Fans</h3>
-          <p className="text-sm text-muted-foreground mb-4">See who has joined and is learning from your courses.</p>
+          <p className="text-sm text-muted-foreground mb-4">See who has joined and is learning from your classes.</p>
           <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary group-hover:gap-2 transition-all">
             View Fans <ChevronRight size={14} />
           </span>

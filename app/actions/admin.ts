@@ -373,7 +373,7 @@ export async function createSchool(data: { name: string; slug: string; logoUrl?:
     const id   = `school-${Date.now()}`;
     await db.insert(school).values({
       id, slug, name: data.name, logoUrl: data.logoUrl || null,
-      commissionPercent: Math.min(100, Math.max(0, data.commissionPercent ?? 0)),
+      commissionPercent: Math.min(100, Math.max(0, data.commissionPercent ?? 10)),
     });
     revalidatePath('/admin/schools');
     return { success: true, data: { id, slug, name: data.name } };

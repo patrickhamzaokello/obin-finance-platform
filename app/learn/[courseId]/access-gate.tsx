@@ -2,22 +2,26 @@
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { activateAccessCode } from '@/app/actions/access-codes';
-import { BookOpen, Lock, ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
+import { activateAccessCode, resendAccessCode } from '@/app/actions/access-codes';
+import { BookOpen, Lock, ArrowLeft, CheckCircle2, AlertCircle, Mail, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 
 interface Props {
   courseId: string;
   courseTitle: string;
   courseThumbnail?: string | null;
+  userEmail?: string | null;
 }
 
-export default function AccessGate({ courseId, courseTitle, courseThumbnail }: Props) {
+export default function AccessGate({ courseId, courseTitle, courseThumbnail, userEmail }: Props) {
   const router  = useRouter();
-  const [code,      setCode]      = useState('');
-  const [error,     setError]     = useState('');
-  const [loading,   setLoading]   = useState(false);
-  const [success,   setSuccess]   = useState(false);
+  const [code,        setCode]        = useState('');
+  const [error,       setError]       = useState('');
+  const [loading,     setLoading]     = useState(false);
+  const [success,     setSuccess]     = useState(false);
+  const [resending,   setResending]   = useState(false);
+  const [resendState, setResendState] = useState<'idle' | 'sent' | 'error'>('idle');
+  const [resendError, setResendError] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,6 +40,21 @@ export default function AccessGate({ courseId, courseTitle, courseThumbnail }: P
     } else {
       setError(result.error ?? 'Something went wrong. Please try again.');
       inputRef.current?.select();
+    }
+  };
+
+  const handleResend = async () => {
+    if (resending) return;
+    setResending(true);
+    setResendState('idle');
+    setResendError('');
+    const result = await resendAccessCode(courseId);
+    setResending(false);
+    if (result.success) {
+      setResendState('sent');
+    } else {
+      setResendState('error');
+      setResendError(result.error ?? 'Could not resend. Please try again.');
     }
   };
 
@@ -106,6 +125,18 @@ export default function AccessGate({ courseId, courseTitle, courseThumbnail }: P
                   </p>
                 </div>
 
+                {/* Email hint */}
+                {userEmail && (
+                  <div className="flex items-start gap-3 bg-primary/5 border border-primary/15 rounded-xl px-4 py-3 mb-5 text-sm">
+                    <Mail size={15} className="text-primary shrink-0 mt-0.5" />
+                    <p className="text-muted-foreground leading-snug">
+                      Your access code was sent to{' '}
+                      <span className="font-semibold text-foreground">{userEmail}</span>.
+                      {' '}Check your inbox (and spam folder).
+                    </p>
+                  </div>
+                )}
+
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
                     <input
@@ -145,10 +176,39 @@ export default function AccessGate({ courseId, courseTitle, courseThumbnail }: P
                   </button>
                 </form>
 
-                <p className="text-xs text-center text-muted-foreground mt-5 leading-relaxed">
-                  Each code is personal and single-use.<br />
-                  Contact your instructor if you need a new code.
-                </p>
+                {/* Resend section */}
+                <div className="mt-5 pt-5 border-t border-border">
+                  <p className="text-xs text-center text-muted-foreground mb-3 leading-relaxed">
+                    Can&apos;t find your email? We can resend your code.
+                  </p>
+
+                  {resendState === 'sent' ? (
+                    <div className="flex items-center justify-center gap-2 text-sm text-green-600 font-medium">
+                      <CheckCircle2 size={15} />
+                      Code resent! Check your inbox{userEmail ? ` (${userEmail})` : ''}.
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={handleResend}
+                        disabled={resending}
+                        className="w-full py-2.5 flex items-center justify-center gap-2 text-sm font-semibold rounded-xl border border-primary/30 text-primary hover:bg-primary/5 transition-colors disabled:opacity-50"
+                      >
+                        {resending
+                          ? <><span className="w-3.5 h-3.5 border-2 border-primary/40 border-t-primary rounded-full animate-spin" /> Sending…</>
+                          : <><RefreshCw size={13} /> Resend access code to email</>
+                        }
+                      </button>
+                      {resendState === 'error' && (
+                        <div className="flex items-start gap-2 mt-2 text-xs text-destructive">
+                          <AlertCircle size={13} className="shrink-0 mt-0.5" />
+                          <span>{resendError}</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
               </>
             )}
           </div>

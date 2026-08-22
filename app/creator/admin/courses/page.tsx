@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -49,7 +49,7 @@ export default function CoursesList() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">Courses</h1>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Classes</h1>
           <p className="text-sm text-muted-foreground mt-1">{filteredCourses.length} course{filteredCourses.length !== 1 ? 's' : ''}</p>
         </div>
         <Link
@@ -87,14 +87,14 @@ export default function CoursesList() {
       {courses.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
           <BookOpen className="w-8 h-8 text-border mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground mb-4">No courses yet.</p>
+          <p className="text-sm text-muted-foreground mb-4">No classes yet.</p>
           <Link href="/creator/admin/courses/new" className="text-sm font-semibold text-primary hover:underline">
             Create your first course →
           </Link>
         </div>
       ) : filteredCourses.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
-          <p className="text-sm text-muted-foreground">No courses match your search.</p>
+          <p className="text-sm text-muted-foreground">No Classes match your search.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

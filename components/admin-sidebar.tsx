@@ -7,7 +7,7 @@ import { LayoutDashboard, BookOpen, Users, PanelLeftClose, PanelLeft, Home, Mess
 
 const menuItems = [
   { label: 'Dashboard', href: '/admin',          icon: LayoutDashboard },
-  { label: 'Courses',   href: '/admin/courses',  icon: BookOpen },
+  { label: 'Classes',   href: '/admin/courses',  icon: BookOpen },
   { label: 'Users',     href: '/admin/users',    icon: Users },
   { label: 'Feedback',  href: '/admin/messages', icon: MessageCircle },
 ];

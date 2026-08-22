@@ -1,4 +1,4 @@
-import { db } from '@/lib/db';
+﻿import { db } from '@/lib/db';
 import { course, school, courseEnrollment } from '@/lib/db/schema';
 import { eq, desc, count } from 'drizzle-orm';
 import Link from 'next/link';
@@ -6,7 +6,7 @@ import type { Metadata } from 'next';
 import { PublicNav } from '@/components/public-nav';
 
 export const metadata: Metadata = {
-  title: 'Browse Courses',
+  title: 'Browse Classes',
   description: 'Explore courses from creators across the ObinAcademy platform.',
 };
 
@@ -25,7 +25,7 @@ export default async function CoursesMarketplace({ searchParams }: Props) {
   const priceFilter = params.price ?? 'all';
   const page        = Math.max(1, parseInt(params.page ?? '1', 10));
 
-  // Fetch published courses + school info
+  // Fetch published classes + school info
   const rows = await db
     .select({
       id:              course.id,
@@ -50,7 +50,7 @@ export default async function CoursesMarketplace({ searchParams }: Props) {
     .where(eq(course.isPublished, true))
     .orderBy(desc(course.createdAt));
 
-  // Fetch enrollment counts for all published courses
+  // Fetch enrollment counts for all published classes
   const enrollCounts = await db
     .select({ courseId: courseEnrollment.courseId, cnt: count() })
     .from(courseEnrollment)
@@ -158,7 +158,7 @@ export default async function CoursesMarketplace({ searchParams }: Props) {
         {/* Grid */}
         {paginated.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '80px 20px', color: '#A8A29E' }}>
-            <p style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>No courses found</p>
+            <p style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>No Classes found</p>
             <p style={{ fontSize: 14 }}>Try a different search or filter.</p>
           </div>
         ) : (

@@ -2,11 +2,12 @@
 
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { course, courseEnrollment, module, video, pdf, userProgress, schoolMember, school, certificate } from '@/lib/db/schema';
+import { course, courseEnrollment, module, video, pdf, userProgress, schoolMember, school, certificate, courseAccessCode } from '@/lib/db/schema';
 import { eq, and, desc, count, inArray } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { getCurrentSchool } from '@/lib/school-context';
+import { sendEnrollmentConfirmation } from '@/lib/plunk';
 
 async function getUserId() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -122,31 +123,31 @@ export async function getCourseWithEnrollmentStatus(courseId: string) {
   }
 }
 
+// Helpers
+function randStr(len: number) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  return Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+}
+
 // Enrollment
 export async function enrollCourse(courseId: string) {
   try {
-    const userId = await getUserId();
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user) throw new Error('Unauthorized');
+    const userId = session.user.id;
 
     // Verify course exists and is published
     const courseData = await db.select().from(course).where(eq(course.id, courseId)).limit(1);
-    if (!courseData.length) {
-      return { success: false, error: 'Course not found' };
-    }
-    if (!courseData[0].isPublished) {
-      return { success: false, error: 'This course is not available' };
-    }
+    if (!courseData.length) return { success: false, error: 'Course not found' };
+    if (!courseData[0].isPublished) return { success: false, error: 'This course is not available' };
 
     const existing = await db
       .select()
       .from(courseEnrollment)
       .where(and(eq(courseEnrollment.userId, userId), eq(courseEnrollment.courseId, courseId)))
       .limit(1);
+    if (existing.length) return { success: false, error: 'You are already enrolled in this course' };
 
-    if (existing.length) {
-      return { success: false, error: 'You are already enrolled in this course' };
-    }
-
-    // Snapshot effective price and platform fee at time of enrollment
     const c = courseData[0];
     const rawPrice = c.price ?? 0;
     const effectivePrice = (c.discountActive && (c.discountPercent ?? 0) > 0)
@@ -168,6 +169,35 @@ export async function enrollCourse(courseId: string) {
       priceAtEnrollment: effectivePrice,
       platformFee,
     });
+
+    // For free courses: auto-generate an access code and email it to the learner
+    if (effectivePrice === 0) {
+      const codeValue = `${randStr(4)}-${randStr(4)}-${randStr(4)}`;
+      await db.insert(courseAccessCode).values({
+        id:        `code-free-${Date.now()}-${randStr(6)}`,
+        courseId,
+        code:      codeValue,
+        createdBy: userId,  // auto-generated on behalf of the learner
+        label:     'Auto-generated on free enrollment',
+      });
+
+      // Fetch school name for the email
+      let schoolName = 'ObinAcademy';
+      if (c.schoolId) {
+        const schoolRows = await db.select({ name: school.name }).from(school).where(eq(school.id, c.schoolId)).limit(1);
+        if (schoolRows.length) schoolName = schoolRows[0].name;
+      }
+
+      const learningUrl = `${process.env.BETTER_AUTH_URL ?? 'https://obinacademy.com'}/learn/${courseId}`;
+      sendEnrollmentConfirmation({
+        email:       session.user.email,
+        name:        session.user.name ?? session.user.email,
+        courseTitle: c.title,
+        schoolName,
+        learningUrl,
+        accessCode:  codeValue,
+      }).catch(console.error);
+    }
 
     revalidatePath('/dashboard');
     revalidatePath(`/course/${courseId}`);
