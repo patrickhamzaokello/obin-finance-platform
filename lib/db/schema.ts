@@ -3,15 +3,17 @@ import { sql } from 'drizzle-orm';
 
 // Better Auth tables
 export const user = pgTable('user', {
-  id:            text('id').primaryKey(),
-  name:          text('name'),
-  email:         text('email').notNull().unique(),
-  emailVerified: boolean('emailVerified').notNull().default(false),
-  image:         text('image'),
+  id:                  text('id').primaryKey(),
+  name:                text('name'),
+  email:               text('email').notNull().unique(),
+  emailVerified:       boolean('emailVerified').notNull().default(false),
+  image:               text('image'),
   // Platform-level role: 'owner' = platform owner, 'user' = everyone else
-  platformRole:  text('platformRole').notNull().default('user'),
-  createdAt:     timestamp('createdAt').notNull().defaultNow(),
-  updatedAt:     timestamp('updatedAt').notNull().defaultNow(),
+  platformRole:        text('platformRole').notNull().default('user'),
+  // Set to true when a temp password is issued; cleared after user changes it
+  mustChangePassword:  boolean('mustChangePassword').notNull().default(false),
+  createdAt:           timestamp('createdAt').notNull().defaultNow(),
+  updatedAt:           timestamp('updatedAt').notNull().defaultNow(),
 });
 
 export const session = pgTable('session', {

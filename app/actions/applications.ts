@@ -1,7 +1,8 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { creatorApplication, school, schoolMember, user } from '@/lib/db/schema';
+import { account, creatorApplication, school, schoolMember, user } from '@/lib/db/schema';
+import { hashPassword } from '@better-auth/utils/password';
 import { eq, desc } from 'drizzle-orm';
 import { requirePlatformOwner } from '@/lib/school-context';
 import { getCurrentOrganizationId } from '@/lib/organization';
@@ -145,7 +146,12 @@ export async function approveApplication(applicationId: string) {
       isNewAccount = false;
     }
 
-    // ── Link user to their school as school_admin (skip if already linked) ──
+    // Mark that this account needs a password change after first login
+    await db.update(user)
+      .set({ mustChangePassword: true })
+      .where(eq(user.id, userId));
+
+    // ── Link user to their school as school_admin (upsert — always enforce the role) ──
     const existingMember = await db.select({ id: schoolMember.id })
       .from(schoolMember).where(eq(schoolMember.userId, userId)).limit(1);
 
@@ -156,6 +162,11 @@ export async function approveApplication(applicationId: string) {
         schoolId,
         role:     'school_admin',
       });
+    } else {
+      // User already had a membership (e.g. signed up as a learner) — upgrade to school_admin
+      await db.update(schoolMember)
+        .set({ role: 'school_admin', schoolId })
+        .where(eq(schoolMember.userId, userId));
     }
 
     revalidatePath('/platform/admin');
@@ -195,16 +206,43 @@ export async function sendCreatorCredentials(applicationId: string) {
 
     const tempPassword = generateTempPassword();
 
+    let userId: string;
     if (existingUsers.length === 0) {
       // No account yet — create one
-      await auth.api.signUpEmail({
+      const signUpResult = await auth.api.signUpEmail({
         body: { email: app.email, password: tempPassword, name: app.name },
       });
+      userId = signUpResult.user.id;
     } else {
-      // Reset password via admin API
-      await auth.api.admin.setUserPassword({
-        body: { userId: existingUsers[0].id, newPassword: tempPassword },
-      });
+      userId = existingUsers[0].id;
+      // Reset password directly in the credentials account row
+      const hashed = await hashPassword(tempPassword);
+      await db.update(account)
+        .set({ password: hashed, updatedAt: new Date() })
+        .where(eq(account.userId, userId));
+    }
+
+    // Mark that this account needs a password change on next login
+    await db.update(user)
+      .set({ mustChangePassword: true })
+      .where(eq(user.id, userId));
+
+    // Ensure schoolMember link exists and role is school_admin
+    if (app.schoolId) {
+      const existingMember = await db.select({ id: schoolMember.id })
+        .from(schoolMember).where(eq(schoolMember.userId, userId)).limit(1);
+      if (existingMember.length === 0) {
+        await db.insert(schoolMember).values({
+          id:       `member-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          userId,
+          schoolId: app.schoolId,
+          role:     'school_admin',
+        });
+      } else {
+        await db.update(schoolMember)
+          .set({ role: 'school_admin', schoolId: app.schoolId })
+          .where(eq(schoolMember.userId, userId));
+      }
     }
 
     // Send credentials email

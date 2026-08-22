@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth'
 import { pool } from '@/lib/db'
-import { sendWelcomeEmail } from '@/lib/plunk'
+import { sendWelcomeEmail, sendPasswordResetEmail } from '@/lib/plunk'
 
 const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN; // e.g. "ObinAcademy.com"
 
@@ -17,6 +17,13 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     autoSignIn: true,
+    sendResetPassword: async ({ user, url }) => {
+      sendPasswordResetEmail({
+        email:    user.email,
+        name:     user.name ?? user.email,
+        resetUrl: url,
+      }).catch(console.error);
+    },
   },
   trustedOrigins: [
     'http://localhost:3000',
