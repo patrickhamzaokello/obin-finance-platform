@@ -297,7 +297,7 @@ export default function CourseEditor() {
                 value={course.thumbnail}
                 onChange={(value) => setCourse({ ...course, thumbnail: value })}
                 fileType="thumbnail"
-                schoolSlug={''}
+                schoolSlug={schoolSlug}
                 label="Thumbnail"
                 placeholder="https://…"
               />
@@ -363,7 +363,7 @@ export default function CourseEditor() {
                     key={mod.id}
                     module={mod}
                     index={index}
-                    schoolSlug={''}
+                    schoolSlug={schoolSlug}
                     onDelete={() => handleDeleteModule(mod.id)}
                     onUpdate={handleModuleUpdate}
                     showToast={showToast}
