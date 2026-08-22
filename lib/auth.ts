@@ -1,5 +1,6 @@
 import { betterAuth } from 'better-auth'
 import { pool } from '@/lib/db'
+import { sendWelcomeEmail } from '@/lib/plunk'
 
 const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN; // e.g. "ObinAcademy.com"
 
@@ -37,6 +38,20 @@ export const auth = betterAuth({
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // 1 day
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          const base = process.env.BETTER_AUTH_URL ?? 'https://obinacademy.com';
+          sendWelcomeEmail({
+            email:    user.email,
+            name:     user.name ?? user.email,
+            signInUrl: `${base}/learn/dashboard`,
+          }).catch(console.error);
+        },
+      },
+    },
   },
   advanced: {
     // Unique prefix prevents platform-admin cookies (set on the apex domain in a

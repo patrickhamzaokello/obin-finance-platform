@@ -5,6 +5,11 @@ import { creatorApplication, school } from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { requirePlatformOwner } from '@/lib/school-context';
 import { revalidatePath } from 'next/cache';
+import {
+  sendApplicationReceivedEmail,
+  sendApplicationApprovedEmail,
+  sendApplicationRejectedEmail,
+} from '@/lib/plunk';
 
 function slugify(text: string) {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -47,15 +52,26 @@ export async function submitCreatorApplication(data: {
       if (s === 'approved') return { success: false, error: 'This email has already been approved. Check your inbox for your channel link.' };
     }
 
+    const trimmedName    = data.name.trim();
+    const trimmedEmail   = data.email.toLowerCase().trim();
+    const trimmedChannel = data.channelName.trim();
+
     await db.insert(creatorApplication).values({
       id:          `app-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      name:        data.name.trim(),
-      email:       data.email.toLowerCase().trim(),
+      name:        trimmedName,
+      email:       trimmedEmail,
       phone:       data.phone.trim(),
       socialLink:  data.socialLink.trim(),
-      channelName: data.channelName.trim(),
+      channelName: trimmedChannel,
       bio:         data.bio?.trim() || null,
     });
+
+    // Send confirmation email to applicant (non-blocking)
+    sendApplicationReceivedEmail({
+      email:       trimmedEmail,
+      name:        trimmedName,
+      channelName: trimmedChannel,
+    }).catch(console.error);
 
     return { success: true };
   } catch (error) {
@@ -102,6 +118,15 @@ export async function approveApplication(applicationId: string) {
     revalidatePath('/platform/admin');
     revalidatePath('/platform/admin/applications');
 
+    // Email the creator their studio link (non-blocking)
+    const base = process.env.BETTER_AUTH_URL ?? 'https://obinacademy.com';
+    sendApplicationApprovedEmail({
+      email:       app.email,
+      name:        app.name,
+      channelName: app.channelName,
+      studioUrl:   `${base}/studio`,
+    }).catch(console.error);
+
     return { success: true, data: { slug, schoolId } };
   } catch (error) {
     return { success: false, error: String(error) };
@@ -111,10 +136,23 @@ export async function approveApplication(applicationId: string) {
 export async function rejectApplication(applicationId: string, notes?: string) {
   try {
     await requirePlatformOwner();
+
+    const apps = await db.select().from(creatorApplication).where(eq(creatorApplication.id, applicationId)).limit(1);
+    if (!apps.length) return { success: false, error: 'Application not found' };
+    const app = apps[0];
+
     await db.update(creatorApplication)
       .set({ status: 'rejected', notes: notes ?? null, reviewedAt: new Date() })
       .where(eq(creatorApplication.id, applicationId));
     revalidatePath('/platform/admin/applications');
+
+    // Notify applicant (non-blocking)
+    sendApplicationRejectedEmail({
+      email:  app.email,
+      name:   app.name,
+      notes:  notes,
+    }).catch(console.error);
+
     return { success: true };
   } catch (error) {
     return { success: false, error: String(error) };

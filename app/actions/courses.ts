@@ -7,7 +7,7 @@ import { eq, and, desc, count, inArray } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { getCurrentSchool } from '@/lib/school-context';
-import { sendEnrollmentConfirmation } from '@/lib/plunk';
+import { sendEnrollmentConfirmation, sendCertificateEmail } from '@/lib/plunk';
 
 async function getUserId() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -359,8 +359,9 @@ export async function markModuleComplete(courseId: string, moduleId: string) {
       if (!alreadyCerted.length) {
         const courseRow = await db.select().from(course).where(eq(course.id, courseId)).limit(1);
         const s         = await getCurrentSchool();
+        const certId    = `cert-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
         await db.insert(certificate).values({
-          id:             `cert-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          id:             certId,
           userId,
           courseId,
           learnerName:    session.user.name ?? session.user.email ?? 'Learner',
@@ -372,6 +373,16 @@ export async function markModuleComplete(courseId: string, moduleId: string) {
         await db.update(courseEnrollment)
           .set({ completedAt: new Date() })
           .where(and(eq(courseEnrollment.userId, userId), eq(courseEnrollment.courseId, courseId)));
+
+        // Email the learner their certificate (non-blocking)
+        const base    = process.env.BETTER_AUTH_URL ?? 'https://obinacademy.com';
+        const certUrl = `${base}/learn/achievements`;
+        sendCertificateEmail({
+          email:       session.user.email,
+          name:        session.user.name ?? session.user.email ?? 'Learner',
+          courseTitle: courseRow[0]?.title ?? 'your course',
+          certUrl,
+        }).catch(console.error);
       }
     }
 
