@@ -20,8 +20,8 @@ function buildC(primary: string, accent: string) {
     muted:    '#57655D',
     muted2:   '#8A968F',
     green:    primary,
-    deepBg:   '#0A3D2E',
-    deepCard: '#0C4836',
+    deepBg:   '#06007A',
+    deepCard: '#08008E',
     greenText: primary,
     lime:     accent,
     surface2: '#F4F7F5',
@@ -62,8 +62,8 @@ export default async function CreatorProfilePage({
   const bannerUrl    = (s as any).bannerUrl     ? convertBlobUrlToApiUrl((s as any).bannerUrl)    : null;
   const category     = ((s as any).category     as string | null) ?? 'Creator';
   const bio          = (s as any).bio           as string | null;
-  const primaryColor = ((s as any).primaryColor as string | null) ?? '#0E9F6E';
-  const accentColor  = ((s as any).accentColor  as string | null) ?? '#CDFB5E';
+  const primaryColor = ((s as any).primaryColor as string | null) ?? '#0B00FF';
+  const accentColor  = ((s as any).accentColor  as string | null) ?? '#BBBBFF';
   const tagline      = (s as any).tagline       as string | null;
   const heroHeadline = (s as any).heroHeadline  as string | null;
 

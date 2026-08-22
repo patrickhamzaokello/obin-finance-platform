@@ -14,7 +14,7 @@ type App = {
 
 const statusColor: Record<string, { bg: string; text: string; label: string }> = {
   pending:  { bg: '#FEF3C7', text: '#92400E', label: 'Pending review' },
-  approved: { bg: '#D1FAE5', text: '#065F46', label: 'Approved' },
+  approved: { bg: '#BBBBFF', text: '#06007A', label: 'Approved' },
   rejected: { bg: '#FEE2E2', text: '#991B1B', label: 'Rejected' },
 };
 
@@ -81,7 +81,7 @@ export default function ApplicationsClient({ applications }: { applications: App
         {[
           { label: 'Total', value: counts.all,      color: '#4F46E5', bg: '#EEF2FF' },
           { label: 'Pending', value: counts.pending, color: '#D97706', bg: '#FEF3C7' },
-          { label: 'Approved', value: counts.approved, color: '#065F46', bg: '#D1FAE5' },
+          { label: 'Approved', value: counts.approved, color: '#06007A', bg: '#BBBBFF' },
           { label: 'Rejected', value: counts.rejected, color: '#991B1B', bg: '#FEE2E2' },
         ].map(({ label, value, color, bg }) => (
           <div key={label} style={{ background: '#fff', borderRadius: 14, padding: '18px 20px', border: '1px solid #E6ECE8' }}>
@@ -106,9 +106,9 @@ export default function ApplicationsClient({ applications }: { applications: App
 
       {/* Approved slug banner */}
       {approvedSlug && (
-        <div style={{ background: '#D1FAE5', border: '1px solid #6EE7B7', borderRadius: 12, padding: '14px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+        <div style={{ background: '#BBBBFF', border: '1px solid #6EE7B7', borderRadius: 12, padding: '14px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
           <div>
-            <p style={{ fontSize: 13, fontWeight: 700, color: '#065F46', margin: '0 0 2px' }}>Channel created successfully!</p>
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#06007A', margin: '0 0 2px' }}>Channel created successfully!</p>
             <p style={{ fontSize: 13, color: '#047857', margin: 0 }}>
               Share this link with the creator to sign up:{' '}
               <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>
@@ -124,7 +124,7 @@ export default function ApplicationsClient({ applications }: { applications: App
             }} style={{ padding: '7px 14px', background: '#059669', color: '#fff', borderRadius: 8, fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
               <Copy size={12} /> Copy link
             </button>
-            <button onClick={() => setApprovedSlug(null)} style={{ padding: '7px 10px', background: 'transparent', color: '#065F46', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button>
+            <button onClick={() => setApprovedSlug(null)} style={{ padding: '7px 10px', background: 'transparent', color: '#06007A', border: 'none', cursor: 'pointer', fontSize: 18 }}>×</button>
           </div>
         </div>
       )}
@@ -174,7 +174,7 @@ export default function ApplicationsClient({ applications }: { applications: App
                   <div>
                     <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#8A968F', margin: '0 0 3px' }}>Social link</p>
                     <a href={app.socialLink} target="_blank" rel="noreferrer"
-                      style={{ fontSize: 13, color: '#0E9F6E', fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, wordBreak: 'break-all' }}>
+                      style={{ fontSize: 13, color: '#0B00FF', fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, wordBreak: 'break-all' }}>
                       {app.socialLink.replace(/^https?:\/\/(www\.)?/, '').slice(0, 40)}{app.socialLink.length > 50 ? '…' : ''}
                       <ExternalLink size={11} />
                     </a>
@@ -198,7 +198,7 @@ export default function ApplicationsClient({ applications }: { applications: App
                 {app.status === 'pending' && (
                   <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                     <button onClick={() => handleApprove(app.id)} disabled={isActing}
-                      style={{ padding: '9px 18px', background: '#0E9F6E', color: '#fff', borderRadius: 10, fontSize: 13, fontWeight: 700, border: 'none', cursor: isActing ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6, opacity: isActing ? 0.7 : 1 }}>
+                      style={{ padding: '9px 18px', background: '#0B00FF', color: '#fff', borderRadius: 10, fontSize: 13, fontWeight: 700, border: 'none', cursor: isActing ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6, opacity: isActing ? 0.7 : 1 }}>
                       {isActing ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> : <Check size={13} />}
                       Approve & create channel
                     </button>
@@ -229,7 +229,7 @@ export default function ApplicationsClient({ applications }: { applications: App
                 )}
 
                 {app.status === 'approved' && app.schoolId && (
-                  <p style={{ fontSize: 13, color: '#065F46', fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <p style={{ fontSize: 13, color: '#06007A', fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
                     <CheckCircle size={14} /> Channel created — ID: <span style={{ fontFamily: 'monospace' }}>{app.schoolId}</span>
                   </p>
                 )}

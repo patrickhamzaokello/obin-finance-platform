@@ -152,7 +152,7 @@ export default function CreatorProfilePage() {
   const [twitter,      setTwitter]      = useState('');
   const [instagram,    setInstagram]    = useState('');
   const [youtube,      setYoutube]      = useState('');
-  const [primaryColor, setPrimaryColor] = useState('#0E9F6E');
+  const [primaryColor, setPrimaryColor] = useState('#0B00FF');
   const [accentColor,  setAccentColor]  = useState('#CDFB5E');
   const [tagline,      setTagline]      = useState('');
   const [heroHeadline, setHeroHeadline] = useState('');
@@ -174,7 +174,7 @@ export default function CreatorProfilePage() {
           setInstagram(social.instagram ?? '');
           setYoutube(social.youtube ?? '');
         } catch { /* empty */ }
-        setPrimaryColor(p.primaryColor ?? '#0E9F6E');
+        setPrimaryColor(p.primaryColor ?? '#0B00FF');
         setAccentColor(p.accentColor ?? '#CDFB5E');
         setTagline(p.tagline ?? '');
         setHeroHeadline(p.heroHeadline ?? '');
@@ -327,7 +327,7 @@ export default function CreatorProfilePage() {
               <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)}
                 className="w-10 h-10 rounded-lg border border-black/[0.08] cursor-pointer p-0.5 bg-white" />
               <input value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)}
-                className={inputCls + ' flex-1'} placeholder="#0E9F6E" maxLength={7} />
+                className={inputCls + ' flex-1'} placeholder="#0B00FF" maxLength={7} />
             </div>
           </div>
           <div>
@@ -347,7 +347,7 @@ export default function CreatorProfilePage() {
           <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Quick Presets</p>
           <div className="flex flex-wrap gap-2">
             {[
-              { label: 'Forest',   primary: '#0E9F6E', accent: '#CDFB5E' },
+              { label: 'Forest',   primary: '#0B00FF', accent: '#CDFB5E' },
               { label: 'Ocean',    primary: '#0066CC', accent: '#7DF9FF' },
               { label: 'Sunset',   primary: '#E8440A', accent: '#FFD166' },
               { label: 'Midnight', primary: '#6E3CCA', accent: '#E0BBFF' },

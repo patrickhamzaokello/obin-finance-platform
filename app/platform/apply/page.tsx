@@ -8,8 +8,8 @@ import { submitCreatorApplication } from '@/app/actions/applications';
 const C = {
   ink:       '#0B1411',
   muted:     '#57655D',
-  green:     '#0E9F6E',
-  deepBg:    '#0A3D2E',
+  green:     '#0B00FF',
+  deepBg:    '#06007A',
   greenText: '#0A6B4A',
   lime:      '#CDFB5E',
   surface2:  '#F4F7F5',

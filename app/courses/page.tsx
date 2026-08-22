@@ -118,7 +118,7 @@ export default async function CoursesMarketplace({ searchParams }: Props) {
               placeholder="Search courses…"
               style={{ flex: 1, padding: '9px 14px', border: '1px solid #E4E1DA', borderRadius: 8, fontSize: 14, background: '#fff', outline: 'none' }}
             />
-            <button type="submit" style={{ padding: '9px 18px', background: '#0E9F6E', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 600, cursor: 'pointer', fontSize: 14 }}>
+            <button type="submit" style={{ padding: '9px 18px', background: '#0B00FF', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 600, cursor: 'pointer', fontSize: 14 }}>
               Search
             </button>
           </form>
@@ -133,9 +133,9 @@ export default async function CoursesMarketplace({ searchParams }: Props) {
               style={{
                 padding: '6px 14px', borderRadius: 100, fontSize: 13, fontWeight: 600,
                 textDecoration: 'none',
-                background: category === cat ? '#0E9F6E' : '#fff',
+                background: category === cat ? '#0B00FF' : '#fff',
                 color:      category === cat ? '#fff' : '#78716C',
-                border:     `1px solid ${category === cat ? '#0E9F6E' : '#E4E1DA'}`,
+                border:     `1px solid ${category === cat ? '#0B00FF' : '#E4E1DA'}`,
               }}
             >{cat}</Link>
           ))}
@@ -181,7 +181,7 @@ export default async function CoursesMarketplace({ searchParams }: Props) {
                       {r.thumbnail ? (
                         <img src={r.thumbnail} alt={r.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
-                        <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg,#0E9F6E22,#0E9F6E44)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>
+                        <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg,#0B00FF22,#0B00FF44)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>
                           📚
                         </div>
                       )}
@@ -211,13 +211,13 @@ export default async function CoursesMarketplace({ searchParams }: Props) {
                         {r.schoolLogo ? (
                           <img src={r.schoolLogo} alt={r.schoolName} style={{ width: 22, height: 22, borderRadius: 4, objectFit: 'cover' }} />
                         ) : (
-                          <div style={{ width: 22, height: 22, borderRadius: 4, background: '#0E9F6E', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#fff', fontWeight: 700 }}>
+                          <div style={{ width: 22, height: 22, borderRadius: 4, background: '#0B00FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#fff', fontWeight: 700 }}>
                             {r.schoolName.charAt(0)}
                           </div>
                         )}
                         <span style={{ fontSize: 12, color: '#78716C', fontWeight: 500 }}>{r.schoolName}</span>
                         {r.category && (
-                          <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 600, color: '#0E9F6E', background: '#F0FDF4', padding: '2px 7px', borderRadius: 6 }}>{r.category}</span>
+                          <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 600, color: '#0B00FF', background: '#EEEEFF', padding: '2px 7px', borderRadius: 6 }}>{r.category}</span>
                         )}
                       </div>
 
@@ -233,7 +233,7 @@ export default async function CoursesMarketplace({ searchParams }: Props) {
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div>
                           {price === 0 ? (
-                            <span style={{ fontSize: 15, fontWeight: 700, color: '#0E9F6E' }}>Free</span>
+                            <span style={{ fontSize: 15, fontWeight: 700, color: '#0B00FF' }}>Free</span>
                           ) : (
                             <span style={{ fontSize: 15, fontWeight: 800, color: '#1C1917' }}>
                               UGX {new Intl.NumberFormat('en-UG').format(price)}
@@ -274,7 +274,7 @@ export default async function CoursesMarketplace({ searchParams }: Props) {
                 style={{
                   padding: '8px 14px', border: '1px solid #E4E1DA', borderRadius: 8, fontSize: 14, fontWeight: 600,
                   textDecoration: 'none',
-                  background: pg === page ? '#0E9F6E' : '#fff',
+                  background: pg === page ? '#0B00FF' : '#fff',
                   color:      pg === page ? '#fff' : '#1C1917',
                 }}
               >
