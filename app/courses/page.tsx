@@ -1,6 +1,6 @@
 ﻿import { db } from '@/lib/db';
 import { course, school, courseEnrollment } from '@/lib/db/schema';
-import { eq, desc, count } from 'drizzle-orm';
+import { eq, and, desc, count } from 'drizzle-orm';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { PublicNav } from '@/components/public-nav';
