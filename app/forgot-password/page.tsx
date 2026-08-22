@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { authClient } from '@/lib/auth-client';
 import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
@@ -15,13 +14,22 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
-    const { error: err } = await authClient.forgetPassword({
-      email,
-      redirectTo: '/reset-password',
-    });
-    setLoading(false);
-    if (err) { setError(err.message ?? 'Something went wrong. Please try again.'); return; }
-    setSent(true);
+    try {
+      const res = await fetch('/api/auth/forget-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, redirectTo: `${window.location.origin}/reset-password` }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.message ?? 'Something went wrong. Please try again.');
+      }
+      setSent(true);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   }
 
   const inp: React.CSSProperties = {
