@@ -10,13 +10,21 @@ import { convertBlobUrlToApiUrl, isBlobUrl } from '@/lib/blob-url';
 import { extractYouTubeId } from '@/lib/video-url';
 import Link from 'next/link';
 import {
-  ArrowLeft, ChevronDown, ChevronUp,
-  Play, FileText, CheckCircle2, Lock,
-  ChevronRight, Loader2,
+  ArrowLeft, Play, FileText, CheckCircle2,
+  Lock, ChevronRight, Loader2, ChevronDown, ChevronUp,
+  BookOpen, ExternalLink,
 } from 'lucide-react';
 
-// ─── URL helpers ──────────────────────────────────────────────────────────────
+// ─── tokens ──────────────────────────────────────────────────────────────────
+const ACCENT = '#0B00FF';
+const INK    = '#0E0E1A';
+const MUTED  = '#6B6B8A';
+const IVORY  = '#F7F5F0';
+const RULE   = '#E2DDD6';
+const WHITE  = '#FFFFFF';
+const NAV_BG = '#0A0A16';
 
+// ─── URL helpers ──────────────────────────────────────────────────────────────
 function resolveYouTubeEmbed(v: { url?: string | null; youtubeUrl?: string | null }): string | null {
   const raw = v.youtubeUrl || v.url || '';
   if (!raw.includes('youtube.com') && !raw.includes('youtu.be')) return null;
@@ -36,7 +44,6 @@ function resolvePdfUrl(p: { url?: string | null }): string | null {
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
-
 export default function LearningClient({ courseId }: { courseId: string }) {
   const router = useRouter();
 
@@ -49,6 +56,7 @@ export default function LearningClient({ courseId }: { courseId: string }) {
   const [loading,          setLoading]          = useState(true);
   const [marking,          setMarking]          = useState(false);
   const [justCompleted,    setJustCompleted]    = useState(false);
+  const [sidebarOpen,      setSidebarOpen]      = useState(false); // mobile
 
   useEffect(() => {
     (async () => {
@@ -97,6 +105,7 @@ export default function LearningClient({ courseId }: { courseId: string }) {
     setCurrentType(type);
     setCurrentContentId(contentId);
     setJustCompleted(false);
+    setSidebarOpen(false);
     setExpandedModules(prev => { const n = new Set(prev); n.add(moduleId); return n; });
   }, []);
 
@@ -133,12 +142,14 @@ export default function LearningClient({ courseId }: { courseId: string }) {
     else                           { setCurrentType(null);    setCurrentContentId(null); }
   };
 
+  // ── loading ──────────────────────────────────────────────────────────────
   if (loading) return (
-    <div className="min-h-screen bg-[#F5F5F7] flex items-center justify-center">
-      <div className="text-center">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-        <p className="text-sm text-muted-foreground">Loading course…</p>
+    <div style={{ minHeight: '100vh', background: NAV_BG, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ width: 36, height: 36, border: `2.5px solid ${ACCENT}`, borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin .8s linear infinite', margin: '0 auto 16px' }} />
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', fontFamily: 'system-ui, sans-serif' }}>Loading course…</p>
       </div>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
 
@@ -146,302 +157,421 @@ export default function LearningClient({ courseId }: { courseId: string }) {
 
   const currentModule  = course.modules.find((m: any) => m.id === currentModuleId);
   const currentVideo   = currentType === 'video' && currentModule ? currentModule.videos.find((v: any) => v.id === currentContentId) : null;
-  const currentPdf     = currentType === 'pdf'   && currentModule ? currentModule.pdfs.find((p: any) => p.id === currentContentId)   : null;
+  const currentPdf     = currentType === 'pdf'   && currentModule ? currentModule.pdfs.find((p: any)   => p.id === currentContentId) : null;
 
   const youtubeUrl   = currentVideo ? resolveYouTubeEmbed(currentVideo)  : null;
   const fileVideoUrl = currentVideo ? resolveFileVideoUrl(currentVideo)   : null;
   const pdfUrl       = currentPdf   ? resolvePdfUrl(currentPdf)           : null;
   const hasContent   = !!(youtubeUrl || fileVideoUrl || pdfUrl);
 
-  const totalModules = course.modules.length;
-  const doneCount    = completedModules.size;
-  const progressPct  = totalModules > 0 ? Math.round((doneCount / totalModules) * 100) : 0;
-
+  const totalModules     = course.modules.length;
+  const doneCount        = completedModules.size;
+  const progressPct      = totalModules > 0 ? Math.round((doneCount / totalModules) * 100) : 0;
   const currentModuleIdx = course.modules.findIndex((m: any) => m.id === currentModuleId);
   const hasNextModule    = currentModuleIdx < totalModules - 1;
   const isCurrentDone    = currentModuleId ? completedModules.has(currentModuleId) : false;
   const allDone          = doneCount === totalModules && totalModules > 0;
 
-  return (
-    <div className="min-h-screen bg-[#F5F5F7]">
+  const contentTitle = currentVideo?.title ?? currentPdf?.title ?? null;
 
-      {/* ── Header ── */}
-      <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-black/[0.06]">
-        <div className="flex items-center gap-3 px-4 py-3 max-w-screen-2xl mx-auto">
-          <Link href="/dashboard"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary transition-colors shrink-0">
-            <ArrowLeft size={15} /> Back
+  return (
+    <div style={{ minHeight: '100vh', background: IVORY, display: 'flex', flexDirection: 'column', fontFamily: 'system-ui, sans-serif' }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
+        *, *::before, *::after { box-sizing: border-box; }
+        @keyframes spin  { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+        /* sidebar scroll */
+        .lc-sidebar { overflow-y: auto; scrollbar-width: thin; scrollbar-color: ${RULE} transparent; }
+        .lc-sidebar::-webkit-scrollbar { width: 4px; }
+        .lc-sidebar::-webkit-scrollbar-track { background: transparent; }
+        .lc-sidebar::-webkit-scrollbar-thumb { background: ${RULE}; }
+
+        /* content row hover */
+        .content-row { transition: background .12s; }
+        .content-row:hover { background: rgba(11,0,255,0.04) !important; }
+
+        /* mobile sidebar overlay */
+        .mob-overlay { display: none; }
+        @media (max-width: 1023px) {
+          .mob-overlay { display: block; }
+          .desktop-sidebar { display: none !important; }
+          .mobile-sidebar-panel {
+            position: fixed; inset: 0; z-index: 50;
+            display: flex; align-items: stretch;
+          }
+          .mobile-sidebar-drawer {
+            width: min(360px, 90vw);
+            background: ${WHITE};
+            border-right: 1px solid ${RULE};
+            display: flex; flex-direction: column;
+            animation: slideIn .2s ease;
+          }
+          @keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+          .mobile-sidebar-scrim {
+            flex: 1; background: rgba(10,10,22,0.5);
+          }
+          .mob-nav-btn { display: flex !important; }
+        }
+        @media (min-width: 1024px) {
+          .mob-nav-btn { display: none !important; }
+        }
+      `}</style>
+
+      {/* ── NAV BAR ── */}
+      <header style={{ background: NAV_BG, borderBottom: `1px solid rgba(255,255,255,0.07)`, position: 'sticky', top: 0, zIndex: 40, flexShrink: 0 }}>
+        <div style={{ maxWidth: 1440, margin: '0 auto', padding: '0 24px', height: 56, display: 'flex', alignItems: 'center', gap: 16 }}>
+
+          {/* Back */}
+          <Link href="/learn/dashboard" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.45)', textDecoration: 'none', flexShrink: 0 }}>
+            <ArrowLeft size={14} />
+            <span style={{ display: 'none' }} className="sm-inline">Dashboard</span>
           </Link>
-          <div className="w-px h-4 bg-border shrink-0" />
-          <h1 className="text-sm font-semibold text-foreground truncate flex-1">{course.title}</h1>
-          <div className="hidden sm:flex items-center gap-3 shrink-0">
-            <span className="text-xs text-muted-foreground">{doneCount}/{totalModules} modules</span>
-            <div className="w-28 h-1.5 bg-secondary rounded-full overflow-hidden">
-              <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${progressPct}%` }} />
+
+          {/* Divider */}
+          <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.1)', flexShrink: 0 }} />
+
+          {/* Course title */}
+          <h1 style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.75)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>
+            {course.title}
+          </h1>
+
+          {/* Progress — desktop */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', fontVariantNumeric: 'tabular-nums' }}>
+              {doneCount}/{totalModules}
+            </span>
+            <div style={{ width: 120, height: 3, background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${progressPct}%`, background: ACCENT, transition: 'width .5s ease' }} />
             </div>
-            <span className="text-xs font-semibold text-primary">{progressPct}%</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: ACCENT, fontVariantNumeric: 'tabular-nums' }}>
+              {progressPct}%
+            </span>
           </div>
+
+          {/* Mobile: open sidebar */}
+          <button className="mob-nav-btn" onClick={() => setSidebarOpen(true)}
+            style={{ display: 'none', alignItems: 'center', gap: 6, padding: '7px 14px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.65)', fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
+            <BookOpen size={13} /> Contents
+          </button>
         </div>
       </header>
 
-      {/* ── Two-column layout — single scroll ── */}
-      <div className="max-w-screen-2xl mx-auto flex gap-0 lg:gap-6 px-0 lg:px-6 py-0 lg:py-6 items-start">
+      {/* ── BODY ── */}
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', maxWidth: 1440, margin: '0 auto', width: '100%' }}>
 
-        {/* ── Left: player + info ── */}
-        <div className="flex-1 min-w-0">
+        {/* ── LEFT: player + info ── */}
+        <main style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
 
           {/* Player */}
-          <div className="bg-black lg:rounded-2xl overflow-hidden shadow-sm">
+          <div style={{ background: '#000', flexShrink: 0 }}>
             {youtubeUrl ? (
-              <div className="aspect-video">
-                <iframe key={youtubeUrl} src={youtubeUrl}
-                  className="w-full h-full border-0"
+              <div style={{ aspectRatio: '16/9' }}>
+                <iframe key={youtubeUrl} src={youtubeUrl} style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen title={currentVideo?.title || 'Video'} />
               </div>
             ) : fileVideoUrl ? (
-              <div className="aspect-video">
+              <div style={{ aspectRatio: '16/9' }}>
                 <video key={fileVideoUrl} src={fileVideoUrl} controls controlsList="nodownload"
-                  className="w-full h-full"
+                  style={{ width: '100%', height: '100%', display: 'block' }}
                   poster={course.thumbnail ? convertBlobUrlToApiUrl(course.thumbnail) : undefined} />
               </div>
             ) : pdfUrl ? (
-              <div style={{ height: '72vh' }}>
-                <iframe key={pdfUrl} src={pdfUrl} className="w-full h-full border-0" title={currentPdf?.title || 'PDF'} />
+              <div style={{ height: '72vh', background: '#1a1a2e' }}>
+                <iframe key={pdfUrl} src={pdfUrl} style={{ width: '100%', height: '100%', border: 'none', display: 'block' }} title={currentPdf?.title || 'PDF'} />
               </div>
             ) : (
-              <div className="aspect-video flex items-center justify-center bg-[#F5F5F7]">
-                <div className="text-center">
-                  <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center mx-auto mb-4 shadow-sm">
-                    <Play className="w-6 h-6 text-primary ml-1" />
+              <div style={{ aspectRatio: '16/9', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0D0D1A' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ width: 64, height: 64, border: `1px solid rgba(255,255,255,0.12)`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                    <Play size={24} style={{ color: 'rgba(255,255,255,0.25)', marginLeft: 3 }} />
                   </div>
-                  <p className="text-sm font-medium text-foreground">Select a resource to begin</p>
-                  <p className="text-xs text-muted-foreground mt-1">Choose from the panel on the right</p>
+                  <p style={{ fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.4)', margin: '0 0 6px' }}>No resource selected</p>
+                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.2)' }}>Choose a lesson from the panel</p>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Info panel below player */}
-          <div className="px-4 lg:px-0 py-5 space-y-4">
+          {/* ── Info strip ── */}
+          <div style={{ background: WHITE, borderBottom: `1px solid ${RULE}`, padding: '24px 32px', flexShrink: 0 }}>
 
-            {/* Title + status */}
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                {currentModule && (
-                  <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">
-                    {currentModule.title}
-                  </p>
-                )}
-                <h2 className="text-lg font-bold text-foreground leading-snug">
-                  {currentVideo?.title ?? currentPdf?.title ?? course.title}
-                </h2>
-              </div>
+            {/* Breadcrumb */}
+            {currentModule && (
+              <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: MUTED, margin: '0 0 8px' }}>
+                {currentModule.title}
+              </p>
+            )}
+
+            {/* Title + completed badge */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 20, marginBottom: 20 }}>
+              <h2 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 26, fontWeight: 700, color: INK, margin: 0, lineHeight: 1.2, flex: 1 }}>
+                {contentTitle ?? course.title}
+              </h2>
               {isCurrentDone && (
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary shrink-0 mt-1 bg-primary/10 px-2.5 py-1 rounded-full">
-                  <CheckCircle2 size={13} /> Completed
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#059669', background: '#D1FAE5', padding: '6px 12px', flexShrink: 0, marginTop: 4, letterSpacing: '0.04em' }}>
+                  <CheckCircle2 size={12} /> Completed
+                </div>
               )}
             </div>
 
-            {/* Actions */}
+            {/* Action bar */}
             {hasContent && (
-              <div className="flex flex-wrap items-center gap-3 pt-1 border-t border-black/[0.06]">
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12, paddingTop: 20, borderTop: `1px solid ${RULE}` }}>
                 {pdfUrl && (
                   <a href={pdfUrl} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-secondary hover:bg-secondary/80 text-foreground text-sm font-medium rounded-xl transition-colors">
-                    <FileText size={13} /> Open PDF
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '10px 18px', border: `1.5px solid ${RULE}`, color: INK, fontSize: 13, fontWeight: 600, textDecoration: 'none', background: IVORY }}>
+                    <ExternalLink size={12} /> Open in new tab
                   </a>
                 )}
 
                 {!isCurrentDone ? (
                   <button onClick={handleMarkComplete} disabled={marking}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-semibold rounded-xl transition-colors disabled:opacity-60 shadow-sm">
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 22px', background: marking ? RULE : ACCENT, color: marking ? MUTED : WHITE, border: 'none', fontSize: 13, fontWeight: 700, cursor: marking ? 'not-allowed' : 'pointer', opacity: marking ? 0.6 : 1 }}>
                     {marking
-                      ? <><Loader2 size={14} className="animate-spin" /> Saving…</>
+                      ? <><Loader2 size={14} style={{ animation: 'spin .9s linear infinite' }} /> Saving…</>
                       : <><CheckCircle2 size={14} /> Mark module complete</>}
                   </button>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
-                    <CheckCircle2 size={15} /> Module complete
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 700, color: '#059669' }}>
+                    <CheckCircle2 size={14} /> Module complete
                   </span>
                 )}
 
+                <div style={{ flex: 1 }} />
+
                 {(isCurrentDone || justCompleted) && hasNextModule && (
                   <button onClick={goToNextModule}
-                    className="inline-flex items-center gap-2 px-4 py-2 border border-border hover:bg-secondary text-foreground text-sm font-semibold rounded-xl transition-colors ml-auto">
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 22px', border: `1.5px solid ${RULE}`, background: WHITE, color: INK, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
                     Next module <ChevronRight size={14} />
                   </button>
                 )}
 
                 {allDone && (
-                  <span className="text-sm font-semibold text-primary ml-auto">🎉 Course complete!</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: ACCENT }}>
+                    🎉 Course complete!
+                  </span>
                 )}
               </div>
             )}
-
-            {/* Module description */}
-            {currentModule?.description && (
-              <div className="bg-white rounded-xl px-4 py-3.5 shadow-sm border border-black/[0.06]">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">About this module</p>
-                <p className="text-sm text-muted-foreground leading-relaxed">{currentModule.description}</p>
-              </div>
-            )}
           </div>
-        </div>
 
-        {/* ── Right: module playlist ── */}
-        <aside className="hidden lg:block w-96 shrink-0">
-          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-
-            {/* Playlist header */}
-            <div className="px-5 py-4 border-b border-black/[0.06] bg-secondary">
-              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Course content</p>
-              <p className="text-sm font-semibold text-foreground">{course.title}</p>
-              <div className="mt-3 flex items-center gap-3">
-                <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-                  <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${progressPct}%` }} />
-                </div>
-                <span className="text-xs text-muted-foreground shrink-0">{doneCount}/{totalModules}</span>
-              </div>
+          {/* Module description */}
+          {currentModule?.description && (
+            <div style={{ padding: '24px 32px', background: IVORY, borderBottom: `1px solid ${RULE}` }}>
+              <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: MUTED, margin: '0 0 8px' }}>About this module</p>
+              <p style={{ fontSize: 15, color: INK, lineHeight: 1.75, margin: 0 }}>{currentModule.description}</p>
             </div>
+          )}
+        </main>
 
-            {/* Module list */}
-            <div className="divide-y divide-black/[0.04]">
-              {course.modules.map((mod: any, index: number) => {
-                const isExpanded = expandedModules.has(mod.id);
-                const isActive   = currentModuleId === mod.id;
-                const isDone     = completedModules.has(mod.id);
-                const videoCount = mod.videos.length;
-                const pdfCount   = mod.pdfs.length;
-
-                return (
-                  <div key={mod.id}>
-                    <button
-                      onClick={() => toggleExpanded(mod.id)}
-                      className={`w-full text-left flex items-start gap-3 px-5 py-4 transition-colors ${
-                        isActive ? 'bg-primary/[0.06]' : 'hover:bg-secondary'
-                      }`}
-                    >
-                      <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold ${
-                        isDone   ? 'bg-primary/10 text-primary'
-                        : isActive ? 'bg-primary text-primary-foreground'
-                        : 'bg-secondary text-muted-foreground'
-                      }`}>
-                        {isDone ? <CheckCircle2 size={13} /> : index + 1}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-semibold leading-snug ${isActive ? 'text-primary' : isDone ? 'text-muted-foreground' : 'text-foreground'}`}>
-                          {mod.title}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {[videoCount > 0 && `${videoCount} video${videoCount !== 1 ? 's' : ''}`, pdfCount > 0 && `${pdfCount} PDF${pdfCount !== 1 ? 's' : ''}`].filter(Boolean).join(' · ') || 'No resources'}
-                        </p>
-                      </div>
-
-                      <div className="shrink-0 mt-1">
-                        {isExpanded
-                          ? <ChevronUp size={14} className="text-muted-foreground" />
-                          : <ChevronDown size={14} className="text-muted-foreground" />}
-                      </div>
-                    </button>
-
-                    {isExpanded && (
-                      <div className="bg-secondary/60 border-t border-black/[0.04] px-4 py-2 space-y-0.5">
-                        {mod.videos.map((v: any, idx: number) => {
-                          const active = currentContentId === v.id && currentType === 'video';
-                          return (
-                            <button key={v.id} onClick={() => selectContent(mod.id, 'video', v.id)}
-                              className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors ${
-                                active ? 'bg-primary text-primary-foreground font-semibold' : 'text-foreground hover:bg-white hover:shadow-sm'
-                              }`}>
-                              <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${active ? 'bg-white/20' : 'bg-white shadow-sm'}`}>
-                                <Play size={10} className={active ? 'text-white ml-0.5' : 'text-primary ml-0.5'} />
-                              </div>
-                              <span className="truncate flex-1">{v.title || `Video ${idx + 1}`}</span>
-                            </button>
-                          );
-                        })}
-                        {mod.pdfs.map((p: any, idx: number) => {
-                          const active = currentContentId === p.id && currentType === 'pdf';
-                          return (
-                            <button key={p.id} onClick={() => selectContent(mod.id, 'pdf', p.id)}
-                              className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors ${
-                                active ? 'bg-primary text-primary-foreground font-semibold' : 'text-foreground hover:bg-white hover:shadow-sm'
-                              }`}>
-                              <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${active ? 'bg-white/20' : 'bg-white shadow-sm'}`}>
-                                <FileText size={10} className={active ? 'text-white' : 'text-primary'} />
-                              </div>
-                              <span className="truncate flex-1">{p.title || `PDF ${idx + 1}`}</span>
-                            </button>
-                          );
-                        })}
-                        {videoCount === 0 && pdfCount === 0 && (
-                          <div className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground">
-                            <Lock size={11} /> No resources yet
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+        {/* ── RIGHT: sidebar playlist (desktop) ── */}
+        <aside className="desktop-sidebar lc-sidebar" style={{
+          width: 340, flexShrink: 0,
+          borderLeft: `1px solid ${RULE}`,
+          background: WHITE,
+          height: 'calc(100vh - 56px)',
+          position: 'sticky',
+          top: 56,
+          overflowY: 'auto',
+        }}>
+          <SidebarContents
+            course={course}
+            completedModules={completedModules}
+            currentModuleId={currentModuleId}
+            currentContentId={currentContentId}
+            currentType={currentType}
+            expandedModules={expandedModules}
+            progressPct={progressPct}
+            doneCount={doneCount}
+            totalModules={totalModules}
+            onSelectContent={selectContent}
+            onToggleExpanded={toggleExpanded}
+          />
         </aside>
       </div>
 
-      {/* ── Mobile playlist ── */}
-      <div className="lg:hidden px-4 pb-8">
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          <div className="px-5 py-3.5 border-b border-black/[0.06] bg-secondary flex items-center justify-between">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Course content</p>
-            <span className="text-xs font-semibold text-primary">{progressPct}%</span>
+      {/* ── MOBILE sidebar overlay ── */}
+      {sidebarOpen && (
+        <div className="mobile-sidebar-panel mob-overlay">
+          <div className="mobile-sidebar-drawer lc-sidebar">
+            <div style={{ borderBottom: `1px solid ${RULE}`, padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+              <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: MUTED, margin: 0 }}>Course contents</p>
+              <button onClick={() => setSidebarOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: MUTED, fontSize: 13, fontWeight: 600 }}>✕</button>
+            </div>
+            <SidebarContents
+              course={course}
+              completedModules={completedModules}
+              currentModuleId={currentModuleId}
+              currentContentId={currentContentId}
+              currentType={currentType}
+              expandedModules={expandedModules}
+              progressPct={progressPct}
+              doneCount={doneCount}
+              totalModules={totalModules}
+              onSelectContent={selectContent}
+              onToggleExpanded={toggleExpanded}
+            />
           </div>
-          {course.modules.map((mod: any, index: number) => {
-            const isExpanded = expandedModules.has(mod.id);
-            const isActive   = currentModuleId === mod.id;
-            const isDone     = completedModules.has(mod.id);
-            return (
-              <div key={mod.id} className="border-b border-black/[0.04] last:border-0">
-                <button onClick={() => toggleExpanded(mod.id)}
-                  className={`w-full text-left flex items-center gap-3 px-5 py-4 transition-colors ${isActive ? 'bg-primary/[0.06]' : 'hover:bg-secondary'}`}>
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${isDone ? 'bg-primary/10 text-primary' : isActive ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>
-                    {isDone ? <CheckCircle2 size={11} /> : index + 1}
-                  </div>
-                  <span className={`text-sm font-semibold flex-1 truncate ${isActive ? 'text-primary' : 'text-foreground'}`}>{mod.title}</span>
-                  {isExpanded ? <ChevronUp size={13} className="text-muted-foreground shrink-0" /> : <ChevronDown size={13} className="text-muted-foreground shrink-0" />}
-                </button>
-                {isExpanded && (
-                  <div className="bg-secondary/60 border-t border-black/[0.04] px-4 py-2 space-y-0.5">
-                    {mod.videos.map((v: any, idx: number) => {
-                      const active = currentContentId === v.id && currentType === 'video';
-                      return (
-                        <button key={v.id} onClick={() => selectContent(mod.id, 'video', v.id)}
-                          className={`w-full text-left flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-colors ${active ? 'bg-primary text-primary-foreground font-semibold' : 'text-foreground hover:bg-white hover:shadow-sm'}`}>
-                          <Play size={11} className="shrink-0" />
-                          <span className="truncate">{v.title || `Video ${idx + 1}`}</span>
-                        </button>
-                      );
-                    })}
-                    {mod.pdfs.map((p: any, idx: number) => {
-                      const active = currentContentId === p.id && currentType === 'pdf';
-                      return (
-                        <button key={p.id} onClick={() => selectContent(mod.id, 'pdf', p.id)}
-                          className={`w-full text-left flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-colors ${active ? 'bg-primary text-primary-foreground font-semibold' : 'text-foreground hover:bg-white hover:shadow-sm'}`}>
-                          <FileText size={11} className="shrink-0" />
-                          <span className="truncate">{p.title || `PDF ${idx + 1}`}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          <div className="mobile-sidebar-scrim" onClick={() => setSidebarOpen(false)} />
         </div>
-      </div>
+      )}
     </div>
+  );
+}
+
+// ─── Sidebar contents (shared desktop + mobile) ───────────────────────────────
+function SidebarContents({
+  course, completedModules, currentModuleId, currentContentId, currentType,
+  expandedModules, progressPct, doneCount, totalModules,
+  onSelectContent, onToggleExpanded,
+}: {
+  course: any;
+  completedModules: Set<string>;
+  currentModuleId: string | null;
+  currentContentId: string | null;
+  currentType: 'video' | 'pdf' | null;
+  expandedModules: Set<string>;
+  progressPct: number;
+  doneCount: number;
+  totalModules: number;
+  onSelectContent: (moduleId: string, type: 'video' | 'pdf', contentId: string) => void;
+  onToggleExpanded: (moduleId: string) => void;
+}) {
+  return (
+    <>
+      {/* Header */}
+      <div style={{ padding: '20px 20px 16px', borderBottom: `1px solid ${RULE}`, background: IVORY, flexShrink: 0 }}>
+        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: MUTED, margin: '0 0 8px' }}>
+          Your progress
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+          <div style={{ flex: 1, height: 3, background: RULE, overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${progressPct}%`, background: ACCENT, transition: 'width .5s ease' }} />
+          </div>
+          <span style={{ fontSize: 12, fontWeight: 700, color: ACCENT, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+            {progressPct}%
+          </span>
+        </div>
+        <p style={{ fontSize: 12, color: MUTED, margin: 0, fontVariantNumeric: 'tabular-nums' }}>
+          {doneCount} of {totalModules} module{totalModules !== 1 ? 's' : ''} complete
+        </p>
+      </div>
+
+      {/* Module list */}
+      <div style={{ flex: 1 }}>
+        {course.modules.map((mod: any, index: number) => {
+          const isExpanded = expandedModules.has(mod.id);
+          const isActive   = currentModuleId === mod.id;
+          const isDone     = completedModules.has(mod.id);
+          const vc = mod.videos.length;
+          const pc = mod.pdfs.length;
+
+          return (
+            <div key={mod.id} style={{ borderBottom: `1px solid ${RULE}` }}>
+              {/* Module header */}
+              <button onClick={() => onToggleExpanded(mod.id)}
+                style={{
+                  width: '100%', textAlign: 'left', display: 'flex', alignItems: 'flex-start',
+                  gap: 14, padding: '16px 20px', background: 'none', border: 'none', cursor: 'pointer',
+                  borderLeft: isActive ? `3px solid ${ACCENT}` : '3px solid transparent',
+                  transition: 'background .12s, border-color .15s',
+                }}
+                className="content-row">
+
+                {/* Index / check */}
+                <div style={{
+                  width: 28, height: 28, flexShrink: 0,
+                  border: `1px solid ${isDone ? 'transparent' : isActive ? ACCENT : RULE}`,
+                  background: isDone ? 'rgba(5,150,105,0.08)' : isActive ? `rgba(11,0,255,0.06)` : 'transparent',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 11, fontWeight: 700,
+                  color: isDone ? '#059669' : isActive ? ACCENT : MUTED,
+                  marginTop: 1,
+                }}>
+                  {isDone ? <CheckCircle2 size={13} /> : String(index + 1).padStart(2, '0')}
+                </div>
+
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: isActive ? ACCENT : isDone ? MUTED : INK, margin: '0 0 3px', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {mod.title}
+                  </p>
+                  <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>
+                    {[vc > 0 && `${vc} video${vc !== 1 ? 's' : ''}`, pc > 0 && `${pc} PDF${pc !== 1 ? 's' : ''}`].filter(Boolean).join(' · ') || 'No resources'}
+                  </p>
+                </div>
+
+                <div style={{ flexShrink: 0, color: MUTED, paddingTop: 2 }}>
+                  {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                </div>
+              </button>
+
+              {/* Content items */}
+              {isExpanded && (
+                <div style={{ background: IVORY, borderTop: `1px solid ${RULE}`, paddingTop: 4, paddingBottom: 4 }}>
+                  {mod.videos.map((v: any, idx: number) => {
+                    const active = currentContentId === v.id && currentType === 'video';
+                    return (
+                      <button key={v.id} onClick={() => onSelectContent(mod.id, 'video', v.id)}
+                        className="content-row"
+                        style={{
+                          width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center',
+                          gap: 12, padding: '10px 20px 10px 28px',
+                          background: active ? `rgba(11,0,255,0.06)` : 'transparent',
+                          border: 'none', borderLeft: active ? `3px solid ${ACCENT}` : '3px solid transparent',
+                          cursor: 'pointer',
+                        }}>
+                        <div style={{
+                          width: 22, height: 22, flexShrink: 0, border: `1px solid ${active ? ACCENT : RULE}`,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          background: active ? ACCENT : WHITE,
+                        }}>
+                          <Play size={9} style={{ color: active ? WHITE : MUTED, marginLeft: 1 }} />
+                        </div>
+                        <span style={{ fontSize: 13, color: active ? ACCENT : INK, fontWeight: active ? 600 : 400, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {v.title || `Video ${idx + 1}`}
+                        </span>
+                      </button>
+                    );
+                  })}
+                  {mod.pdfs.map((p: any, idx: number) => {
+                    const active = currentContentId === p.id && currentType === 'pdf';
+                    return (
+                      <button key={p.id} onClick={() => onSelectContent(mod.id, 'pdf', p.id)}
+                        className="content-row"
+                        style={{
+                          width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center',
+                          gap: 12, padding: '10px 20px 10px 28px',
+                          background: active ? `rgba(11,0,255,0.06)` : 'transparent',
+                          border: 'none', borderLeft: active ? `3px solid ${ACCENT}` : '3px solid transparent',
+                          cursor: 'pointer',
+                        }}>
+                        <div style={{
+                          width: 22, height: 22, flexShrink: 0, border: `1px solid ${active ? ACCENT : RULE}`,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          background: active ? ACCENT : WHITE,
+                        }}>
+                          <FileText size={9} style={{ color: active ? WHITE : MUTED }} />
+                        </div>
+                        <span style={{ fontSize: 13, color: active ? ACCENT : INK, fontWeight: active ? 600 : 400, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {p.title || `PDF ${idx + 1}`}
+                        </span>
+                      </button>
+                    );
+                  })}
+                  {vc === 0 && pc === 0 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px 10px 28px', fontSize: 12, color: MUTED }}>
+                      <Lock size={11} /> No resources yet
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </>
   );
 }
