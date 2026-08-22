@@ -18,11 +18,15 @@ export const auth = betterAuth({
     enabled: true,
     autoSignIn: true,
     sendResetPassword: async ({ user, url }) => {
-      sendPasswordResetEmail({
-        email:    user.email,
-        name:     user.name ?? user.email,
-        resetUrl: url,
-      }).catch(console.error);
+      try {
+        await sendPasswordResetEmail({
+          email:    user.email,
+          name:     user.name ?? user.email,
+          resetUrl: url,
+        });
+      } catch (err) {
+        console.error('[auth] sendResetPassword failed:', err);
+      }
     },
   },
   trustedOrigins: [
