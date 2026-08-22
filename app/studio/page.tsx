@@ -81,12 +81,12 @@ export default async function AdminDashboard() {
             {courses.slice(0, 6).map((c: any) => (
               <div key={c.id} className="flex items-center gap-5 px-6 py-5 hover:bg-black/[0.015] transition-colors group">
 
-                {/* Thumbnail — large */}
-                <div className="w-28 h-20 rounded-xl bg-secondary overflow-hidden shrink-0 shadow-sm">
+                {/* Thumbnail — 16:9 YouTube-style */}
+                <div className="shrink-0 w-48 rounded-xl overflow-hidden shadow-sm bg-secondary" style={{ aspectRatio: '16/9' }}>
                   {c.thumbnail
                     ? <img src={c.thumbnail} alt={c.title} className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300" />
                     : <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/20">
-                        <BookOpen size={22} className="text-primary/40" />
+                        <BookOpen size={28} className="text-primary/40" />
                       </div>
                   }
                 </div>
