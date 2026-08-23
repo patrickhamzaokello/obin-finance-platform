@@ -91,12 +91,14 @@ export default async function CoursesMarketplace({ searchParams }: Props) {
   }
 
   function filterUrl(extra: Record<string, string>) {
+    // Merge current state with caller overrides, then strip defaults so URLs stay clean
+    const merged = { q, category, level, price: priceFilter, ...extra };
     const p = new URLSearchParams({
-      ...(q ? { q } : {}),
-      ...(category !== 'All' ? { category } : {}),
-      ...(level !== 'All levels' ? { level } : {}),
-      ...(priceFilter !== 'all' ? { price: priceFilter } : {}),
-      ...extra,
+      ...(merged.q                                      ? { q: merged.q }                 : {}),
+      ...(merged.category && merged.category !== 'All' ? { category: merged.category }   : {}),
+      ...(merged.level    && merged.level !== 'All levels' ? { level: merged.level }      : {}),
+      ...(merged.price    && merged.price !== 'all'    ? { price: merged.price }          : {}),
+      ...(merged.page     && merged.page !== '1'       ? { page: merged.page }            : {}),
     });
     const s = p.toString();
     return `/courses${s ? `?${s}` : ''}`;
@@ -145,7 +147,7 @@ export default async function CoursesMarketplace({ searchParams }: Props) {
           {CATEGORIES.map(cat => (
             <Link
               key={cat}
-              href={filterUrl({ category: cat === 'All' ? '' : cat, page: '1' })}
+              href={filterUrl({ category: cat, page: '1' })}
               style={{
                 padding: '6px 14px', borderRadius: 100, fontSize: 13, fontWeight: 600,
                 textDecoration: 'none',
