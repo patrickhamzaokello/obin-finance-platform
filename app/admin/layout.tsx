@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { isPlatformOwner } from '@/lib/school-context';
+import { isPlatformOwner, isOrgAdmin } from '@/lib/school-context';
 import Link from 'next/link';
 import { LayoutDashboard, Building2, TrendingUp, ClipboardList, Globe } from 'lucide-react';
 import { db } from '@/lib/db';
@@ -9,7 +9,11 @@ import { SignOutButton } from '@/components/sign-out-button';
 
 export default async function PlatformLayout({ children }: { children: React.ReactNode }) {
   const isOwner = await isPlatformOwner();
-  if (!isOwner) redirect('/sign-in');
+  if (!isOwner) {
+    // org admins have their own portal
+    if (await isOrgAdmin()) redirect('/org-admin');
+    redirect('/sign-in');
+  }
 
   // Badge count for pending applications
   const pending = await db.select({ id: creatorApplication.id })

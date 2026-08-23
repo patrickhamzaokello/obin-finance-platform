@@ -5,14 +5,16 @@ import {
   getOrganizations, createOrganization, updateOrganization,
   deleteOrganization, assignSchoolToOrganization, getSchoolsWithOrg,
 } from '@/app/actions/organizations';
+import { getOrgAdmins, setOrgAdminRole, findUserByEmail, seedUsersToOrganization } from '@/app/actions/org-admin';
 import {
   Globe, Plus, Trash2, Loader2, ChevronDown, ChevronRight,
-  Building2, Pencil, Check, X, Link2, Link2Off,
+  Building2, Pencil, Check, X, Link2, Link2Off, UserCog, UserX, Search, Users,
 } from 'lucide-react';
 
 export default function OrganizationsPage() {
   const [orgs,         setOrgs]         = useState<any[]>([]);
   const [allSchools,   setAllSchools]   = useState<any[]>([]);
+  const [orgAdmins,    setOrgAdmins]    = useState<any[]>([]);
   const [loading,      setLoading]      = useState(true);
   const [showForm,     setShowForm]     = useState(false);
   const [formName,     setFormName]     = useState('');
@@ -27,22 +29,81 @@ export default function OrganizationsPage() {
   const [editDomain,   setEditDomain]   = useState('');
   const [savingOrg,    setSavingOrg]    = useState(false);
 
-  // Assign modal
+  // Assign creators
   const [assignOrgId,  setAssignOrgId]  = useState<string | null>(null);
-  const [assigning,    setAssigning]    = useState<string | null>(null); // schoolId being saved
+  const [assigning,    setAssigning]    = useState<string | null>(null);
+
+  // Seed users
+  const [seeding,     setSeeding]    = useState(false);
+  const [seedResult,  setSeedResult] = useState<string | null>(null);
+
+  const handleSeedUsers = async () => {
+    if (!confirm('Assign all users without an organization to the default organization?')) return;
+    setSeeding(true); setSeedResult(null);
+    const r = await seedUsersToOrganization();
+    setSeeding(false);
+    if (r.success) {
+      setSeedResult(`✓ ${(r as any).data?.updated ?? 0} users assigned to ${(r as any).data?.orgName}`);
+    } else {
+      setSeedResult(`Error: ${(r as any).error}`);
+    }
+  };
+
+  // Assign org admin
+  const [adminEmail,        setAdminEmail]         = useState<Record<string, string>>({}); // orgId → email input
+  const [adminSearchResult, setAdminSearchResult]  = useState<Record<string, any>>({}); // orgId → found user
+  const [adminSearchError,  setAdminSearchError]   = useState<Record<string, string>>({});
+  const [searchingAdmin,    setSearchingAdmin]      = useState<string | null>(null);
+  const [assigningAdmin,    setAssigningAdmin]      = useState<string | null>(null);
+  const [revokingAdmin,     setRevokingAdmin]       = useState<string | null>(null);
+  const [adminExpandedOrg,  setAdminExpandedOrg]   = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([getOrganizations(), getSchoolsWithOrg()]).then(([orgRes, schoolRes]) => {
-      if (orgRes.success)    setOrgs(orgRes.data ?? []);
+    Promise.all([getOrganizations(), getSchoolsWithOrg(), getOrgAdmins()]).then(([orgRes, schoolRes, adminRes]) => {
+      if (orgRes.success)   setOrgs(orgRes.data ?? []);
       if (schoolRes.success) setAllSchools(schoolRes.data ?? []);
+      if (adminRes.success) setOrgAdmins(adminRes.data ?? []);
       setLoading(false);
     });
   }, []);
 
   const refresh = async () => {
-    const [orgRes, schoolRes] = await Promise.all([getOrganizations(), getSchoolsWithOrg()]);
-    if (orgRes.success)    setOrgs(orgRes.data ?? []);
+    const [orgRes, schoolRes, adminRes] = await Promise.all([getOrganizations(), getSchoolsWithOrg(), getOrgAdmins()]);
+    if (orgRes.success)   setOrgs(orgRes.data ?? []);
     if (schoolRes.success) setAllSchools(schoolRes.data ?? []);
+    if (adminRes.success) setOrgAdmins(adminRes.data ?? []);
+  };
+
+  const handleSearchAdmin = async (orgId: string) => {
+    const email = adminEmail[orgId]?.trim();
+    if (!email) return;
+    setSearchingAdmin(orgId);
+    setAdminSearchError(prev => ({ ...prev, [orgId]: '' }));
+    setAdminSearchResult(prev => ({ ...prev, [orgId]: null }));
+    const r = await findUserByEmail(email);
+    setSearchingAdmin(null);
+    if (!r.success) {
+      setAdminSearchError(prev => ({ ...prev, [orgId]: (r as any).error ?? 'Not found' }));
+    } else {
+      setAdminSearchResult(prev => ({ ...prev, [orgId]: r.data }));
+    }
+  };
+
+  const handleAssignAdmin = async (userId: string, orgId: string) => {
+    setAssigningAdmin(userId);
+    await setOrgAdminRole(userId, orgId);
+    setAssigningAdmin(null);
+    setAdminSearchResult(prev => ({ ...prev, [orgId]: null }));
+    setAdminEmail(prev => ({ ...prev, [orgId]: '' }));
+    await refresh();
+  };
+
+  const handleRevokeAdmin = async (userId: string) => {
+    if (!confirm('Remove this user\'s org admin access?')) return;
+    setRevokingAdmin(userId);
+    await setOrgAdminRole(userId, null);
+    setRevokingAdmin(null);
+    await refresh();
   };
 
   const handleCreate = async () => {
@@ -98,11 +159,25 @@ export default function OrganizationsPage() {
             Group creators under an organization domain (e.g. myschool.com)
           </p>
         </div>
-        <button onClick={() => { setShowForm(true); setFormError(''); }}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors">
-          <Plus size={14} /> New Organization
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={handleSeedUsers} disabled={seeding}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-secondary text-foreground text-sm font-semibold rounded-xl hover:bg-secondary/80 disabled:opacity-60 transition-colors"
+            title="Assign all users without an org to the default organization">
+            {seeding ? <Loader2 size={14} className="animate-spin" /> : <Users size={14} />}
+            Seed users to org
+          </button>
+          <button onClick={() => { setShowForm(true); setFormError(''); }}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors">
+            <Plus size={14} /> New Organization
+          </button>
+        </div>
       </div>
+
+      {seedResult && (
+        <div className={`mb-4 px-4 py-3 rounded-xl text-sm font-medium ${seedResult.startsWith('✓') ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
+          {seedResult}
+        </div>
+      )}
 
       {/* Create form */}
       {showForm && (
@@ -328,6 +403,151 @@ export default function OrganizationsPage() {
           </div>
         );
       })()}
+
+      {/* ── Org Admins ────────────────────────────────────────────────────── */}
+      {!loading && (
+        <div className="mt-10">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <UserCog size={18} className="text-primary" /> Organization Admins
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Users who can manage a single organization — creators, applications, and revenue for that org only.
+              </p>
+            </div>
+          </div>
+
+          {/* Current org admins */}
+          {orgAdmins.length > 0 && (
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-4">
+              <table className="w-full text-sm">
+                <thead className="bg-secondary text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  <tr>
+                    <th className="px-6 py-3 text-left">User</th>
+                    <th className="px-6 py-3 text-left">Email</th>
+                    <th className="px-6 py-3 text-left">Organization</th>
+                    <th className="px-6 py-3 text-left"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {orgAdmins.map(admin => {
+                    const org = orgs.find(o => o.id === admin.organizationId);
+                    return (
+                      <tr key={admin.id} className="hover:bg-secondary/40 transition-colors">
+                        <td className="px-6 py-4 font-medium text-foreground">{admin.name ?? '—'}</td>
+                        <td className="px-6 py-4 text-muted-foreground">{admin.email}</td>
+                        <td className="px-6 py-4">
+                          {org
+                            ? <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold"><Globe size={10} /> {org.name}</span>
+                            : <span className="text-muted-foreground text-xs italic">Unknown org</span>}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button onClick={() => handleRevokeAdmin(admin.id)} disabled={revokingAdmin === admin.id}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-destructive/70 hover:text-destructive border border-destructive/20 rounded-lg hover:border-destructive/50 transition-colors disabled:opacity-50">
+                            {revokingAdmin === admin.id ? <Loader2 size={11} className="animate-spin" /> : <UserX size={11} />}
+                            Revoke
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Assign org admin per organization */}
+          <div className="space-y-3">
+            {orgs.map(org => {
+              const isOpen = adminExpandedOrg === org.id;
+              const currentAdmin = orgAdmins.find(a => a.organizationId === org.id);
+              return (
+                <div key={org.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                  <button
+                    onClick={() => setAdminExpandedOrg(isOpen ? null : org.id)}
+                    className="w-full flex items-center gap-4 px-6 py-4 text-left hover:bg-secondary/30 transition-colors">
+                    {isOpen ? <ChevronDown size={15} className="text-muted-foreground shrink-0" /> : <ChevronRight size={15} className="text-muted-foreground shrink-0" />}
+                    <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                      <Globe size={14} className="text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground">{org.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {currentAdmin
+                          ? <span className="text-green-700 font-medium">Admin: {currentAdmin.name ?? currentAdmin.email}</span>
+                          : <span className="text-orange-600">No admin assigned</span>}
+                      </p>
+                    </div>
+                    <span className="text-xs font-semibold text-primary shrink-0">
+                      {isOpen ? 'Close' : 'Assign admin'}
+                    </span>
+                  </button>
+
+                  {isOpen && (
+                    <div className="border-t border-black/[0.05] px-6 py-5 space-y-4">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Assign org admin for {org.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground -mt-2">
+                        The user must already have an account. Enter their email to look them up.
+                      </p>
+                      <div className="flex gap-2">
+                        <input
+                          value={adminEmail[org.id] ?? ''}
+                          onChange={e => setAdminEmail(prev => ({ ...prev, [org.id]: e.target.value }))}
+                          onKeyDown={e => e.key === 'Enter' && handleSearchAdmin(org.id)}
+                          placeholder="user@example.com"
+                          className="flex-1 px-3 py-2 text-sm border border-border rounded-lg focus:border-primary focus:outline-none bg-white"
+                        />
+                        <button
+                          onClick={() => handleSearchAdmin(org.id)}
+                          disabled={searchingAdmin === org.id}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 disabled:opacity-60 transition-colors">
+                          {searchingAdmin === org.id ? <Loader2 size={13} className="animate-spin" /> : <Search size={13} />}
+                          Look up
+                        </button>
+                      </div>
+
+                      {adminSearchError[org.id] && (
+                        <p className="text-xs text-destructive">{adminSearchError[org.id]}</p>
+                      )}
+
+                      {adminSearchResult[org.id] && (() => {
+                        const found = adminSearchResult[org.id];
+                        const isAlreadyAdmin = found.platformRole === 'org_admin';
+                        const currentOrgName = isAlreadyAdmin && found.organizationId
+                          ? orgs.find(o => o.id === found.organizationId)?.name
+                          : null;
+                        return (
+                          <div className="flex items-center justify-between gap-3 px-4 py-3 border border-border rounded-xl bg-secondary/30">
+                            <div>
+                              <p className="text-sm font-semibold text-foreground">{found.name ?? found.email}</p>
+                              <p className="text-xs text-muted-foreground">{found.email}</p>
+                              {isAlreadyAdmin && (
+                                <p className="text-[11px] text-orange-600 mt-0.5">
+                                  Already org admin{currentOrgName ? ` for ${currentOrgName}` : ''} — reassigning will move them.
+                                </p>
+                              )}
+                            </div>
+                            <button
+                              onClick={() => handleAssignAdmin(found.id, org.id)}
+                              disabled={assigningAdmin === found.id}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors shrink-0">
+                              {assigningAdmin === found.id ? <Loader2 size={11} className="animate-spin" /> : <UserCog size={11} />}
+                              Make org admin
+                            </button>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

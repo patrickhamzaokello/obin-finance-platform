@@ -8,8 +8,10 @@ export const user = pgTable('user', {
   email:               text('email').notNull().unique(),
   emailVerified:       boolean('emailVerified').notNull().default(false),
   image:               text('image'),
-  // Platform-level role: 'owner' = platform owner, 'user' = everyone else
+  // Platform-level role: 'owner' | 'org_admin' | 'user'
   platformRole:        text('platformRole').notNull().default('user'),
+  // Set when platformRole = 'org_admin' — which organization they manage
+  organizationId:      text('organizationId'),
   // Set to true when a temp password is issued; cleared after user changes it
   mustChangePassword:  boolean('mustChangePassword').notNull().default(false),
   createdAt:           timestamp('createdAt').notNull().defaultNow(),
