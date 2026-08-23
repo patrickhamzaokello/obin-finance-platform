@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, BookOpen, Users, MessageCircle, UserCircle } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Users, MessageCircle, UserCircle, TrendingUp } from 'lucide-react';
 import { UserMenu } from '@/components/user-menu';
 
 interface StudioNavProps {
@@ -20,6 +20,7 @@ export function StudioNav({ schoolName, userName, userEmail, role }: StudioNavPr
     { href: '/studio/courses',  label: 'Classes',   icon: BookOpen },
     { href: '/studio/learners', label: 'Learners',  icon: Users },
     { href: '/studio/messages', label: 'Feedback',  icon: MessageCircle },
+    { href: '/studio/revenue',  label: 'Revenue',   icon: TrendingUp },
     { href: '/studio/profile',  label: 'Profile',   icon: UserCircle },
   ];
 

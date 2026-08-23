@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { course, module, video, pdf, user, school, schoolMember, courseAccessCode, courseEnrollment } from '@/lib/db/schema';
+import { course, module, video, pdf, user, school, schoolMember, courseAccessCode, courseEnrollment, payment } from '@/lib/db/schema';
 import { eq, desc, and, isNotNull, sql } from 'drizzle-orm';
 import { isYouTubeUrl, extractYouTubeId } from '@/lib/video-url';
 import { revalidatePath } from 'next/cache';
@@ -413,36 +413,41 @@ export async function deleteSchool(schoolId: string) {
 }
 
 /** Platform-owner only: full access-code activation report across all schools. */
+/**
+ * Revenue split logic (all amounts in UGX):
+ *   gross           = payment.amount  (what the student paid)
+ *   orgCommission   = gross * school.commissionPercent / 100  (org's cut)
+ *   ownerCut        = orgCommission * 0.20  (platform owner takes 20% of org's earnings)
+ *   orgKeeps        = orgCommission * 0.80  (org keeps 80% of their commission)
+ *   creatorEarns    = gross - orgCommission  (creator keeps the rest)
+ */
+
 export async function getRevenueReport() {
   try {
     await requirePlatformOwner();
 
-    // All activated access codes joined with course, school, and the learner user
+    // Source of truth: successful payments joined with course, school, and learner
     const rows = await db
       .select({
-        codeId:          courseAccessCode.id,
-        code:            courseAccessCode.code,
-        label:           courseAccessCode.label,
-        usedAt:          courseAccessCode.usedAt,
-        accessExpiresAt: courseAccessCode.accessExpiresAt,
-        courseId:        course.id,
-        courseTitle:     course.title,
-        coursePrice:     course.price,
-        discountPercent: course.discountPercent,
-        discountActive:  course.discountActive,
-        schoolId:        school.id,
-        schoolName:      school.name,
-        schoolSlug:      school.slug,
-        learnerId:       user.id,
-        learnerName:     user.name,
-        learnerEmail:    user.email,
+        paymentId:         payment.id,
+        paidAt:            payment.createdAt,
+        amount:            payment.amount,
+        courseId:          course.id,
+        courseTitle:       course.title,
+        schoolId:          school.id,
+        schoolName:        school.name,
+        schoolSlug:        school.slug,
+        commissionPercent: school.commissionPercent,
+        learnerId:         user.id,
+        learnerName:       user.name,
+        learnerEmail:      user.email,
       })
-      .from(courseAccessCode)
-      .innerJoin(course, eq(courseAccessCode.courseId, course.id))
-      .innerJoin(school, eq(course.schoolId, school.id))
-      .innerJoin(user, eq(courseAccessCode.usedBy, user.id))
-      .where(isNotNull(courseAccessCode.usedBy))
-      .orderBy(desc(courseAccessCode.usedAt));
+      .from(payment)
+      .innerJoin(course,  eq(payment.courseId, course.id))
+      .innerJoin(school,  eq(course.schoolId, school.id))
+      .innerJoin(user,    eq(payment.userId, user.id))
+      .where(eq(payment.status, 'success'))
+      .orderBy(desc(payment.createdAt));
 
     return { success: true, data: rows };
   } catch (error) {
@@ -452,25 +457,21 @@ export async function getRevenueReport() {
 }
 
 /**
- * Platform-owner only: earnings based on access code activations (confirmed payments).
- * Also returns per-course enrollment counts for the funnel metric
- * (enrolled but no code = dropped off before paying).
+ * Platform-owner only: owner's earnings from all schools.
+ * Owner earns 20% of each school's commission on every successful payment.
+ * Also returns per-course enrollment counts for the funnel metric.
  */
 export async function getEarningsReport() {
   try {
     await requirePlatformOwner();
 
-    // Source of truth: activated access codes = confirmed payment
-    const activations = await db
+    const payments = await db
       .select({
-        activationId:      courseAccessCode.id,
-        activatedAt:       courseAccessCode.usedAt,
-        accessExpiresAt:   courseAccessCode.accessExpiresAt,
+        paymentId:         payment.id,
+        paidAt:            payment.createdAt,
+        amount:            payment.amount,
         courseId:          course.id,
         courseTitle:       course.title,
-        coursePrice:       course.price,
-        discountPercent:   course.discountPercent,
-        discountActive:    course.discountActive,
         schoolId:          school.id,
         schoolName:        school.name,
         schoolSlug:        school.slug,
@@ -479,14 +480,14 @@ export async function getEarningsReport() {
         learnerName:       user.name,
         learnerEmail:      user.email,
       })
-      .from(courseAccessCode)
-      .innerJoin(course,  eq(courseAccessCode.courseId, course.id))
+      .from(payment)
+      .innerJoin(course,  eq(payment.courseId, course.id))
       .innerJoin(school,  eq(course.schoolId, school.id))
-      .innerJoin(user,    eq(courseAccessCode.usedBy, user.id))
-      .where(isNotNull(courseAccessCode.usedBy))
-      .orderBy(desc(courseAccessCode.usedAt));
+      .innerJoin(user,    eq(payment.userId, user.id))
+      .where(eq(payment.status, 'success'))
+      .orderBy(desc(payment.createdAt));
 
-    // Funnel: enrollments per course (intent) vs activations (payment)
+    // Funnel: enrollments per course (intent) vs payments (confirmed)
     const enrollmentFunnel = await db
       .select({
         courseId:    course.id,
@@ -501,9 +502,51 @@ export async function getEarningsReport() {
       .where(isNotNull(course.schoolId))
       .groupBy(course.id, course.title, school.id, school.name);
 
-    return { success: true, data: activations, enrollmentFunnel };
+    return { success: true, data: payments, enrollmentFunnel };
   } catch (error) {
     console.error('Error fetching earnings report:', error);
+    return { success: false, error: String(error) };
+  }
+}
+
+/**
+ * Creator-scoped revenue report.
+ * Creator earnings = payment.amount − orgCommission (they keep what's left after the org's cut).
+ */
+export async function getCreatorRevenue() {
+  try {
+    await isSchoolAdmin();
+    const s = await getCurrentSchool();
+    if (!s) return { success: false, error: 'No school context' };
+
+    const rows = await db
+      .select({
+        paymentId:   payment.id,
+        paidAt:      payment.createdAt,
+        amount:      payment.amount,
+        courseId:    course.id,
+        courseTitle: course.title,
+        learnerId:   user.id,
+        learnerName: user.name,
+        learnerEmail: user.email,
+      })
+      .from(payment)
+      .innerJoin(course, eq(payment.courseId, course.id))
+      .innerJoin(user,   eq(payment.userId, user.id))
+      .where(and(eq(payment.status, 'success'), eq(payment.schoolId, s.id)))
+      .orderBy(desc(payment.createdAt));
+
+    const commissionPercent = s.commissionPercent ?? 10;
+
+    // Enrich with split math
+    const enriched = rows.map((r) => {
+      const orgCommission  = Math.round(r.amount * commissionPercent / 100);
+      const creatorEarns   = r.amount - orgCommission;
+      return { ...r, commissionPercent, orgCommission, creatorEarns };
+    });
+
+    return { success: true, data: enriched, school: s };
+  } catch (error) {
     return { success: false, error: String(error) };
   }
 }

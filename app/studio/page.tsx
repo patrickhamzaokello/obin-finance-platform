@@ -2,21 +2,37 @@
 export const metadata: Metadata = { title: 'Creator Studio' };
 
 import Link from 'next/link';
-import { getAllCourses, getAllUsers } from '@/app/actions/admin';
+import { getAllCourses, getAllUsers, getCreatorRevenue } from '@/app/actions/admin';
 import { getCurrentSchool } from '@/lib/school-context';
-import { BookOpen, Users, TrendingUp, Heart, ChevronRight, Plus, ExternalLink } from 'lucide-react';
+import { BookOpen, Users, TrendingUp, Heart, ChevronRight, Plus, ExternalLink, DollarSign } from 'lucide-react';
 
 export default async function AdminDashboard() {
-  const [s, coursesResult, usersResult] = await Promise.all([
+  const [s, coursesResult, usersResult, revenueResult] = await Promise.all([
     getCurrentSchool(),
     getAllCourses(),
     getAllUsers(),
+    getCreatorRevenue(),
   ]);
 
   const courses        = (coursesResult.success ? coursesResult.data : []) ?? [];
   const members        = (usersResult.success   ? usersResult.data   : []) ?? [];
+  const revenueRows    = (revenueResult.success  ? revenueResult.data  : []) ?? [];
   const publishedCount = courses.filter((c: any) => c.isPublished).length;
   const fanCount       = members.filter((m: any) => m.role === 'learner').length;
+  const totalEarnings  = revenueRows.reduce((s: number, r: any) => s + r.creatorEarns, 0);
+
+  // Month-over-month
+  const now = new Date();
+  const thisMonth = revenueRows.filter((r: any) => {
+    const d = r.paidAt ? new Date(r.paidAt) : null;
+    return d && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  }).reduce((s: number, r: any) => s + r.creatorEarns, 0);
+  const lastMonth = revenueRows.filter((r: any) => {
+    const d = r.paidAt ? new Date(r.paidAt) : null;
+    const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    return d && d.getFullYear() === lm.getFullYear() && d.getMonth() === lm.getMonth();
+  }).reduce((s: number, r: any) => s + r.creatorEarns, 0);
+  const momPct = lastMonth > 0 ? Math.round(((thisMonth - lastMonth) / lastMonth) * 100) : null;
 
   const stats = [
     { label: 'Classes',    value: courses.length, icon: BookOpen,   color: 'bg-blue-50 text-blue-600' },
@@ -54,6 +70,39 @@ export default async function AdminDashboard() {
           </div>
         ))}
       </div>
+
+      {/* Revenue highlight */}
+      <Link href='/studio/revenue' className='group block bg-white rounded-2xl shadow-sm p-6 hover:shadow-md transition-all'>
+        <div className='flex items-center justify-between'>
+          <div className='flex items-center gap-3'>
+            <div className='w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center'>
+              <DollarSign size={18} className='text-green-600' />
+            </div>
+            <div>
+              <p className='text-xs text-muted-foreground font-medium'>My All-Time Earnings</p>
+              <p className='text-2xl font-bold text-foreground'>UGX {totalEarnings.toLocaleString()}</p>
+            </div>
+          </div>
+          <div className='flex items-center gap-4'>
+            {momPct !== null && (
+              <div className={`text-right ${momPct >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                <p className='text-lg font-bold'>{momPct >= 0 ? '+' : ''}{momPct}%</p>
+                <p className='text-[10px] text-muted-foreground'>vs last month</p>
+              </div>
+            )}
+            <span className='inline-flex items-center gap-1 text-sm font-semibold text-primary group-hover:gap-2 transition-all'>
+              View details <ChevronRight size={14} />
+            </span>
+          </div>
+        </div>
+        {revenueRows.length > 0 && (
+          <div className='mt-4 pt-4 border-t border-black/[0.05] flex items-center gap-6 text-xs text-muted-foreground'>
+            <span><span className='font-semibold text-foreground'>{revenueRows.length}</span> payments</span>
+            <span><span className='font-semibold text-foreground'>{new Set(revenueRows.map((r: any) => r.learnerId)).size}</span> learners</span>
+            <span><span className='font-semibold text-foreground'>UGX {thisMonth.toLocaleString()}</span> this month</span>
+          </div>
+        )}
+      </Link>
 
       {/* Recent courses */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
@@ -143,7 +192,7 @@ export default async function AdminDashboard() {
       </div>
 
       {/* Quick actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Link href="/studio/courses" className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200">
           <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center mb-4">
             <BookOpen size={18} className="text-blue-600" />
@@ -172,6 +221,16 @@ export default async function AdminDashboard() {
           <p className="text-sm text-muted-foreground mb-4">Read messages and reviews from your fans.</p>
           <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary group-hover:gap-2 transition-all">
             View Feedback <ChevronRight size={14} />
+          </span>
+        </Link>
+        <Link href="/studio/revenue" className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200">
+          <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center mb-4">
+            <DollarSign size={18} className="text-green-600" />
+          </div>
+          <h3 className="font-semibold text-foreground mb-1">Revenue</h3>
+          <p className="text-sm text-muted-foreground mb-4">Track your earnings, growth, and payment history.</p>
+          <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary group-hover:gap-2 transition-all">
+            View Revenue <ChevronRight size={14} />
           </span>
         </Link>
       </div>

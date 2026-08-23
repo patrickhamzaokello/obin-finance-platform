@@ -86,7 +86,7 @@ export async function getOrgRevenue(orgId?: string) {
       .from(school)
       .where(eq(school.organizationId, org.id));
 
-    if (!schools.length) return { success: true, data: { schools: [], payments: [], totals: { gross: 0, platformCut: 0, creatorEarnings: 0 } }, org };
+    if (!schools.length) return { success: true, data: { schools: [], payments: [], totals: { gross: 0, orgCommission: 0, ownerTakes: 0, orgKeeps: 0, creatorEarnings: 0 } }, org };
 
     const schoolIds = schools.map(s => s.id);
 
@@ -106,24 +106,31 @@ export async function getOrgRevenue(orgId?: string) {
 
     const orgPayments = payments.filter(p => p.schoolId && schoolIds.includes(p.schoolId));
 
-    // Per-school totals
-    const schoolMap = Object.fromEntries(schools.map(s => [s.id, s]));
+    // Per-school totals with correct 3-way split:
+    //   orgCommission = gross * commissionPercent / 100
+    //   ownerTakes    = orgCommission * 0.20  (platform owner's cut)
+    //   orgKeeps      = orgCommission * 0.80  (org's actual take)
+    //   creatorEarns  = gross - orgCommission
     const bySchool  = schools.map(s => {
       const sp    = orgPayments.filter(p => p.schoolId === s.id);
       const gross = sp.reduce((sum, p) => sum + p.amount, 0);
       const commission = s.commissionPercent ?? 10;
-      const platformCut    = Math.round(gross * commission / 100);
-      const creatorEarnings = gross - platformCut;
-      return { schoolId: s.id, name: s.name, gross, platformCut, creatorEarnings, commission, txCount: sp.length };
+      const orgCommission  = Math.round(gross * commission / 100);
+      const ownerTakes     = Math.round(orgCommission * 0.20);
+      const orgKeeps       = orgCommission - ownerTakes;
+      const creatorEarnings = gross - orgCommission;
+      return { schoolId: s.id, name: s.name, gross, orgCommission, ownerTakes, orgKeeps, creatorEarnings, commission, txCount: sp.length };
     });
 
     const totals = bySchool.reduce(
       (acc, s) => ({
-        gross: acc.gross + s.gross,
-        platformCut: acc.platformCut + s.platformCut,
-        creatorEarnings: acc.creatorEarnings + s.creatorEarnings,
+        gross:            acc.gross            + s.gross,
+        orgCommission:    acc.orgCommission    + s.orgCommission,
+        ownerTakes:       acc.ownerTakes       + s.ownerTakes,
+        orgKeeps:         acc.orgKeeps         + s.orgKeeps,
+        creatorEarnings:  acc.creatorEarnings  + s.creatorEarnings,
       }),
-      { gross: 0, platformCut: 0, creatorEarnings: 0 }
+      { gross: 0, orgCommission: 0, ownerTakes: 0, orgKeeps: 0, creatorEarnings: 0 }
     );
 
     return { success: true, data: { schools: bySchool, payments: orgPayments, totals }, org };

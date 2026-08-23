@@ -10,8 +10,8 @@ import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import Link from 'next/link';
 import { db } from '@/lib/db';
-import { course, school, courseEnrollment } from '@/lib/db/schema';
-import { eq, desc, count } from 'drizzle-orm';
+import { course, school, courseEnrollment, organization } from '@/lib/db/schema';
+import { eq, desc, count, and } from 'drizzle-orm';
 import { convertBlobUrlToApiUrl } from '@/lib/blob-url';
 import {
   Search, Play, Users, Bell, MessageSquare, ChevronRight,
@@ -45,11 +45,21 @@ export default async function DiscoverPage({ searchParams }: Props) {
   const page     = Math.max(1, parseInt(params.page ?? '1', 10));
 
   // Auth state for nav
-  const session = await auth.api.getSession({ headers: await headers() });
+  const h       = await headers();
+  const session = await auth.api.getSession({ headers: h });
   const user    = session?.user ?? null;
 
-  // Fetch all published classes with school info
-  const rows = await db
+  // ── Resolve organization from the request hostname ────────────────────────
+  // Strip port and www prefix so "www.obinacademy.com:3000" → "obinacademy.com"
+  const rawHost  = h.get('host') ?? '';
+  const hostname = rawHost.split(':')[0].replace(/^www\./, '').toLowerCase();
+
+  const orgs = await db.select().from(organization);
+  const currentOrg = orgs.find(o => o.domain.toLowerCase() === hostname) ?? null;
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // Fetch published classes scoped to this organization (via school.organizationId)
+  const courseQuery = db
     .select({
       id:              course.id,
       title:           course.title,
@@ -66,9 +76,12 @@ export default async function DiscoverPage({ searchParams }: Props) {
       createdAt:       course.createdAt,
     })
     .from(course)
-    .innerJoin(school, eq(course.schoolId, school.id))
-    .where(eq(course.isPublished, true))
-    .orderBy(desc(course.createdAt));
+    .innerJoin(school, eq(course.schoolId, school.id));
+
+  const rows = await (currentOrg
+    ? courseQuery.where(and(eq(course.isPublished, true), eq(school.organizationId, currentOrg.id)))
+    : courseQuery.where(eq(course.isPublished, true))
+  ).orderBy(desc(course.createdAt));
 
   // Enrollment counts
   const enrollCounts = await db

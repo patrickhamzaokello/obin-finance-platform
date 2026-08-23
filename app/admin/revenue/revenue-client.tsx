@@ -1,37 +1,41 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Search, Download, TrendingUp, Users, BookOpen, Building2 } from 'lucide-react';
+import { Search, Download, TrendingUp, Users, BookOpen, Building2, DollarSign } from 'lucide-react';
 
+/**
+ * Revenue split (per payment):
+ *   orgCommission = amount * commissionPercent / 100
+ *   ownerCut      = orgCommission * 0.20
+ *   orgKeeps      = orgCommission * 0.80
+ *   creatorEarns  = amount - orgCommission
+ */
 type Row = {
-  codeId: string;
-  code: string;
-  label: string | null;
-  usedAt: Date | null;
-  accessExpiresAt: Date | null;
-  courseId: string;
-  courseTitle: string;
-  coursePrice: number | null;
-  discountPercent: number | null;
-  discountActive: boolean;
-  schoolId: string;
-  schoolName: string;
-  schoolSlug: string;
-  learnerId: string;
-  learnerName: string | null;
-  learnerEmail: string;
+  paymentId:         string;
+  paidAt:            Date | null;
+  amount:            number;
+  courseId:          string;
+  courseTitle:       string;
+  schoolId:          string;
+  schoolName:        string;
+  schoolSlug:        string;
+  commissionPercent: number;
+  learnerId:         string;
+  learnerName:       string | null;
+  learnerEmail:      string;
 };
 
-function effectivePrice(row: Row): number {
-  const price = row.coursePrice ?? 0;
-  if (row.discountActive && (row.discountPercent ?? 0) > 0) {
-    return Math.round(price * (1 - (row.discountPercent ?? 0) / 100));
-  }
-  return price;
+function split(row: Row) {
+  const commission = row.commissionPercent ?? 0;
+  const orgTotal   = Math.round(row.amount * commission / 100);
+  const ownerCut   = Math.round(orgTotal * 0.20);
+  const orgKeeps   = orgTotal - ownerCut;
+  const creator    = row.amount - orgTotal;
+  return { orgTotal, ownerCut, orgKeeps, creator };
 }
 
 export function RevenueReportClient({ rows }: { rows: Row[] }) {
-  const [search, setSearch]           = useState('');
+  const [search, setSearch]             = useState('');
   const [filterSchool, setFilterSchool] = useState('all');
 
   const schools = useMemo(() => {
@@ -50,49 +54,63 @@ export function RevenueReportClient({ rows }: { rows: Row[] }) {
           r.learnerName?.toLowerCase().includes(q) ||
           r.learnerEmail.toLowerCase().includes(q) ||
           r.courseTitle.toLowerCase().includes(q) ||
-          r.schoolName.toLowerCase().includes(q) ||
-          r.code.toLowerCase().includes(q) ||
-          (r.label ?? '').toLowerCase().includes(q),
+          r.schoolName.toLowerCase().includes(q),
       );
     }
     return f;
   }, [rows, filterSchool, search]);
 
-  // Summary totals (for filtered view)
-  const totalRevenue  = filtered.reduce((s, r) => s + effectivePrice(r), 0);
-  const bySchool      = useMemo(() => {
-    const map = new Map<string, { name: string; slug: string; count: number; revenue: number }>();
+  // Summary totals
+  const totals = useMemo(() => filtered.reduce(
+    (acc, r) => {
+      const s = split(r);
+      return {
+        gross:    acc.gross    + r.amount,
+        owner:    acc.owner    + s.ownerCut,
+        org:      acc.org      + s.orgKeeps,
+        creator:  acc.creator  + s.creator,
+      };
+    },
+    { gross: 0, owner: 0, org: 0, creator: 0 }
+  ), [filtered]);
+
+  const bySchool = useMemo(() => {
+    const map = new Map<string, { name: string; slug: string; count: number; gross: number; owner: number; org: number; creator: number }>();
     filtered.forEach((r) => {
-      const existing = map.get(r.schoolId) ?? { name: r.schoolName, slug: r.schoolSlug, count: 0, revenue: 0 };
+      const existing = map.get(r.schoolId) ?? { name: r.schoolName, slug: r.schoolSlug, count: 0, gross: 0, owner: 0, org: 0, creator: 0 };
+      const s = split(r);
       map.set(r.schoolId, {
         ...existing,
-        count:   existing.count + 1,
-        revenue: existing.revenue + effectivePrice(r),
+        count:   existing.count   + 1,
+        gross:   existing.gross   + r.amount,
+        owner:   existing.owner   + s.ownerCut,
+        org:     existing.org     + s.orgKeeps,
+        creator: existing.creator + s.creator,
       });
     });
-    return Array.from(map.values()).sort((a, b) => b.revenue - a.revenue);
+    return Array.from(map.values()).sort((a, b) => b.gross - a.gross);
   }, [filtered]);
 
   const handleExportCsv = () => {
-    const header = ['School', 'Course', 'Price (UGX)', 'Discount', 'Effective Price (UGX)', 'Learner Name', 'Learner Email', 'Access Code', 'Label', 'Activated At', 'Access Expires'];
-    const csvRows = filtered.map((r) => [
-      r.schoolName,
-      r.courseTitle,
-      r.coursePrice ?? 0,
-      r.discountActive ? `${r.discountPercent}%` : '—',
-      effectivePrice(r),
-      r.learnerName ?? '—',
-      r.learnerEmail,
-      r.code,
-      r.label ?? '—',
-      r.usedAt ? new Date(r.usedAt).toLocaleString() : '—',
-      r.accessExpiresAt ? new Date(r.accessExpiresAt).toLocaleString() : 'Permanent',
-    ]);
+    const header = [
+      'School', 'Course', 'Learner Name', 'Learner Email',
+      'Gross (UGX)', 'Creator Keeps (UGX)', 'Org Commission (UGX)', 'My Cut 20% (UGX)', 'Org Keeps 80% (UGX)',
+      'Commission %', 'Paid At',
+    ];
+    const csvRows = filtered.map((r) => {
+      const s = split(r);
+      return [
+        r.schoolName, r.courseTitle, r.learnerName ?? '—', r.learnerEmail,
+        r.amount, s.creator, s.orgTotal, s.ownerCut, s.orgKeeps,
+        `${r.commissionPercent}%`,
+        r.paidAt ? new Date(r.paidAt).toLocaleString() : '—',
+      ];
+    });
     const csv = [header, ...csvRows].map((row) => row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
-    a.href = url;
+    a.href     = url;
     a.download = `revenue-report-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
@@ -107,7 +125,7 @@ export function RevenueReportClient({ rows }: { rows: Row[] }) {
       <div className='flex items-start justify-between gap-4'>
         <div>
           <h1 className='text-2xl font-bold text-foreground'>Revenue Report</h1>
-          <p className='text-sm text-muted-foreground mt-1'>All access code activations across schools</p>
+          <p className='text-sm text-muted-foreground mt-1'>All successful payments · full 3-way split</p>
         </div>
         <button
           onClick={handleExportCsv}
@@ -120,17 +138,18 @@ export function RevenueReportClient({ rows }: { rows: Row[] }) {
       {/* Summary cards */}
       <div className='grid grid-cols-2 lg:grid-cols-4 gap-4'>
         {[
-          { label: 'Total Activations', value: filtered.length,          icon: Users,      color: 'bg-blue-50 text-blue-600' },
-          { label: 'Total Revenue',     value: fmt(totalRevenue),        icon: TrendingUp, color: 'bg-green-50 text-green-600' },
-          { label: 'Schools',           value: bySchool.length,          icon: Building2,  color: 'bg-purple-50 text-purple-600' },
-          { label: 'Courses',           value: new Set(filtered.map(r => r.courseId)).size, icon: BookOpen, color: 'bg-orange-50 text-orange-600' },
-        ].map(({ label, value, icon: Icon, color }) => (
+          { label: 'Total Collected',  value: fmt(totals.gross),   icon: TrendingUp,  color: 'bg-blue-50 text-blue-600',   sub: 'gross from students' },
+          { label: 'My Earnings',      value: fmt(totals.owner),   icon: DollarSign,  color: 'bg-green-50 text-green-600', sub: '20% of org commissions' },
+          { label: 'Org Keeps',        value: fmt(totals.org),     icon: Building2,   color: 'bg-indigo-50 text-indigo-600', sub: '80% of their commission' },
+          { label: 'Creator Earnings', value: fmt(totals.creator), icon: Users,       color: 'bg-purple-50 text-purple-600', sub: 'after org commission' },
+        ].map(({ label, value, icon: Icon, color, sub }) => (
           <div key={label} className='bg-white rounded-2xl shadow-sm p-5'>
             <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${color}`}>
               <Icon size={16} />
             </div>
             <p className='text-xl font-bold text-foreground'>{value}</p>
             <p className='text-xs text-muted-foreground mt-0.5'>{label}</p>
+            <p className='text-[10px] text-muted-foreground/70 mt-0.5'>{sub}</p>
           </div>
         ))}
       </div>
@@ -140,23 +159,36 @@ export function RevenueReportClient({ rows }: { rows: Row[] }) {
         <div className='bg-white rounded-2xl shadow-sm overflow-hidden'>
           <div className='px-6 py-4 border-b border-black/[0.05]'>
             <h2 className='text-sm font-semibold text-foreground'>Revenue by school</h2>
+            <p className='text-xs text-muted-foreground mt-0.5'>Full split per creator</p>
           </div>
-          <div className='divide-y divide-black/[0.04]'>
-            {bySchool.map((s) => (
-              <div key={s.slug} className='px-6 py-4 flex items-center gap-4'>
-                <div className='w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary shrink-0'>
-                  {s.name[0].toUpperCase()}
-                </div>
-                <div className='flex-1 min-w-0'>
-                  <p className='text-sm font-semibold text-foreground'>{s.name}</p>
-                  <p className='text-xs text-muted-foreground'>{s.count} activation{s.count !== 1 ? 's' : ''}</p>
-                </div>
-                <div className='text-right shrink-0'>
-                  <p className='text-sm font-bold text-foreground'>{fmt(s.revenue)}</p>
-                  <p className='text-[10px] text-muted-foreground uppercase tracking-wide'>to collect</p>
-                </div>
-              </div>
-            ))}
+          <div className='overflow-x-auto'>
+            <table className='w-full text-sm'>
+              <thead className='bg-secondary text-xs font-semibold text-muted-foreground uppercase tracking-wider'>
+                <tr>
+                  <th className='px-6 py-3 text-left'>School</th>
+                  <th className='px-6 py-3 text-right'>Payments</th>
+                  <th className='px-6 py-3 text-right'>Gross</th>
+                  <th className='px-6 py-3 text-right'>Creator Keeps</th>
+                  <th className='px-6 py-3 text-right'>My 20%</th>
+                  <th className='px-6 py-3 text-right'>Org 80%</th>
+                </tr>
+              </thead>
+              <tbody className='divide-y divide-black/[0.04]'>
+                {bySchool.map((s) => (
+                  <tr key={s.slug} className='hover:bg-secondary/40 transition-colors'>
+                    <td className='px-6 py-4'>
+                      <p className='font-semibold text-foreground'>{s.name}</p>
+                      <p className='text-xs text-muted-foreground font-mono'>{s.slug}</p>
+                    </td>
+                    <td className='px-6 py-4 text-right font-medium text-foreground'>{s.count}</td>
+                    <td className='px-6 py-4 text-right text-muted-foreground'>{fmt(s.gross)}</td>
+                    <td className='px-6 py-4 text-right text-muted-foreground'>{fmt(s.creator)}</td>
+                    <td className='px-6 py-4 text-right font-bold text-primary'>{fmt(s.owner)}</td>
+                    <td className='px-6 py-4 text-right text-indigo-600 font-medium'>{fmt(s.org)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
@@ -167,7 +199,7 @@ export function RevenueReportClient({ rows }: { rows: Row[] }) {
           <Search size={14} className='absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground' />
           <input
             type='text'
-            placeholder='Search by learner, course, code, school…'
+            placeholder='Search by learner, course, school…'
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className='w-full pl-9 pr-4 py-2 text-sm bg-secondary rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-primary/20'
@@ -192,7 +224,7 @@ export function RevenueReportClient({ rows }: { rows: Row[] }) {
         <div className='bg-white rounded-2xl shadow-sm py-16 text-center text-muted-foreground text-sm'>
           <TrendingUp className='w-8 h-8 mx-auto mb-3 opacity-30' />
           {rows.length === 0
-            ? 'No access codes have been activated yet.'
+            ? 'No successful payments yet.'
             : 'No results match your search.'}
         </div>
       ) : (
@@ -202,53 +234,36 @@ export function RevenueReportClient({ rows }: { rows: Row[] }) {
               <thead className='bg-secondary text-xs font-semibold text-muted-foreground uppercase tracking-wider'>
                 <tr>
                   <th className='px-6 py-3 text-left'>Learner</th>
-                  <th className='px-6 py-3 text-left'>School</th>
-                  <th className='px-6 py-3 text-left'>Course</th>
-                  <th className='px-6 py-3 text-left'>Code</th>
-                  <th className='px-6 py-3 text-right'>Amount (UGX)</th>
-                  <th className='px-6 py-3 text-left'>Activated</th>
-                  <th className='px-6 py-3 text-left'>Access expires</th>
+                  <th className='px-6 py-3 text-left'>School / Course</th>
+                  <th className='px-6 py-3 text-right'>Gross (UGX)</th>
+                  <th className='px-6 py-3 text-right'>Creator</th>
+                  <th className='px-6 py-3 text-right'>My 20%</th>
+                  <th className='px-6 py-3 text-right'>Org 80%</th>
+                  <th className='px-6 py-3 text-left'>Paid At</th>
                 </tr>
               </thead>
               <tbody className='divide-y divide-black/[0.04]'>
                 {filtered.map((r) => {
-                  const price    = r.coursePrice ?? 0;
-                  const effPrice = effectivePrice(r);
-                  const hasDisc  = r.discountActive && (r.discountPercent ?? 0) > 0;
+                  const s = split(r);
                   return (
-                    <tr key={r.codeId} className='hover:bg-secondary/40 transition-colors'>
+                    <tr key={r.paymentId} className='hover:bg-secondary/40 transition-colors'>
                       <td className='px-6 py-4'>
                         <p className='font-medium text-foreground'>{r.learnerName || '—'}</p>
                         <p className='text-xs text-muted-foreground'>{r.learnerEmail}</p>
                       </td>
                       <td className='px-6 py-4'>
                         <p className='font-medium text-foreground'>{r.schoolName}</p>
-                        <p className='text-xs text-muted-foreground font-mono'>{r.schoolSlug}</p>
-                      </td>
-                      <td className='px-6 py-4 max-w-[180px]'>
-                        <p className='font-medium text-foreground truncate'>{r.courseTitle}</p>
-                      </td>
-                      <td className='px-6 py-4'>
-                        <p className='font-mono text-xs text-foreground bg-secondary px-2 py-1 rounded-lg inline-block'>{r.code}</p>
-                        {r.label && <p className='text-xs text-muted-foreground mt-0.5'>{r.label}</p>}
+                        <p className='text-xs text-muted-foreground truncate max-w-[200px]'>{r.courseTitle}</p>
                       </td>
                       <td className='px-6 py-4 text-right'>
-                        <p className='font-semibold text-foreground'>{effPrice.toLocaleString()}</p>
-                        {hasDisc && (
-                          <p className='text-xs text-muted-foreground line-through'>{price.toLocaleString()}</p>
-                        )}
-                        {hasDisc && (
-                          <span className='text-[10px] font-bold text-red-600'>-{r.discountPercent}%</span>
-                        )}
+                        <p className='font-semibold text-foreground'>{r.amount.toLocaleString()}</p>
+                        <p className='text-[10px] text-muted-foreground'>{r.commissionPercent}% comm.</p>
                       </td>
+                      <td className='px-6 py-4 text-right text-muted-foreground'>{s.creator.toLocaleString()}</td>
+                      <td className='px-6 py-4 text-right font-bold text-primary'>{s.ownerCut.toLocaleString()}</td>
+                      <td className='px-6 py-4 text-right text-indigo-600 font-medium'>{s.orgKeeps.toLocaleString()}</td>
                       <td className='px-6 py-4 text-muted-foreground whitespace-nowrap'>
-                        {r.usedAt ? new Date(r.usedAt).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
-                      </td>
-                      <td className='px-6 py-4 text-muted-foreground whitespace-nowrap'>
-                        {r.accessExpiresAt
-                          ? new Date(r.accessExpiresAt).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' })
-                          : <span className='text-xs text-green-600 font-medium'>Permanent</span>
-                        }
+                        {r.paidAt ? new Date(r.paidAt).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
                       </td>
                     </tr>
                   );
@@ -256,13 +271,14 @@ export function RevenueReportClient({ rows }: { rows: Row[] }) {
               </tbody>
               <tfoot className='border-t-2 border-black/[0.08] bg-secondary/50'>
                 <tr>
-                  <td colSpan={4} className='px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide'>
-                    Total ({filtered.length} activation{filtered.length !== 1 ? 's' : ''})
+                  <td colSpan={2} className='px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide'>
+                    Total ({filtered.length} payment{filtered.length !== 1 ? 's' : ''})
                   </td>
-                  <td className='px-6 py-3 text-right font-bold text-foreground'>
-                    {totalRevenue.toLocaleString()}
-                  </td>
-                  <td colSpan={2} />
+                  <td className='px-6 py-3 text-right font-bold text-foreground'>{totals.gross.toLocaleString()}</td>
+                  <td className='px-6 py-3 text-right font-bold text-muted-foreground'>{totals.creator.toLocaleString()}</td>
+                  <td className='px-6 py-3 text-right font-bold text-primary'>{totals.owner.toLocaleString()}</td>
+                  <td className='px-6 py-3 text-right font-bold text-indigo-600'>{totals.org.toLocaleString()}</td>
+                  <td />
                 </tr>
               </tfoot>
             </table>

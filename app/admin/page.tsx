@@ -21,13 +21,10 @@ export default async function PlatformDashboard() {
   const earningsRows    = earningsResult.success && earningsResult.data ? earningsResult.data : [];
   const enrollmentFunnel = earningsResult.success && (earningsResult as any).enrollmentFunnel ? (earningsResult as any).enrollmentFunnel : [];
 
-  // Earnings are computed from activated codes (effectivePrice * commissionPercent / 100)
+  // Owner's earnings = 20% of each school's commission on every successful payment
   const totalEarnings = earningsRows.reduce((s, r) => {
-    const base = r.coursePrice ?? 0;
-    const eff  = (r.discountActive && (r.discountPercent ?? 0) > 0)
-      ? Math.round(base * (1 - (r.discountPercent ?? 0) / 100))
-      : base;
-    return s + Math.round(eff * (r.commissionPercent ?? 0) / 100);
+    const orgCommission = Math.round((r.amount ?? 0) * (r.commissionPercent ?? 0) / 100);
+    return s + Math.round(orgCommission * 0.20);
   }, 0);
 
   const stats = [
@@ -91,11 +88,8 @@ export default async function PlatformDashboard() {
                 const schoolEarnings = earningsRows
                   .filter((r) => r.schoolId === s.id)
                   .reduce((sum, r) => {
-                    const base = r.coursePrice ?? 0;
-                    const eff  = (r.discountActive && (r.discountPercent ?? 0) > 0)
-                      ? Math.round(base * (1 - (r.discountPercent ?? 0) / 100))
-                      : base;
-                    return sum + Math.round(eff * (r.commissionPercent ?? 0) / 100);
+                    const orgCommission = Math.round((r.amount ?? 0) * (r.commissionPercent ?? 0) / 100);
+                    return sum + Math.round(orgCommission * 0.20);
                   }, 0);
                 return (
                   <tr key={s.id} className='hover:bg-secondary/40 transition-colors'>
