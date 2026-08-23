@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { isPlatformOwner } from '@/lib/school-context';
 import Link from 'next/link';
-import { LayoutDashboard, Building2, TrendingUp, ClipboardList } from 'lucide-react';
+import { LayoutDashboard, Building2, TrendingUp, ClipboardList, Globe } from 'lucide-react';
 import { db } from '@/lib/db';
 import { creatorApplication } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
@@ -32,8 +32,9 @@ export default async function PlatformLayout({ children }: { children: React.Rea
           {[
             { href: '/admin',                     label: 'Dashboard',    icon: LayoutDashboard, badge: 0 },
             { href: '/admin/applications',        label: 'Applications', icon: ClipboardList,   badge: pendingCount },
-            { href: '/admin/schools',             label: 'Creators',     icon: Building2,       badge: 0 },
-            { href: '/admin/revenue',             label: 'Revenue',      icon: TrendingUp,      badge: 0 },
+            { href: '/admin/schools',             label: 'Creators',       icon: Building2,       badge: 0 },
+            { href: '/admin/organizations',       label: 'Organizations',  icon: Globe,           badge: 0 },
+            { href: '/admin/revenue',             label: 'Revenue',        icon: TrendingUp,      badge: 0 },
           ].map(({ href, label, icon: Icon, badge }) => (
             <Link key={href} href={href}
               className='flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors'
