@@ -10,21 +10,23 @@ import Link from 'next/link';
 import {
   ArrowLeft, BookOpen, Play, FileText, Clock,
   CheckCircle2, GraduationCap, Loader2, ChevronDown, ChevronUp,
-  Users, Star, Smartphone, X, CheckCheck, Shield,
+  Users, Star, Smartphone, X, CheckCheck, Shield, Lock,
+  Globe, Tag,
 } from 'lucide-react';
 import { ReviewsSection } from './reviews';
 
-// ─── Tokens ───────────────────────────────────────────────────────────────────
+// ─── Design tokens ────────────────────────────────────────────────────────────
 const ACCENT  = '#0B00FF';
-const INK     = '#0E0E1A';
-const MUTED   = '#6B6B8A';
-const IVORY   = '#F7F5F0';
-const RULE    = '#E2DDD6';
+const INK     = '#111111';
+const MUTED   = '#666666';
+const BG      = '#EEECEA';   // warm light grey ground (like Skool's #F2F2F2)
 const WHITE   = '#FFFFFF';
+const BORDER  = '#E5E5E5';
 const RED     = '#DC2626';
 const REDBG   = '#FEF2F2';
-const HERO_BG = '#0A0A16'; // near-black for hero
+const CHIPBG  = '#F2F2F2';
 
+// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function CoursePage({ params }: { params: Promise<{ courseId: string }> }) {
   const router = useRouter();
   const [course,        setCourse]        = useState<any>(null);
@@ -77,19 +79,19 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
   }, [course?.description]);
 
   if (loading) return (
-    <div style={{ minHeight: '100vh', background: IVORY, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div style={{ minHeight: '100vh', background: BG, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ width: 32, height: 32, border: `2.5px solid ${ACCENT}`, borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
 
   if (!course) return (
-    <div style={{ minHeight: '100vh', background: IVORY, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-      <div style={{ background: WHITE, border: `1px solid ${RULE}`, padding: '56px 48px', maxWidth: 400, width: '100%', textAlign: 'center' }}>
-        <BookOpen size={40} style={{ color: RULE, margin: '0 auto 16px', display: 'block' }} />
+    <div style={{ minHeight: '100vh', background: BG, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <div style={{ background: WHITE, borderRadius: 16, padding: '56px 48px', maxWidth: 400, width: '100%', textAlign: 'center', boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }}>
+        <BookOpen size={40} style={{ color: BORDER, margin: '0 auto 16px', display: 'block' }} />
         <h2 style={{ fontSize: 22, fontWeight: 700, color: INK, margin: '0 0 8px' }}>Course not found</h2>
-        <p style={{ fontSize: 15, color: MUTED, margin: '0 0 24px', lineHeight: 1.7 }}>{error || "This course doesn't exist."}</p>
-        <Link href="/courses" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', background: ACCENT, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
+        <p style={{ fontSize: 18, color: MUTED, margin: '0 0 24px', lineHeight: 1.7 }}>{error || "This course doesn't exist."}</p>
+        <Link href="/courses" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', background: ACCENT, color: '#fff', fontSize: 18, fontWeight: 700, textDecoration: 'none', borderRadius: 10 }}>
           <ArrowLeft size={14} /> All Courses
         </Link>
       </div>
@@ -121,7 +123,6 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
     if (!result.success) { setError(result.error || 'Payment failed to start'); setPaying(false); return; }
     const pid = result.data!.paymentId;
     setPaymentId(pid); setPaymentStatus('pending');
-    setPaymentMessage('Check your phone — enter your PIN to confirm payment.');
     pollRef.current = setInterval(async () => {
       const sr = await getPaymentStatus(pid);
       if (!sr.success) return;
@@ -138,318 +139,211 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
     setPaymentId(null); setPaymentMessage(null); setPhone('');
   };
 
-  const ctaProps = {
-    title: course.title, isFree, isEnrolled, isLoggedIn, enrolling,
-    price, discountedPrice, discountActive, discountPercent: course.discountPercent,
-    error, onEnroll: handleEnroll, onContinue: () => router.push(`/learn/${courseId}`),
-    onPay: () => setPaymentOpen(true),
-    modules: course.modules.length, videos: totalVideos, pdfs: totalPdfs,
-  };
+  const returnPath = typeof window !== 'undefined' ? window.location.pathname : '';
+  const ctaParam   = `?next=${encodeURIComponent(returnPath)}&courseTitle=${encodeURIComponent(course.title)}`;
 
   return (
-    <div style={{ minHeight: '100vh', background: IVORY, fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: BG, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif' }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap');
         *, *::before, *::after { box-sizing: border-box; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
-        .course-grid {
-          display: grid;
-          grid-template-columns: 1fr 360px;
-          gap: 0;
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 56px 32px 96px;
-          align-items: start;
+        p { font-size: 18px; }
+        @keyframes spin   { to { transform: rotate(360deg); } }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+        .pg-grid {
+          max-width: 1140px; margin: 0 auto; padding: 32px 20px 80px;
+          display: grid; grid-template-columns: 1fr 320px; gap: 24px; align-items: start;
         }
-        .course-main { padding-right: 56px; }
-        .course-sidebar { position: sticky; top: 24px; }
-        .mobile-cta { display: none; }
-        @media (max-width: 900px) {
-          .course-grid { grid-template-columns: 1fr; padding: 32px 20px 80px; }
-          .course-main { padding-right: 0; }
-          .desktop-cta { display: none; }
-          .mobile-cta { display: block; margin: 32px 0; }
+        @media (max-width: 860px) {
+          .pg-grid { grid-template-columns: 1fr; padding: 20px 16px 64px; }
+          .sidebar-col { order: -1; }
         }
+        .card { background: ${WHITE}; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 20px rgba(0,0,0,0.04); }
+        .module-row { transition: background .12s; cursor: default; }
+        .module-row:hover { background: #FAFAFA; }
         .cta-btn {
-          width: 100%; padding: 16px; border: none; font-size: 15px;
-          font-weight: 700; cursor: pointer; display: flex;
-          align-items: center; justify-content: center; gap: 9px;
-          font-family: system-ui, sans-serif; transition: opacity .15s, transform .1s;
-          letter-spacing: 0.01em;
+          display: flex; align-items: center; justify-content: center; gap: 8px;
+          width: 100%; padding: 15px 20px; border: none; border-radius: 12px;
+          font-size: 15px; font-weight: 700; cursor: pointer;
+          font-family: inherit; transition: opacity .15s, transform .1s; letter-spacing: 0.01em;
         }
-        .cta-btn:hover:not(:disabled) { opacity: .92; transform: translateY(-1px); }
+        .cta-btn:hover:not(:disabled) { opacity: .9; transform: translateY(-1px); }
         .cta-btn:disabled { opacity: .45; cursor: not-allowed; }
-        .module-row:hover { background: rgba(11,0,255,0.025); }
-        .pg-input:focus { outline: 2px solid ${ACCENT}; outline-offset: -2px; }
+        .inp:focus { outline: 2px solid ${ACCENT}; outline-offset: -2px; }
+        .chip {
+          display: inline-flex; align-items: center; gap: 6px;
+          padding: 6px 12px; border-radius: 999px;
+          background: ${CHIPBG}; font-size: 13px; color: ${MUTED}; font-weight: 500;
+        }
+        .check-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid ${BORDER}; }
+        .check-item:last-child { border-bottom: none; }
       `}</style>
 
       {/* ── TOP NAV ── */}
-      <nav style={{ background: WHITE, borderBottom: `1px solid ${RULE}`, position: 'sticky', top: 0, zIndex: 40 }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', gap: 16 }}>
-          <Link href="/courses" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 600, color: MUTED, textDecoration: 'none' }}>
-            <ArrowLeft size={14} /> All Courses
+      <nav style={{ background: WHITE, borderBottom: `1px solid ${BORDER}`, position: 'sticky', top: 0, zIndex: 40 }}>
+        <div style={{ maxWidth: 1140, margin: '0 auto', padding: '0 20px', height: 52, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Link href="/courses" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 18, fontWeight: 600, color: MUTED, textDecoration: 'none', padding: '6px 12px', borderRadius: 8, background: CHIPBG }}>
+            <ArrowLeft size={13} /> All Courses
           </Link>
           <div style={{ flex: 1 }} />
-          {isEnrolled && (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 700, color: '#059669', background: '#D1FAE5', padding: '5px 12px', letterSpacing: '0.04em' }}>
-              <CheckCircle2 size={12} /> Enrolled
-            </span>
-          )}
           {isLoggedIn ? (
-            <Link href="/learn/dashboard" style={{ fontSize: 13, fontWeight: 600, color: MUTED, textDecoration: 'none' }}>My Learning</Link>
+            <Link href="/learn/dashboard" style={{ fontSize: 18, fontWeight: 600, color: MUTED, textDecoration: 'none' }}>My Learning</Link>
           ) : (
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-              <Link href="/sign-in" style={{ fontSize: 13, fontWeight: 500, color: MUTED, textDecoration: 'none' }}>Sign in</Link>
-              <Link href="/sign-up" style={{ fontSize: 13, fontWeight: 700, color: '#fff', background: ACCENT, padding: '8px 18px', textDecoration: 'none' }}>Get started</Link>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <Link href="/sign-in" style={{ fontSize: 18, fontWeight: 600, color: MUTED, textDecoration: 'none', padding: '7px 14px', borderRadius: 8 }}>Sign in</Link>
+              <Link href="/sign-up" style={{ fontSize: 18, fontWeight: 700, color: WHITE, background: ACCENT, padding: '7px 16px', textDecoration: 'none', borderRadius: 8 }}>Get started</Link>
             </div>
           )}
         </div>
       </nav>
 
-      {/* ── HERO BANNER ── */}
-      <div style={{ background: HERO_BG, padding: '0' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '48px 32px 52px', display: 'grid', gridTemplateColumns: '1fr 360px', gap: 0, alignItems: 'center' }}>
+      {/* ── MAIN GRID ── */}
+      <div className="pg-grid">
 
-          {/* Left: course info */}
-          <div style={{ paddingRight: 56 }}>
+        {/* ── LEFT: main content card ── */}
+        <div className="card">
 
-            {/* Breadcrumb badges */}
-            <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-              {course.level && (
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#A5B4FC', background: 'rgba(99,102,241,0.15)', padding: '4px 10px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                  {course.level}
-                </span>
-              )}
-              {discountActive && !isEnrolled && (
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#FCA5A5', background: 'rgba(239,68,68,0.15)', padding: '4px 10px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                  {course.discountPercent}% off
-                </span>
-              )}
-              {course.language && (
-                <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.08)', padding: '4px 10px' }}>
-                  {course.language}
-                </span>
+          {/* Thumbnail / video preview */}
+          <div style={{ position: 'relative', background: '#0D0D1A' }}>
+            <div style={{ aspectRatio: '16/9', overflow: 'hidden' }}>
+              {thumbnailUrl ? (
+                <img src={thumbnailUrl} alt={course.title}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              ) : (
+                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <BookOpen size={52} style={{ color: 'rgba(255,255,255,0.12)' }} />
+                </div>
               )}
             </div>
+            {/* Enrolled ribbon */}
+            {isEnrolled && (
+              <div style={{ position: 'absolute', top: 16, left: 16, display: 'flex', alignItems: 'center', gap: 6, background: '#059669', color: WHITE, fontSize: 12, fontWeight: 700, padding: '5px 12px', borderRadius: 999 }}>
+                <CheckCircle2 size={12} /> Enrolled
+              </div>
+            )}
+            {/* Discount ribbon */}
+            {discountActive && !isEnrolled && (
+              <div style={{ position: 'absolute', top: 16, right: 16, background: RED, color: WHITE, fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 999, letterSpacing: '0.04em' }}>
+                -{course.discountPercent}% OFF
+              </div>
+            )}
+          </div>
 
-            {/* Title */}
-            <h1 style={{
-              fontFamily: "'Playfair Display', Georgia, serif",
-              fontSize: 'clamp(28px, 4vw, 48px)',
-              fontWeight: 900,
-              color: '#FFFFFF',
-              lineHeight: 1.1,
-              letterSpacing: '-0.02em',
-              margin: '0 0 20px',
-            }}>
+          {/* Title + meta */}
+          <div style={{ padding: '24px 28px 20px' }}>
+            <h1 style={{ fontSize: 'clamp(20px, 3vw, 28px)', fontWeight: 800, color: INK, margin: '0 0 16px', lineHeight: 1.25, letterSpacing: '-0.02em' }}>
               {course.title}
             </h1>
 
-            {/* Description preview */}
-            {course.description && (
-              <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, margin: '0 0 28px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                {course.description}
-              </p>
-            )}
-
-            {/* Rating */}
-            {avgRating && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
-                <div style={{ display: 'flex', gap: 2 }}>
-                  {[1,2,3,4,5].map(i => (
-                    <Star key={i} size={14} style={{ fill: i <= Math.round(avgRating) ? '#FBBF24' : 'transparent', color: '#FBBF24' }} />
-                  ))}
-                </div>
-                <span style={{ fontSize: 14, fontWeight: 700, color: '#FBBF24' }}>{avgRating.toFixed(1)}</span>
-                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>({totalReviews} review{totalReviews !== 1 ? 's' : ''})</span>
-              </div>
-            )}
-
-            {/* Instructor */}
-            {course.instructor && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
-                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Users size={14} color="rgba(255,255,255,0.5)" />
-                </div>
-                <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)' }}>
-                  Instructor: <span style={{ color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>{course.instructor}</span>
-                </span>
-              </div>
-            )}
-
-            {/* Meta chips */}
-            <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-              {[
-                { icon: BookOpen, label: `${course.modules.length} module${course.modules.length !== 1 ? 's' : ''}` },
-                { icon: Play,     label: `${totalVideos} video${totalVideos !== 1 ? 's' : ''}` },
-                { icon: FileText, label: `${totalPdfs} PDF${totalPdfs !== 1 ? 's' : ''}` },
-                { icon: Clock,    label: 'Self-paced' },
-              ].map(({ icon: Icon, label }) => (
-                <span key={label} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>
-                  <Icon size={13} style={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0 }} /> {label}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Right: thumbnail */}
-          <div style={{ position: 'relative' }}>
-            <div style={{ width: '100%', aspectRatio: '16/9', background: '#111', overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,0.6)' }}>
-              {thumbnailUrl ? (
-                <img src={thumbnailUrl} alt={course.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            {/* Meta chips row */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+              <span className="chip"><Lock size={12} /> Private</span>
+              {course.instructor && (
+                <span className="chip"><Users size={12} /> {course.instructor}</span>
+              )}
+              {isFree ? (
+                <span className="chip" style={{ color: '#059669', background: '#D1FAE5', fontWeight: 700 }}><Tag size={12} /> Free</span>
               ) : (
-                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1a1a2e, #0d0d1a)' }}>
-                  <BookOpen size={48} style={{ color: 'rgba(255,255,255,0.15)' }} />
-                </div>
+                <span className="chip" style={{ color: INK, fontWeight: 700 }}>
+                  <Tag size={12} />
+                  {discountActive
+                    ? <><span style={{ textDecoration: 'line-through', fontWeight: 400, color: MUTED }}>UGX {price.toLocaleString()}</span>{' '}UGX {discountedPrice.toLocaleString()}</>
+                    : `UGX ${price.toLocaleString()}`
+                  }
+                </span>
               )}
-              {/* Play overlay hint */}
-              {thumbnailUrl && (
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.1)', opacity: 0, transition: 'opacity .2s' }}
-                  onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
-                  onMouseLeave={e => (e.currentTarget.style.opacity = '0')}>
-                  <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(255,255,255,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Play size={22} fill={ACCENT} color={ACCENT} style={{ marginLeft: 3 }} />
-                  </div>
-                </div>
+              {course.level && (
+                <span className="chip"><Globe size={12} /> {course.level}</span>
+              )}
+              {avgRating && (
+                <span className="chip" style={{ color: '#92400E', background: '#FEF3C7' }}>
+                  <Star size={12} style={{ fill: '#F59E0B', color: '#F59E0B' }} /> {avgRating.toFixed(1)} ({totalReviews})
+                </span>
               )}
             </div>
-          </div>
-        </div>
-      </div>
 
-      {/* ── BODY GRID ── */}
-      <div className="course-grid">
+            <div style={{ height: 1, background: BORDER, marginBottom: 24 }} />
 
-        {/* ── LEFT: content ── */}
-        <div className="course-main">
-
-          {/* Mobile CTA */}
-          <div className="mobile-cta">
-            <CtaCard {...ctaProps} />
-          </div>
-
-          {/* ── What you'll learn ── */}
-          {course.whatYoullLearn && (() => {
-            try {
-              const items: string[] = JSON.parse(course.whatYoullLearn);
-              if (!items.length) return null;
-              return (
-                <section style={{ marginBottom: 48 }}>
-                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: MUTED, margin: '0 0 10px' }}>What you'll learn</p>
-                  <h2 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 26, fontWeight: 700, color: INK, margin: '0 0 24px', lineHeight: 1.2 }}>
-                    Skills you'll walk away with
-                  </h2>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
-                    {items.map((item, i) => (
-                      <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '14px 16px', background: WHITE, border: `1px solid ${RULE}` }}>
-                        <CheckCircle2 size={16} style={{ color: ACCENT, flexShrink: 0, marginTop: 2 }} />
-                        <span style={{ fontSize: 14, color: INK, lineHeight: 1.55 }}>{item}</span>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              );
-            } catch { return null; }
-          })()}
-
-          {/* ── Description ── */}
-          {course.description && (
-            <section style={{ marginBottom: 48 }}>
-              <div style={{ borderTop: `1px solid ${RULE}`, paddingTop: 40 }}>
-                <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: MUTED, margin: '0 0 10px' }}>About this course</p>
-                <h2 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 26, fontWeight: 700, color: INK, margin: '0 0 20px', lineHeight: 1.2 }}>
-                  Course overview
-                </h2>
+            {/* Description */}
+            {course.description && (
+              <div style={{ marginBottom: 28 }}>
                 <p
                   ref={descRef}
                   style={{
-                    fontSize: 16, color: '#3A3A5C', lineHeight: 1.8, margin: 0, whiteSpace: 'pre-wrap',
-                    ...(!descExpanded ? { display: '-webkit-box', WebkitLineClamp: 6, WebkitBoxOrient: 'vertical', overflow: 'hidden' } : {}),
+                    fontSize: 18, color: '#333', lineHeight: 1.75, margin: 0, whiteSpace: 'pre-wrap',
+                    ...(!descExpanded ? { display: '-webkit-box', WebkitLineClamp: 5, WebkitBoxOrient: 'vertical', overflow: 'hidden' } : {}),
                   }}
                 >
                   {course.description}
                 </p>
                 {(descOverflows || descExpanded) && (
                   <button onClick={() => setDescExpanded(!descExpanded)}
-                    style={{ marginTop: 14, display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 14, fontWeight: 600, color: ACCENT, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                    {descExpanded ? <><ChevronUp size={14} /> Show less</> : <><ChevronDown size={14} /> Read more</>}
+                    style={{ marginTop: 10, display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 18, fontWeight: 600, color: ACCENT, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                    {descExpanded ? <><ChevronUp size={13} /> Show less</> : <><ChevronDown size={13} /> Read more</>}
                   </button>
                 )}
               </div>
-            </section>
-          )}
+            )}
 
-          {/* ── Curriculum ── */}
-          {course.modules.length > 0 && (
-            <section style={{ marginBottom: 48 }}>
-              <div style={{ borderTop: `1px solid ${RULE}`, paddingTop: 40 }}>
-                <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: MUTED, margin: '0 0 10px' }}>Curriculum</p>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: 28 }}>
-                  <h2 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 26, fontWeight: 700, color: INK, margin: 0, lineHeight: 1.2 }}>
-                    Course content
-                  </h2>
-                  <span style={{ fontSize: 13, color: MUTED }}>
-                    {course.modules.length} modules · {totalVideos + totalPdfs} resources
-                  </span>
-                </div>
-                <div style={{ border: `1px solid ${RULE}`, background: WHITE, overflow: 'hidden' }}>
-                  {course.modules.map((mod: any, index: number) => {
-                    const vc = mod.videos.length;
-                    const pc = mod.pdfs.length;
-                    return (
-                      <div
-                        key={mod.id}
-                        className="module-row"
-                        style={{
-                          padding: '22px 28px',
-                          borderBottom: index < course.modules.length - 1 ? `1px solid ${RULE}` : 'none',
-                          display: 'flex', gap: 20, alignItems: 'flex-start',
-                          transition: 'background .15s',
-                        }}
-                      >
-                        {/* Index */}
-                        <div style={{
-                          width: 36, height: 36, flexShrink: 0,
-                          border: `1px solid ${RULE}`,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontFamily: 'system-ui, sans-serif',
-                          fontSize: 11, fontWeight: 700, color: MUTED,
-                          letterSpacing: '0.06em', marginTop: 2,
-                        }}>
-                          {String(index + 1).padStart(2, '0')}
+            {/* What you'll learn */}
+            {course.whatYoullLearn && (() => {
+              try {
+                const items: string[] = JSON.parse(course.whatYoullLearn);
+                if (!items.length) return null;
+                return (
+                  <div style={{ marginBottom: 28 }}>
+                    <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: MUTED, margin: '0 0 12px' }}>What's inside</p>
+                    <div>
+                      {items.map((item, i) => (
+                        <div key={i} className="check-item">
+                          <CheckCircle2 size={16} style={{ color: '#059669', flexShrink: 0, marginTop: 1 }} />
+                          <span style={{ fontSize: 18, color: INK, lineHeight: 1.55 }}>{item}</span>
                         </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontSize: 16, fontWeight: 600, color: INK, margin: '0 0 5px', lineHeight: 1.4 }}>{mod.title}</p>
-                          {mod.description && (
-                            <p style={{ fontSize: 14, color: MUTED, margin: '0 0 12px', lineHeight: 1.6 }}>{mod.description}</p>
-                          )}
-                          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-                            {vc > 0 && (
-                              <span style={{ fontSize: 13, color: MUTED, display: 'flex', alignItems: 'center', gap: 5 }}>
-                                <Play size={11} style={{ color: ACCENT }} /> {vc} video{vc !== 1 ? 's' : ''}
-                              </span>
-                            )}
-                            {pc > 0 && (
-                              <span style={{ fontSize: 13, color: MUTED, display: 'flex', alignItems: 'center', gap: 5 }}>
-                                <FileText size={11} style={{ color: ACCENT }} /> {pc} PDF{pc !== 1 ? 's' : ''}
-                              </span>
-                            )}
-                            {vc === 0 && pc === 0 && (
-                              <span style={{ fontSize: 13, color: MUTED, fontStyle: 'italic' }}>No resources yet</span>
-                            )}
-                          </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              } catch { return null; }
+            })()}
+          </div>
+
+          {/* Curriculum */}
+          {course.modules.length > 0 && (
+            <div style={{ borderTop: `1px solid ${BORDER}`, padding: '24px 28px 28px' }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 16 }}>
+                <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: MUTED, margin: 0 }}>Curriculum</p>
+                <span style={{ fontSize: 12, color: MUTED }}>{course.modules.length} modules · {totalVideos + totalPdfs} resources</span>
+              </div>
+              <div style={{ border: `1px solid ${BORDER}`, borderRadius: 12, overflow: 'hidden' }}>
+                {course.modules.map((mod: any, index: number) => {
+                  const vc = mod.videos.length;
+                  const pc = mod.pdfs.length;
+                  return (
+                    <div key={mod.id} className="module-row"
+                      style={{ padding: '16px 20px', borderBottom: index < course.modules.length - 1 ? `1px solid ${BORDER}` : 'none', display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: CHIPBG, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: MUTED, flexShrink: 0, marginTop: 1 }}>
+                        {String(index + 1).padStart(2, '0')}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: 18, fontWeight: 600, color: INK, margin: '0 0 4px', lineHeight: 1.4 }}>{mod.title}</p>
+                        {mod.description && (
+                          <p style={{ fontSize: 18, color: MUTED, margin: '0 0 6px', lineHeight: 1.55 }}>{mod.description}</p>
+                        )}
+                        <div style={{ display: 'flex', gap: 12 }}>
+                          {vc > 0 && <span style={{ fontSize: 12, color: MUTED, display: 'flex', alignItems: 'center', gap: 4 }}><Play size={10} style={{ color: ACCENT }} /> {vc} video{vc !== 1 ? 's' : ''}</span>}
+                          {pc > 0 && <span style={{ fontSize: 12, color: MUTED, display: 'flex', alignItems: 'center', gap: 4 }}><FileText size={10} style={{ color: ACCENT }} /> {pc} PDF{pc !== 1 ? 's' : ''}</span>}
+                          {vc === 0 && pc === 0 && <span style={{ fontSize: 12, color: MUTED, fontStyle: 'italic' }}>No resources yet</span>}
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  );
+                })}
               </div>
-            </section>
+            </div>
           )}
 
-          {/* ── Reviews ── */}
-          <div style={{ borderTop: `1px solid ${RULE}`, paddingTop: 40 }}>
+          {/* Reviews */}
+          <div style={{ borderTop: `1px solid ${BORDER}`, padding: '24px 28px 32px' }}>
             <ReviewsSection
               courseId={courseId!}
               isEnrolled={isEnrolled}
@@ -461,208 +355,192 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
           </div>
         </div>
 
-        {/* ── RIGHT: sticky CTA ── */}
-        <div className="course-sidebar desktop-cta">
-          <CtaCard {...ctaProps} />
+        {/* ── RIGHT: sidebar ── */}
+        <div className="sidebar-col" style={{ position: 'sticky', top: 68 }}>
+          <div className="card">
+
+            {/* Thumbnail */}
+            <div style={{ aspectRatio: '16/9', background: '#0D0D1A', overflow: 'hidden' }}>
+              {thumbnailUrl
+                ? <img src={thumbnailUrl} alt={course.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><BookOpen size={36} style={{ color: 'rgba(255,255,255,0.12)' }} /></div>}
+            </div>
+
+            <div style={{ padding: '20px 20px 24px' }}>
+              {/* Course name + tag */}
+              <h2 style={{ fontSize: 16, fontWeight: 800, color: INK, margin: '0 0 4px', lineHeight: 1.3 }}>{course.title}</h2>
+              {course.instructor && (
+                <p style={{ fontSize: 12, color: MUTED, margin: '0 0 16px' }}>by {course.instructor}</p>
+              )}
+
+              {/* Stats row */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0, borderRadius: 10, overflow: 'hidden', border: `1px solid ${BORDER}`, marginBottom: 20 }}>
+                {[
+                  { label: 'Modules',  value: course.modules.length },
+                  { label: 'Videos',   value: totalVideos },
+                  { label: 'PDFs',     value: totalPdfs },
+                ].map((s, i) => (
+                  <div key={s.label} style={{ textAlign: 'center', padding: '12px 8px', borderRight: i < 2 ? `1px solid ${BORDER}` : 'none', background: CHIPBG }}>
+                    <p style={{ fontSize: 20, fontWeight: 800, color: INK, margin: '0 0 2px', lineHeight: 1 }}>{s.value}</p>
+                    <p style={{ fontSize: 11, color: MUTED, margin: 0, fontWeight: 500 }}>{s.label}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Price */}
+              {!isEnrolled && (
+                <div style={{ marginBottom: 16, textAlign: 'center' }}>
+                  {isFree ? (
+                    <p style={{ fontSize: 32, fontWeight: 900, color: ACCENT, margin: 0, letterSpacing: '-0.02em' }}>Free</p>
+                  ) : (
+                    <div>
+                      <p style={{ fontSize: 32, fontWeight: 900, color: INK, margin: 0, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>
+                        UGX {discountedPrice.toLocaleString()}
+                      </p>
+                      {discountActive && (
+                        <p style={{ fontSize: 18, color: MUTED, textDecoration: 'line-through', margin: '4px 0 0', fontVariantNumeric: 'tabular-nums' }}>
+                          UGX {price.toLocaleString()}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* CTA */}
+              {isEnrolled ? (
+                <button className="cta-btn" onClick={() => router.push(`/learn/${courseId}`)}
+                  style={{ background: ACCENT, color: WHITE, marginBottom: 12 }}>
+                  <Play size={15} fill="white" /> Continue Learning
+                </button>
+              ) : isLoggedIn ? (
+                <>
+                  {isFree ? (
+                    <button className="cta-btn" onClick={handleEnroll} disabled={enrolling}
+                      style={{ background: enrolling ? '#DDD' : ACCENT, color: enrolling ? MUTED : WHITE, marginBottom: 12 }}>
+                      {enrolling
+                        ? <><Loader2 size={14} style={{ animation: 'spin .9s linear infinite' }} /> Enrolling…</>
+                        : <><GraduationCap size={15} /> Enroll for free</>}
+                    </button>
+                  ) : (
+                    <button className="cta-btn" onClick={() => setPaymentOpen(true)}
+                      style={{ background: ACCENT, color: WHITE, marginBottom: 12 }}>
+                      <Smartphone size={15} /> Pay with Mobile Money
+                    </button>
+                  )}
+                  {error && <p style={{ fontSize: 18, color: RED, textAlign: 'center', margin: '0 0 8px' }}>{error}</p>}
+                </>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+                  <Link href={`/sign-up${ctaParam}`} className="cta-btn" style={{ background: ACCENT, color: WHITE, textDecoration: 'none' }}>
+                    <GraduationCap size={15} /> {isFree ? 'Sign up & enroll free' : 'Sign up to enroll'}
+                  </Link>
+                  <p style={{ fontSize: 18, color: MUTED, textAlign: 'center', margin: 0 }}>
+                    Have an account? <Link href={`/sign-in${ctaParam}`} style={{ color: ACCENT, fontWeight: 600, textDecoration: 'none' }}>Sign in</Link>
+                  </p>
+                </div>
+              )}
+
+              {/* Includes list */}
+              <div style={{ borderTop: `1px solid ${BORDER}`, paddingTop: 16, marginTop: 4 }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 12px' }}>Includes</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+                  {[
+                    { icon: BookOpen,      t: `${course.modules.length} module${course.modules.length !== 1 ? 's' : ''}` },
+                    { icon: Play,          t: `${totalVideos} video lesson${totalVideos !== 1 ? 's' : ''}` },
+                    { icon: FileText,      t: `${totalPdfs} PDF resource${totalPdfs !== 1 ? 's' : ''}` },
+                    { icon: Clock,         t: 'Self-paced' },
+                    { icon: GraduationCap, t: 'Certificate on completion' },
+                    { icon: Shield,        t: 'Full lifetime access' },
+                  ].map(({ icon: Icon, t }) => (
+                    <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 18, color: '#444' }}>
+                      <Icon size={13} style={{ color: ACCENT, flexShrink: 0 }} /> {t}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* ── PAYMENT MODAL ── */}
       {paymentOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(10,10,22,0.7)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, backdropFilter: 'blur(4px)' }}>
-          <div style={{ background: WHITE, width: '100%', maxWidth: 440, overflow: 'hidden', animation: 'fadeUp .2s ease' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, backdropFilter: 'blur(4px)' }}>
+          <div style={{ background: WHITE, borderRadius: 20, width: '100%', maxWidth: 420, overflow: 'hidden', animation: 'fadeUp .2s ease', boxShadow: '0 24px 80px rgba(0,0,0,0.2)' }}>
 
-            {/* Modal header */}
-            <div style={{ padding: '18px 24px', borderBottom: `1px solid ${RULE}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 15, fontWeight: 700, color: INK }}>
+            <div style={{ padding: '18px 24px', borderBottom: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 16, fontWeight: 700, color: INK }}>
                 {paymentStatus === 'success' ? 'Payment confirmed' : paymentStatus === 'failed' ? 'Payment failed' : paymentStatus === 'pending' ? 'Awaiting payment' : 'Pay with Mobile Money'}
               </span>
-              <button onClick={closePayment} style={{ background: 'none', border: 'none', cursor: 'pointer', color: MUTED, padding: 4, display: 'flex' }}>
-                <X size={18} />
+              <button onClick={closePayment} style={{ background: CHIPBG, border: 'none', cursor: 'pointer', color: MUTED, padding: 8, display: 'flex', borderRadius: 8 }}>
+                <X size={16} />
               </button>
             </div>
 
-            <div style={{ padding: 28 }}>
+            <div style={{ padding: 24 }}>
               {paymentStatus === 'success' ? (
-                <div style={{ textAlign: 'center', padding: '24px 0 12px' }}>
-                  <CheckCheck size={48} style={{ color: '#059669', margin: '0 auto 20px', display: 'block' }} />
-                  <h3 style={{ fontSize: 24, fontWeight: 800, color: INK, margin: '0 0 8px' }}>Payment confirmed!</h3>
-                  <p style={{ fontSize: 15, color: MUTED }}>Taking you to your course…</p>
+                <div style={{ textAlign: 'center', padding: '20px 0 8px' }}>
+                  <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#D1FAE5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                    <CheckCheck size={28} style={{ color: '#059669' }} />
+                  </div>
+                  <h3 style={{ fontSize: 22, fontWeight: 800, color: INK, margin: '0 0 8px' }}>Payment confirmed!</h3>
+                  <p style={{ fontSize: 18, color: MUTED }}>Taking you to your course…</p>
                 </div>
               ) : paymentStatus === 'failed' ? (
                 <div>
-                  <p style={{ fontSize: 15, color: MUTED, margin: '0 0 24px', lineHeight: 1.7 }}>
+                  <p style={{ fontSize: 18, color: MUTED, margin: '0 0 24px', lineHeight: 1.7 }}>
                     {paymentMessage ?? 'The payment was declined or timed out. Please try again.'}
                   </p>
                   <button className="cta-btn" onClick={() => { setPaymentStatus('idle'); setPaymentId(null); setPaymentMessage(null); }}
-                    style={{ background: ACCENT, color: '#fff' }}>
-                    Try again
-                  </button>
+                    style={{ background: ACCENT, color: WHITE }}>Try again</button>
                 </div>
               ) : paymentStatus === 'pending' ? (
-                <div style={{ textAlign: 'center', padding: '12px 0 4px' }}>
-                  <Smartphone size={44} style={{ color: ACCENT, margin: '0 auto 20px', display: 'block' }} />
-                  <h3 style={{ fontSize: 22, fontWeight: 800, color: INK, margin: '0 0 12px' }}>Check your phone</h3>
-                  <p style={{ fontSize: 15, color: MUTED, margin: '0 0 24px', lineHeight: 1.7 }}>
-                    A prompt was sent to <strong style={{ color: INK }}>{phone}</strong>. Enter your mobile money PIN to approve.
+                <div style={{ textAlign: 'center', padding: '8px 0 4px' }}>
+                  <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#EEF2FF', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                    <Smartphone size={28} style={{ color: ACCENT }} />
+                  </div>
+                  <h3 style={{ fontSize: 20, fontWeight: 800, color: INK, margin: '0 0 10px' }}>Check your phone</h3>
+                  <p style={{ fontSize: 18, color: MUTED, margin: '0 0 20px', lineHeight: 1.7 }}>
+                    A prompt was sent to <strong style={{ color: INK }}>{phone}</strong>. Enter your PIN to approve.
                   </p>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: MUTED, fontSize: 14, fontWeight: 500 }}>
-                    <Loader2 size={16} style={{ animation: 'spin 0.9s linear infinite', color: ACCENT }} />
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: MUTED, fontSize: 13 }}>
+                    <Loader2 size={15} style={{ animation: 'spin 0.9s linear infinite', color: ACCENT }} />
                     Waiting for confirmation…
                   </div>
                 </div>
               ) : (
                 <div>
-                  <div style={{ padding: '18px 20px', background: IVORY, border: `1px solid ${RULE}`, marginBottom: 24 }}>
-                    <p style={{ fontSize: 13, color: MUTED, margin: '0 0 6px', lineHeight: 1.45 }}>{course.title}</p>
-                    <p style={{ fontSize: 36, fontWeight: 800, color: INK, margin: 0, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+                  <div style={{ padding: '16px 18px', background: CHIPBG, borderRadius: 12, marginBottom: 20 }}>
+                    <p style={{ fontSize: 18, color: MUTED, margin: '0 0 4px' }}>{course.title}</p>
+                    <p style={{ fontSize: 28, fontWeight: 900, color: INK, margin: 0, fontVariantNumeric: 'tabular-nums' }}>
                       UGX {discountedPrice.toLocaleString()}
                     </p>
-                    {discountActive && (
-                      <p style={{ fontSize: 13, color: MUTED, textDecoration: 'line-through', margin: '6px 0 0' }}>
-                        UGX {price.toLocaleString()}
-                      </p>
-                    )}
                   </div>
-                  <div style={{ marginBottom: 20 }}>
-                    <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: INK, marginBottom: 8, letterSpacing: '0.02em' }}>
-                      Mobile money number
-                    </label>
-                    <div style={{ display: 'flex', border: `1.5px solid ${RULE}`, overflow: 'hidden', background: WHITE }}>
-                      <div style={{ padding: '0 14px', borderRight: `1px solid ${RULE}`, background: IVORY, height: 52, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                  <div style={{ marginBottom: 18 }}>
+                    <label style={{ display: 'block', fontSize: 18, fontWeight: 600, color: INK, marginBottom: 8 }}>Mobile money number</label>
+                    <div style={{ display: 'flex', border: `1.5px solid ${BORDER}`, borderRadius: 10, overflow: 'hidden', background: WHITE }}>
+                      <div style={{ padding: '0 14px', borderRight: `1px solid ${BORDER}`, background: CHIPBG, height: 50, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
                         <Smartphone size={15} style={{ color: MUTED }} />
                       </div>
                       <input type="tel" placeholder="0711 234 567" value={phone} onChange={e => setPhone(e.target.value)}
-                        className="pg-input"
-                        style={{ flex: 1, padding: '14px 16px', border: 'none', outline: 'none', fontSize: 16, color: INK, background: 'transparent', fontFamily: 'system-ui, sans-serif' }} />
+                        className="inp"
+                        style={{ flex: 1, padding: '13px 14px', border: 'none', outline: 'none', fontSize: 18, color: INK, background: 'transparent', fontFamily: 'inherit' }} />
                     </div>
-                    <p style={{ fontSize: 12, color: MUTED, margin: '6px 0 0' }}>MTN or Airtel Uganda</p>
+                    <p style={{ fontSize: 12, color: MUTED, margin: '5px 0 0' }}>MTN or Airtel Uganda</p>
                   </div>
-                  {error && (
-                    <div style={{ fontSize: 14, color: RED, background: REDBG, border: '1px solid #FECACA', padding: '10px 14px', marginBottom: 16 }}>
-                      {error}
-                    </div>
-                  )}
+                  {error && <div style={{ fontSize: 18, color: RED, background: REDBG, border: '1px solid #FECACA', borderRadius: 8, padding: '10px 14px', marginBottom: 16 }}>{error}</div>}
                   <button className="cta-btn" onClick={handlePay} disabled={paying || !phone.trim()}
-                    style={{ background: paying || !phone.trim() ? RULE : ACCENT, color: paying || !phone.trim() ? MUTED : '#fff' }}>
-                    {paying ? <><Loader2 size={16} style={{ animation: 'spin 0.9s linear infinite' }} /> Sending prompt…</> : 'Pay now'}
+                    style={{ background: paying || !phone.trim() ? '#DDD' : ACCENT, color: paying || !phone.trim() ? MUTED : WHITE }}>
+                    {paying ? <><Loader2 size={15} style={{ animation: 'spin .9s linear infinite' }} /> Sending prompt…</> : 'Pay now'}
                   </button>
-                  <p style={{ fontSize: 12, color: MUTED, textAlign: 'center', margin: '12px 0 0' }}>
-                    You'll receive a USSD prompt on your phone.
-                  </p>
+                  <p style={{ fontSize: 12, color: MUTED, textAlign: 'center', margin: '10px 0 0' }}>You'll receive a USSD prompt on your phone.</p>
                 </div>
               )}
             </div>
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-// ─── CTA Card ────────────────────────────────────────────────────────────────
-function CtaCard({
-  isFree, isEnrolled, isLoggedIn, enrolling,
-  price, discountedPrice, discountActive, discountPercent,
-  error, onEnroll, onContinue, onPay,
-  modules, videos, pdfs, title,
-}: {
-  isFree: boolean; isEnrolled: boolean; isLoggedIn: boolean; enrolling: boolean;
-  price: number; discountedPrice: number; discountActive: boolean; discountPercent: number;
-  error: string | null; onEnroll: () => void; onContinue: () => void; onPay: () => void;
-  modules: number; videos: number; pdfs: number; title: string;
-}) {
-  const returnPath = typeof window !== 'undefined' ? window.location.pathname : '';
-  const ctaParam   = `?next=${encodeURIComponent(returnPath)}&courseTitle=${encodeURIComponent(title)}`;
-  const signInHref = `/sign-in${ctaParam}`;
-  const signUpHref = `/sign-up${ctaParam}`;
-
-  return (
-    <div style={{ background: WHITE, border: `1px solid ${RULE}`, overflow: 'hidden', boxShadow: '0 8px 40px rgba(0,0,0,0.08)' }}>
-
-      {/* Price */}
-      {!isEnrolled && (
-        <div style={{ padding: '28px 28px 24px', borderBottom: `1px solid ${RULE}`, background: IVORY }}>
-          {isFree ? (
-            <p style={{ fontSize: 44, fontWeight: 900, color: ACCENT, lineHeight: 1, margin: 0, fontVariantNumeric: 'tabular-nums' }}>Free</p>
-          ) : (
-            <>
-              <p style={{ fontSize: 44, fontWeight: 900, color: INK, lineHeight: 1, margin: 0, fontVariantNumeric: 'tabular-nums' }}>
-                UGX {discountedPrice.toLocaleString()}
-              </p>
-              {discountActive && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
-                  <span style={{ fontSize: 15, color: MUTED, textDecoration: 'line-through' }}>UGX {price.toLocaleString()}</span>
-                  <span style={{ fontSize: 11, fontWeight: 800, color: RED, background: REDBG, padding: '3px 8px', letterSpacing: '0.06em' }}>
-                    -{discountPercent}%
-                  </span>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      )}
-
-      {/* Action */}
-      <div style={{ padding: '24px 28px', borderBottom: `1px solid ${RULE}` }}>
-        {isEnrolled ? (
-          <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 700, color: '#059669', marginBottom: 16, letterSpacing: '0.02em' }}>
-              <CheckCircle2 size={14} /> You're enrolled
-            </div>
-            <button className="cta-btn" onClick={onContinue} style={{ background: ACCENT, color: '#fff' }}>
-              <Play size={15} fill="white" /> Continue Learning
-            </button>
-          </>
-        ) : isLoggedIn ? (
-          <>
-            {isFree ? (
-              <button className="cta-btn" onClick={onEnroll} disabled={enrolling}
-                style={{ background: enrolling ? RULE : ACCENT, color: enrolling ? MUTED : '#fff', marginBottom: 0 }}>
-                {enrolling
-                  ? <><Loader2 size={15} style={{ animation: 'spin 0.9s linear infinite' }} /> Enrolling…</>
-                  : <><GraduationCap size={15} /> Enroll for free</>}
-              </button>
-            ) : (
-              <button className="cta-btn" onClick={onPay} style={{ background: ACCENT, color: '#fff' }}>
-                <Smartphone size={15} /> Pay with Mobile Money
-              </button>
-            )}
-            {error && <p style={{ fontSize: 13, color: RED, margin: '10px 0 0', textAlign: 'center' }}>{error}</p>}
-          </>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <Link href={signUpHref} className="cta-btn" style={{ background: ACCENT, color: '#fff', textDecoration: 'none' }}>
-              <GraduationCap size={15} /> {isFree ? 'Sign up & enroll free' : 'Sign up to enroll'}
-            </Link>
-            <p style={{ fontSize: 13, color: MUTED, textAlign: 'center', margin: 0 }}>
-              Already have an account?{' '}
-              <Link href={signInHref} style={{ color: ACCENT, fontWeight: 600, textDecoration: 'none' }}>Sign in</Link>
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Includes */}
-      <div style={{ padding: '22px 28px' }}>
-        <p style={{ fontSize: 10, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.16em', margin: '0 0 16px' }}>
-          This course includes
-        </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {[
-            { icon: BookOpen,      label: `${modules} module${modules !== 1 ? 's' : ''}` },
-            { icon: Play,          label: `${videos} video${videos !== 1 ? 's' : ''}` },
-            { icon: FileText,      label: `${pdfs} PDF resource${pdfs !== 1 ? 's' : ''}` },
-            { icon: Clock,         label: 'Self-paced learning' },
-            { icon: GraduationCap, label: 'Certificate on completion' },
-            { icon: Shield,        label: 'Full lifetime access' },
-          ].map(({ icon: Icon, label }) => (
-            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 14, color: INK }}>
-              <Icon size={14} style={{ color: ACCENT, flexShrink: 0 }} /> {label}
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
