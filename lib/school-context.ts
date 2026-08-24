@@ -101,6 +101,27 @@ export async function requirePlatformOwner(): Promise<void> {
   if (!(await isPlatformOwner())) throw new Error('Unauthorized: platform owner only');
 }
 
+/**
+ * Allows both the platform owner and org admins.
+ * Returns the caller's organization context:
+ *   - owner  → { role: 'owner',     orgId: null }   — can act on any org
+ *   - org_admin → { role: 'org_admin', orgId: string } — scoped to their org
+ * Throws if the caller is neither.
+ */
+export async function requireOwnerOrOrgAdmin(): Promise<{ role: 'owner' | 'org_admin'; orgId: string | null }> {
+  const h = await headers();
+  const session = await auth.api.getSession({ headers: h });
+  if (!session?.user) throw new Error('Unauthorized');
+
+  const rows = await db.select({ platformRole: user.platformRole, organizationId: user.organizationId })
+    .from(user).where(eq(user.id, session.user.id)).limit(1);
+  const row = rows[0];
+
+  if (row?.platformRole === 'owner')     return { role: 'owner',     orgId: null };
+  if (row?.platformRole === 'org_admin') return { role: 'org_admin', orgId: row.organizationId ?? null };
+  throw new Error('Unauthorized: platform owner or org admin required');
+}
+
 export async function requireOrgAdmin() {
   const org = await getOrgAdminOrganization();
   if (!org) throw new Error('Unauthorized: org admin only');

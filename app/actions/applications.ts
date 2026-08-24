@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 import { account, creatorApplication, school, schoolMember, user } from '@/lib/db/schema';
 import bcrypt from 'bcryptjs';
 import { eq, desc } from 'drizzle-orm';
-import { requirePlatformOwner } from '@/lib/school-context';
+import { requirePlatformOwner, requireOwnerOrOrgAdmin } from '@/lib/school-context';
 import { getCurrentOrganizationId } from '@/lib/organization';
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
@@ -91,10 +91,22 @@ export async function submitCreatorApplication(data: {
 
 export async function getApplications(status?: 'pending' | 'approved' | 'rejected') {
   try {
-    await requirePlatformOwner();
+    const { role, orgId } = await requireOwnerOrOrgAdmin();
+
     const rows = status
       ? await db.select().from(creatorApplication).where(eq(creatorApplication.status, status)).orderBy(desc(creatorApplication.createdAt))
       : await db.select().from(creatorApplication).orderBy(desc(creatorApplication.createdAt));
+
+    // Org admins see: pending apps (anyone can apply) + approved apps for their org's schools
+    if (role === 'org_admin' && orgId) {
+      const orgSchools = await db.select({ id: school.id }).from(school).where(eq(school.organizationId, orgId));
+      const orgSchoolIds = new Set(orgSchools.map(s => s.id));
+      const filtered = rows.filter(r =>
+        r.status === 'pending' || (r.schoolId && orgSchoolIds.has(r.schoolId))
+      );
+      return { success: true, data: filtered };
+    }
+
     return { success: true, data: rows };
   } catch (error) {
     return { success: false, error: String(error), data: [] };
@@ -103,7 +115,7 @@ export async function getApplications(status?: 'pending' | 'approved' | 'rejecte
 
 export async function approveApplication(applicationId: string) {
   try {
-    await requirePlatformOwner();
+    const { role, orgId: callerOrgId } = await requireOwnerOrOrgAdmin();
 
     const apps = await db.select().from(creatorApplication).where(eq(creatorApplication.id, applicationId)).limit(1);
     if (!apps.length) return { success: false, error: 'Application not found' };
@@ -113,7 +125,8 @@ export async function approveApplication(applicationId: string) {
     const slug     = await uniqueSlug(app.channelName);
     const schoolId = `school-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 
-    const orgId = await getCurrentOrganizationId();
+    // Org admin → assign to their org; owner → use request-domain org (existing behaviour)
+    const orgId = role === 'org_admin' ? callerOrgId : await getCurrentOrganizationId();
     await db.insert(school).values({
       id:             schoolId,
       slug,
@@ -171,6 +184,8 @@ export async function approveApplication(applicationId: string) {
 
     revalidatePath('/platform/admin');
     revalidatePath('/platform/admin/applications');
+    revalidatePath('/org-admin');
+    revalidatePath('/org-admin/applications');
 
     // ── Email the creator their credentials ──────────────────────────────
     const base = process.env.BETTER_AUTH_URL ?? 'https://obinacademy.com';
@@ -190,7 +205,7 @@ export async function approveApplication(applicationId: string) {
 
 export async function sendCreatorCredentials(applicationId: string) {
   try {
-    await requirePlatformOwner();
+    await requireOwnerOrOrgAdmin();
 
     const apps = await db.select().from(creatorApplication).where(eq(creatorApplication.id, applicationId)).limit(1);
     if (!apps.length) return { success: false, error: 'Application not found' };
@@ -263,7 +278,7 @@ export async function sendCreatorCredentials(applicationId: string) {
 
 export async function rejectApplication(applicationId: string, notes?: string) {
   try {
-    await requirePlatformOwner();
+    await requireOwnerOrOrgAdmin();
 
     const apps = await db.select().from(creatorApplication).where(eq(creatorApplication.id, applicationId)).limit(1);
     if (!apps.length) return { success: false, error: 'Application not found' };
@@ -273,6 +288,7 @@ export async function rejectApplication(applicationId: string, notes?: string) {
       .set({ status: 'rejected', notes: notes ?? null, reviewedAt: new Date() })
       .where(eq(creatorApplication.id, applicationId));
     revalidatePath('/platform/admin/applications');
+    revalidatePath('/org-admin/applications');
 
     // Notify applicant (non-blocking)
     sendApplicationRejectedEmail({
