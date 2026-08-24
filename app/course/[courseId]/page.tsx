@@ -146,16 +146,16 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
     <div style={{ minHeight: '100vh', background: BG, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif' }}>
       <style>{`
         *, *::before, *::after { box-sizing: border-box; }
-        p { font-size: 18px; }
         @keyframes spin   { to { transform: rotate(360deg); } }
         @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes slideUp { from { transform:translateY(100%); opacity:0; } to { transform:translateY(0); opacity:1; } }
 
         .pg-grid {
           max-width: 1140px; margin: 0 auto; padding: 32px 20px 80px;
           display: grid; grid-template-columns: 1fr 320px; gap: 24px; align-items: start;
         }
         @media (max-width: 860px) {
-          .pg-grid { grid-template-columns: 1fr; padding: 20px 16px 64px; }
+          .pg-grid { grid-template-columns: 1fr; padding: 16px 12px 80px; gap: 16px; }
           .sidebar-col { order: -1; }
         }
         .card { background: ${WHITE}; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 20px rgba(0,0,0,0.04); }
@@ -172,26 +172,43 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
         .inp:focus { outline: 2px solid ${ACCENT}; outline-offset: -2px; }
         .chip {
           display: inline-flex; align-items: center; gap: 6px;
-          padding: 6px 12px; border-radius: 999px;
-          background: ${CHIPBG}; font-size: 13px; color: ${MUTED}; font-weight: 500;
+          padding: 5px 11px; border-radius: 999px;
+          background: ${CHIPBG}; font-size: 12px; color: ${MUTED}; font-weight: 500;
         }
         .check-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid ${BORDER}; }
         .check-item:last-child { border-bottom: none; }
+
+        /* Payment modal — centered on desktop, bottom sheet on mobile */
+        .pay-modal-wrap {
+          position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50;
+          display: flex; align-items: center; justify-content: center;
+          padding: 20px; backdrop-filter: blur(4px);
+        }
+        .pay-modal {
+          background: ${WHITE}; border-radius: 20px; width: 100%; max-width: 420px;
+          overflow: hidden; animation: fadeUp .2s ease; box-shadow: 0 24px 80px rgba(0,0,0,0.2);
+        }
+        @media (max-width: 540px) {
+          .pay-modal-wrap { align-items: flex-end; padding: 0; }
+          .pay-modal { border-radius: 24px 24px 0 0; max-width: 100%; animation: slideUp .25s ease; }
+        }
       `}</style>
 
       {/* ── TOP NAV ── */}
       <nav style={{ background: WHITE, borderBottom: `1px solid ${BORDER}`, position: 'sticky', top: 0, zIndex: 40 }}>
-        <div style={{ maxWidth: 1140, margin: '0 auto', padding: '0 20px', height: 52, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Link href="/courses" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 18, fontWeight: 600, color: MUTED, textDecoration: 'none', padding: '6px 12px', borderRadius: 8, background: CHIPBG }}>
-            <ArrowLeft size={13} /> All Courses
+        <div style={{ maxWidth: 1140, margin: '0 auto', padding: '0 16px', height: 52, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Link href="/courses" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: MUTED, textDecoration: 'none', padding: '6px 12px', borderRadius: 8, background: CHIPBG, whiteSpace: 'nowrap' }}>
+            <ArrowLeft size={13} /> <span style={{ display: 'none' }} className="sm-show">All Courses</span>
           </Link>
-          <div style={{ flex: 1 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: 13, fontWeight: 600, color: INK, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{course.title}</p>
+          </div>
           {isLoggedIn ? (
-            <Link href="/learn/dashboard" style={{ fontSize: 18, fontWeight: 600, color: MUTED, textDecoration: 'none' }}>My Learning</Link>
+            <Link href="/learn/dashboard" style={{ fontSize: 13, fontWeight: 600, color: MUTED, textDecoration: 'none', whiteSpace: 'nowrap' }}>My Learning</Link>
           ) : (
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <Link href="/sign-in" style={{ fontSize: 18, fontWeight: 600, color: MUTED, textDecoration: 'none', padding: '7px 14px', borderRadius: 8 }}>Sign in</Link>
-              <Link href="/sign-up" style={{ fontSize: 18, fontWeight: 700, color: WHITE, background: ACCENT, padding: '7px 16px', textDecoration: 'none', borderRadius: 8 }}>Get started</Link>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+              <Link href="/sign-in" style={{ fontSize: 13, fontWeight: 600, color: MUTED, textDecoration: 'none', padding: '7px 12px', borderRadius: 8 }}>Sign in</Link>
+              <Link href="/sign-up" style={{ fontSize: 13, fontWeight: 700, color: WHITE, background: ACCENT, padding: '7px 14px', textDecoration: 'none', borderRadius: 8, whiteSpace: 'nowrap' }}>Get started</Link>
             </div>
           )}
         </div>
@@ -230,7 +247,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
           </div>
 
           {/* Title + meta */}
-          <div style={{ padding: '24px 28px 20px' }}>
+          <div style={{ padding: 'clamp(16px, 4vw, 28px)' }}>
             <h1 style={{ fontSize: 'clamp(20px, 3vw, 28px)', fontWeight: 800, color: INK, margin: '0 0 16px', lineHeight: 1.25, letterSpacing: '-0.02em' }}>
               {course.title}
             </h1>
@@ -270,7 +287,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
                 <p
                   ref={descRef}
                   style={{
-                    fontSize: 18, color: '#333', lineHeight: 1.75, margin: 0, whiteSpace: 'pre-wrap',
+                    fontSize: 15, color: '#333', lineHeight: 1.75, margin: 0, whiteSpace: 'pre-wrap',
                     ...(!descExpanded ? { display: '-webkit-box', WebkitLineClamp: 5, WebkitBoxOrient: 'vertical', overflow: 'hidden' } : {}),
                   }}
                 >
@@ -297,7 +314,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
                       {items.map((item, i) => (
                         <div key={i} className="check-item">
                           <CheckCircle2 size={16} style={{ color: '#059669', flexShrink: 0, marginTop: 1 }} />
-                          <span style={{ fontSize: 18, color: INK, lineHeight: 1.55 }}>{item}</span>
+                          <span style={{ fontSize: 14, color: INK, lineHeight: 1.55 }}>{item}</span>
                         </div>
                       ))}
                     </div>
@@ -309,7 +326,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
 
           {/* Curriculum */}
           {course.modules.length > 0 && (
-            <div style={{ borderTop: `1px solid ${BORDER}`, padding: '24px 28px 28px' }}>
+            <div style={{ borderTop: `1px solid ${BORDER}`, padding: 'clamp(16px, 4vw, 28px)' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 16 }}>
                 <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: MUTED, margin: 0 }}>Curriculum</p>
                 <span style={{ fontSize: 12, color: MUTED }}>{course.modules.length} modules · {totalVideos + totalPdfs} resources</span>
@@ -325,9 +342,9 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
                         {String(index + 1).padStart(2, '0')}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontSize: 18, fontWeight: 600, color: INK, margin: '0 0 4px', lineHeight: 1.4 }}>{mod.title}</p>
+                        <p style={{ fontSize: 14, fontWeight: 600, color: INK, margin: '0 0 4px', lineHeight: 1.4 }}>{mod.title}</p>
                         {mod.description && (
-                          <p style={{ fontSize: 18, color: MUTED, margin: '0 0 6px', lineHeight: 1.55 }}>{mod.description}</p>
+                          <p style={{ fontSize: 13, color: MUTED, margin: '0 0 6px', lineHeight: 1.55 }}>{mod.description}</p>
                         )}
                         <div style={{ display: 'flex', gap: 12 }}>
                           {vc > 0 && <span style={{ fontSize: 12, color: MUTED, display: 'flex', alignItems: 'center', gap: 4 }}><Play size={10} style={{ color: ACCENT }} /> {vc} video{vc !== 1 ? 's' : ''}</span>}
@@ -343,7 +360,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
           )}
 
           {/* Reviews */}
-          <div style={{ borderTop: `1px solid ${BORDER}`, padding: '24px 28px 32px' }}>
+          <div style={{ borderTop: `1px solid ${BORDER}`, padding: 'clamp(16px, 4vw, 28px)' }}>
             <ReviewsSection
               courseId={courseId!}
               isEnrolled={isEnrolled}
@@ -398,7 +415,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
                         UGX {discountedPrice.toLocaleString()}
                       </p>
                       {discountActive && (
-                        <p style={{ fontSize: 18, color: MUTED, textDecoration: 'line-through', margin: '4px 0 0', fontVariantNumeric: 'tabular-nums' }}>
+                        <p style={{ fontSize: 13, color: MUTED, textDecoration: 'line-through', margin: '4px 0 0', fontVariantNumeric: 'tabular-nums' }}>
                           UGX {price.toLocaleString()}
                         </p>
                       )}
@@ -428,14 +445,14 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
                       <Smartphone size={15} /> Pay with Mobile Money
                     </button>
                   )}
-                  {error && <p style={{ fontSize: 18, color: RED, textAlign: 'center', margin: '0 0 8px' }}>{error}</p>}
+                  {error && <p style={{ fontSize: 13, color: RED, textAlign: 'center', margin: '0 0 8px' }}>{error}</p>}
                 </>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
                   <Link href={`/sign-up${ctaParam}`} className="cta-btn" style={{ background: ACCENT, color: WHITE, textDecoration: 'none' }}>
                     <GraduationCap size={15} /> {isFree ? 'Sign up & enroll free' : 'Sign up to enroll'}
                   </Link>
-                  <p style={{ fontSize: 18, color: MUTED, textAlign: 'center', margin: 0 }}>
+                  <p style={{ fontSize: 13, color: MUTED, textAlign: 'center', margin: 0 }}>
                     Have an account? <Link href={`/sign-in${ctaParam}`} style={{ color: ACCENT, fontWeight: 600, textDecoration: 'none' }}>Sign in</Link>
                   </p>
                 </div>
@@ -453,7 +470,7 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
                     { icon: GraduationCap, t: 'Certificate on completion' },
                     { icon: Shield,        t: 'Full lifetime access' },
                   ].map(({ icon: Icon, t }) => (
-                    <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 18, color: '#444' }}>
+                    <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13, color: '#444' }}>
                       <Icon size={13} style={{ color: ACCENT, flexShrink: 0 }} /> {t}
                     </div>
                   ))}
@@ -466,11 +483,12 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
 
       {/* ── PAYMENT MODAL ── */}
       {paymentOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, backdropFilter: 'blur(4px)' }}>
-          <div style={{ background: WHITE, borderRadius: 20, width: '100%', maxWidth: 420, overflow: 'hidden', animation: 'fadeUp .2s ease', boxShadow: '0 24px 80px rgba(0,0,0,0.2)' }}>
+        <div className="pay-modal-wrap">
+          <div className="pay-modal">
 
-            <div style={{ padding: '18px 24px', borderBottom: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 16, fontWeight: 700, color: INK }}>
+            {/* Handle bar on mobile */}
+            <div style={{ padding: '12px 24px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${BORDER}`, paddingBottom: 12 }}>
+              <span style={{ fontSize: 15, fontWeight: 700, color: INK }}>
                 {paymentStatus === 'success' ? 'Payment confirmed' : paymentStatus === 'failed' ? 'Payment failed' : paymentStatus === 'pending' ? 'Awaiting payment' : 'Pay with Mobile Money'}
               </span>
               <button onClick={closePayment} style={{ background: CHIPBG, border: 'none', cursor: 'pointer', color: MUTED, padding: 8, display: 'flex', borderRadius: 8 }}>
@@ -484,12 +502,12 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
                   <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#D1FAE5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
                     <CheckCheck size={28} style={{ color: '#059669' }} />
                   </div>
-                  <h3 style={{ fontSize: 22, fontWeight: 800, color: INK, margin: '0 0 8px' }}>Payment confirmed!</h3>
-                  <p style={{ fontSize: 18, color: MUTED }}>Taking you to your course…</p>
+                  <h3 style={{ fontSize: 20, fontWeight: 800, color: INK, margin: '0 0 8px' }}>Payment confirmed!</h3>
+                  <p style={{ fontSize: 14, color: MUTED, margin: 0 }}>Taking you to your course…</p>
                 </div>
               ) : paymentStatus === 'failed' ? (
                 <div>
-                  <p style={{ fontSize: 18, color: MUTED, margin: '0 0 24px', lineHeight: 1.7 }}>
+                  <p style={{ fontSize: 14, color: MUTED, margin: '0 0 24px', lineHeight: 1.7 }}>
                     {paymentMessage ?? 'The payment was declined or timed out. Please try again.'}
                   </p>
                   <button className="cta-btn" onClick={() => { setPaymentStatus('idle'); setPaymentId(null); setPaymentMessage(null); }}
@@ -500,8 +518,8 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
                   <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#EEF2FF', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
                     <Smartphone size={28} style={{ color: ACCENT }} />
                   </div>
-                  <h3 style={{ fontSize: 20, fontWeight: 800, color: INK, margin: '0 0 10px' }}>Check your phone</h3>
-                  <p style={{ fontSize: 18, color: MUTED, margin: '0 0 20px', lineHeight: 1.7 }}>
+                  <h3 style={{ fontSize: 18, fontWeight: 800, color: INK, margin: '0 0 10px' }}>Check your phone</h3>
+                  <p style={{ fontSize: 14, color: MUTED, margin: '0 0 20px', lineHeight: 1.7 }}>
                     A prompt was sent to <strong style={{ color: INK }}>{phone}</strong>. Enter your PIN to approve.
                   </p>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: MUTED, fontSize: 13 }}>
@@ -511,25 +529,25 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
                 </div>
               ) : (
                 <div>
-                  <div style={{ padding: '16px 18px', background: CHIPBG, borderRadius: 12, marginBottom: 20 }}>
-                    <p style={{ fontSize: 18, color: MUTED, margin: '0 0 4px' }}>{course.title}</p>
-                    <p style={{ fontSize: 28, fontWeight: 900, color: INK, margin: 0, fontVariantNumeric: 'tabular-nums' }}>
+                  <div style={{ padding: '14px 16px', background: CHIPBG, borderRadius: 12, marginBottom: 20 }}>
+                    <p style={{ fontSize: 12, color: MUTED, margin: '0 0 4px' }}>{course.title}</p>
+                    <p style={{ fontSize: 26, fontWeight: 900, color: INK, margin: 0, fontVariantNumeric: 'tabular-nums' }}>
                       UGX {discountedPrice.toLocaleString()}
                     </p>
                   </div>
                   <div style={{ marginBottom: 18 }}>
-                    <label style={{ display: 'block', fontSize: 18, fontWeight: 600, color: INK, marginBottom: 8 }}>Mobile money number</label>
+                    <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: INK, marginBottom: 8 }}>Mobile Money number</label>
                     <div style={{ display: 'flex', border: `1.5px solid ${BORDER}`, borderRadius: 10, overflow: 'hidden', background: WHITE }}>
                       <div style={{ padding: '0 14px', borderRight: `1px solid ${BORDER}`, background: CHIPBG, height: 50, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
                         <Smartphone size={15} style={{ color: MUTED }} />
                       </div>
                       <input type="tel" placeholder="0711 234 567" value={phone} onChange={e => setPhone(e.target.value)}
                         className="inp"
-                        style={{ flex: 1, padding: '13px 14px', border: 'none', outline: 'none', fontSize: 18, color: INK, background: 'transparent', fontFamily: 'inherit' }} />
+                        style={{ flex: 1, padding: '13px 14px', border: 'none', outline: 'none', fontSize: 15, color: INK, background: 'transparent', fontFamily: 'inherit' }} />
                     </div>
                     <p style={{ fontSize: 12, color: MUTED, margin: '5px 0 0' }}>MTN or Airtel Uganda</p>
                   </div>
-                  {error && <div style={{ fontSize: 18, color: RED, background: REDBG, border: '1px solid #FECACA', borderRadius: 8, padding: '10px 14px', marginBottom: 16 }}>{error}</div>}
+                  {error && <div style={{ fontSize: 13, color: RED, background: REDBG, border: '1px solid #FECACA', borderRadius: 8, padding: '10px 14px', marginBottom: 16 }}>{error}</div>}
                   <button className="cta-btn" onClick={handlePay} disabled={paying || !phone.trim()}
                     style={{ background: paying || !phone.trim() ? '#DDD' : ACCENT, color: paying || !phone.trim() ? MUTED : WHITE }}>
                     {paying ? <><Loader2 size={15} style={{ animation: 'spin .9s linear infinite' }} /> Sending prompt…</> : 'Pay now'}
