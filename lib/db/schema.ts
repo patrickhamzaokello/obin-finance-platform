@@ -86,6 +86,7 @@ export const school = pgTable('school', {
   tagline:       text('tagline'),        // short hero subline e.g. "I help 10k+ people invest smarter"
   heroHeadline:   text('heroHeadline'),    // custom H1 override; falls back to "Learn {category} from {name}"
   organizationId: text('organizationId'), // FK → organization.id (which platform this school belongs to)
+  phone:          text('phone'),           // Mobile Money number for withdrawal payouts (e.g. 256701234567)
   createdAt:      timestamp('createdAt').notNull().defaultNow(),
   updatedAt:      timestamp('updatedAt').notNull().defaultNow(),
 });
@@ -247,6 +248,24 @@ export const payment = pgTable('payment', {
   statusMessage:      text('statusMessage'),               // ioTec status message for display
   createdAt:          timestamp('createdAt').notNull().defaultNow(),
   updatedAt:          timestamp('updatedAt').notNull().defaultNow(),
+});
+
+// Creator withdrawal requests — 3-step approval: creator → org_admin → owner → sent
+export const withdrawal = pgTable('withdrawal', {
+  id:              text('id').primaryKey(),
+  schoolId:        text('schoolId').notNull(),          // FK → school.id
+  amount:          integer('amount').notNull(),          // UGX requested
+  phone:           text('phone').notNull(),              // Mobile Money number at time of request
+  // status flow: pending → org_approved → owner_approved → sent  (or → rejected at any step)
+  status:          text('status').notNull().default('pending'),
+  notes:           text('notes'),                        // rejection reason / admin note
+  rejectedBy:      text('rejectedBy'),                   // 'org_admin' | 'owner'
+  requestedAt:     timestamp('requestedAt').notNull().defaultNow(),
+  orgApprovedAt:   timestamp('orgApprovedAt'),
+  ownerApprovedAt: timestamp('ownerApprovedAt'),
+  sentAt:          timestamp('sentAt'),
+  rejectedAt:      timestamp('rejectedAt'),
+  createdAt:       timestamp('createdAt').notNull().defaultNow(),
 });
 
 export const userProgress = pgTable(

@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { isPlatformAdminOrOwner, isOrgAdmin, getOrgAdminOrganization } from '@/lib/school-context';
 import Link from 'next/link';
-import { LayoutDashboard, Building2, TrendingUp, ClipboardList, Globe } from 'lucide-react';
+import { LayoutDashboard, Building2, TrendingUp, ClipboardList, Globe, Wallet } from 'lucide-react';
 import { SignOutButton } from '@/components/sign-out-button';
 
 export default async function OrgAdminLayout({ children }: { children: React.ReactNode }) {
@@ -37,6 +37,7 @@ export default async function OrgAdminLayout({ children }: { children: React.Rea
             { href: '/org-admin/creators',     label: 'Creators',     icon: Building2       },
             { href: '/org-admin/applications', label: 'Applications', icon: ClipboardList   },
             { href: '/org-admin/revenue',      label: 'Revenue',      icon: TrendingUp      },
+            { href: '/org-admin/withdrawals', label: 'Withdrawals',  icon: Wallet          },
           ].map(({ href, label, icon: Icon }) => (
             <Link key={href} href={href}
               className='flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors'>

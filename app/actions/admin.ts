@@ -515,7 +515,6 @@ export async function getEarningsReport() {
  */
 export async function getCreatorRevenue() {
   try {
-    await isSchoolAdmin();
     const s = await getCurrentSchool();
     if (!s) return { success: false, error: 'No school context' };
 
